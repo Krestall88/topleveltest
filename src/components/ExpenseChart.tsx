@@ -124,6 +124,7 @@ export default function ExpenseChart({ objectId, objectName }: ExpenseChartProps
     const labels = chartData.map(item => item.month);
     const limitData = chartData.map(item => item.limit);
     const spentData = chartData.map(item => item.spent);
+    const balanceData = chartData.map(item => item.balance);
 
     chartInstance.current = new Chart(ctx, {
       type: chartType,
@@ -133,7 +134,7 @@ export default function ExpenseChart({ objectId, objectName }: ExpenseChartProps
           {
             label: 'Лимит',
             data: limitData,
-            backgroundColor: 'rgba(59, 130, 246, 0.5)',
+            backgroundColor: 'rgba(59, 130, 246, 0.7)',
             borderColor: 'rgba(59, 130, 246, 1)',
             borderWidth: 2,
             tension: 0.4
@@ -141,8 +142,24 @@ export default function ExpenseChart({ objectId, objectName }: ExpenseChartProps
           {
             label: 'Потрачено',
             data: spentData,
-            backgroundColor: 'rgba(239, 68, 68, 0.5)',
+            backgroundColor: 'rgba(239, 68, 68, 0.7)',
             borderColor: 'rgba(239, 68, 68, 1)',
+            borderWidth: 2,
+            tension: 0.4
+          },
+          {
+            label: 'Остаток/Превышение',
+            data: balanceData,
+            backgroundColor: chartData.map(item => 
+              item.balance >= 0 
+                ? 'rgba(34, 197, 94, 0.8)'  // Зеленый для положительного остатка
+                : 'rgba(220, 38, 127, 0.8)' // Ярко-розовый для превышения
+            ),
+            borderColor: chartData.map(item => 
+              item.balance >= 0 
+                ? 'rgba(34, 197, 94, 1)' 
+                : 'rgba(220, 38, 127, 1)'
+            ),
             borderWidth: 2,
             tension: 0.4
           }
@@ -167,7 +184,18 @@ export default function ExpenseChart({ objectId, objectName }: ExpenseChartProps
             callbacks: {
               label: function(context: any) {
                 const value = context.parsed.y;
-                return `${context.dataset.label}: ${new Intl.NumberFormat('ru-RU', {
+                const datasetLabel = context.dataset.label;
+                
+                if (datasetLabel === 'Остаток/Превышение') {
+                  const prefix = value >= 0 ? 'Остаток: ' : 'Превышение: ';
+                  const absValue = Math.abs(value);
+                  return `${prefix}${new Intl.NumberFormat('ru-RU', {
+                    style: 'currency',
+                    currency: 'RUB'
+                  }).format(absValue)}`;
+                }
+                
+                return `${datasetLabel}: ${new Intl.NumberFormat('ru-RU', {
                   style: 'currency',
                   currency: 'RUB'
                 }).format(value)}`;
@@ -342,8 +370,15 @@ export default function ExpenseChart({ objectId, objectName }: ExpenseChartProps
       {/* График */}
       <Card>
         <CardContent className="p-6">
-          <div className="h-96">
-            <canvas ref={chartRef}></canvas>
+          <canvas ref={chartRef} height="400"></canvas>
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+            <p className="text-sm text-gray-600 text-center">
+              💡 <strong>Пояснение:</strong> 
+              <span className="text-blue-600"> Синие столбцы</span> - установленные лимиты, 
+              <span className="text-red-600"> красные</span> - потраченные суммы, 
+              <span className="text-green-600"> зеленые</span> - остаток средств, 
+              <span className="text-pink-600"> розовые (вниз)</span> - превышение лимита
+            </p>
           </div>
         </CardContent>
       </Card>
