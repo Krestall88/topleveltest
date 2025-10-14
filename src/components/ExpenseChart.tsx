@@ -124,7 +124,6 @@ export default function ExpenseChart({ objectId, objectName }: ExpenseChartProps
     const labels = chartData.map(item => item.month);
     const limitData = chartData.map(item => item.limit);
     const spentData = chartData.map(item => item.spent);
-    const balanceData = chartData.map(item => item.balance);
 
     chartInstance.current = new Chart(ctx, {
       type: chartType,
@@ -144,18 +143,6 @@ export default function ExpenseChart({ objectId, objectName }: ExpenseChartProps
             data: spentData,
             backgroundColor: 'rgba(239, 68, 68, 0.5)',
             borderColor: 'rgba(239, 68, 68, 1)',
-            borderWidth: 2,
-            tension: 0.4
-          },
-          {
-            label: 'Остаток',
-            data: balanceData,
-            backgroundColor: chartData.map(item => 
-              item.balance >= 0 ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)'
-            ),
-            borderColor: chartData.map(item => 
-              item.balance >= 0 ? 'rgba(34, 197, 94, 1)' : 'rgba(239, 68, 68, 1)'
-            ),
             borderWidth: 2,
             tension: 0.4
           }
@@ -391,27 +378,6 @@ export default function ExpenseChart({ objectId, objectName }: ExpenseChartProps
                 </div>
               </div>
 
-              {/* Детали расходов */}
-              {monthData.expenseDetails.length > 0 && (
-                <div>
-                  <h4 className="font-medium mb-2">Детали расходов ({monthData.expenseDetails.length})</h4>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {monthData.expenseDetails.map((expense, expenseIndex) => (
-                      <div key={expenseIndex} className="flex justify-between items-start text-sm bg-white p-2 rounded border">
-                        <div className="flex-1">
-                          <p className="font-medium">{expense.description}</p>
-                          <p className="text-gray-500 text-xs">
-                            {formatDate(expense.date)} • {expense.recordedBy}
-                          </p>
-                        </div>
-                        <p className="font-medium text-red-600 ml-2">
-                          {formatCurrency(expense.amount)}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         ))}
