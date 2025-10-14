@@ -168,6 +168,10 @@ export default function ExpenseChart({ objectId, objectName }: ExpenseChartProps
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        interaction: {
+          intersect: false,
+          mode: 'index'
+        },
         plugins: {
           title: {
             display: true,
@@ -217,13 +221,16 @@ export default function ExpenseChart({ objectId, objectName }: ExpenseChartProps
               }
             }
           }
-        },
-        interaction: {
-          intersect: false,
-          mode: 'index'
         }
       }
     });
+
+    // Принудительное обновление размеров
+    setTimeout(() => {
+      if (chartInstance.current) {
+        chartInstance.current.resize();
+      }
+    }, 100);
   };
 
   const formatCurrency = (amount: number) => {
@@ -370,7 +377,9 @@ export default function ExpenseChart({ objectId, objectName }: ExpenseChartProps
       {/* График */}
       <Card>
         <CardContent className="p-6">
-          <canvas ref={chartRef} height="400"></canvas>
+          <div className="relative h-96 w-full">
+            <canvas ref={chartRef}></canvas>
+          </div>
           <div className="mt-4 p-3 bg-gray-50 rounded-lg">
             <p className="text-sm text-gray-600 text-center">
               💡 <strong>Пояснение:</strong> 
