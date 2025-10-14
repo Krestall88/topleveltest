@@ -1,0 +1,300 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "../docs/erd.md"
+  theme    = "dark"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                       String                  @id @default(cuid())
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  email                    String                  @unique
+  name                     String?
+  phone                    String?
+  password                 String
+  role                     Role                    @default(MANAGER)
+  assignedAdditionalTasks  AdditionalTask[]        @relation("AssignedAdditionalTasks")
+  completedAdditionalTasks AdditionalTask[]        @relation("CompletedAdditionalTasks")
+  auditLogs                AuditLog[]
+  completedChecklists      Checklist[]             @relation("CompletedChecklists")
+  createdChecklists        Checklist[]
+  createdObjects           CleaningObject[]        @relation("CreatedBy")
+  managedObjects           CleaningObject[]        @relation("ManagedBy")
+  assignedDeputyAdmins     DeputyAdminAssignment[] @relation("AssignedDeputyAdmins")
+  deputyAdminAssignments   DeputyAdminAssignment[] @relation("DeputyAdminAssignments")
+  inventoryExpenses        InventoryExpense[]      @relation("InventoryExpenses")
+  setInventoryLimits       InventoryLimit[]        @relation("SetInventoryLimits")
+  photoReports             PhotoReport[]
+  createdRequests          Request[]
+  completedTasks           Task[]
+}
+
+model CleaningObject {
+  id                          String                  @id @default(cuid())
+  createdAt                   DateTime                @default(now())
+  updatedAt                   DateTime                @updatedAt
+  name                        String
+  address                     String
+  documents                   Json?
+  timezone                    String?
+  workingHours                Json?
+  workingDays                 String[]
+  autoChecklistEnabled        Boolean                 @default(true)
+  lastChecklistDate           DateTime?
+  requirePhotoForCompletion   Boolean                 @default(false)
+  requireCommentForCompletion Boolean                 @default(false)
+  completionRequirements      Json?
+  creatorId                   String
+  managerId                   String?
+  additionalTasks             AdditionalTask[]
+  checklists                  Checklist[]
+  creator                     User                    @relation("CreatedBy", fields: [creatorId], references: [id])
+  manager                     User?                   @relation("ManagedBy", fields: [managerId], references: [id])
+  clientBindings              ClientBinding[]
+  deputyAdminAssignments      DeputyAdminAssignment[] @relation("DeputyAdminObjects")
+  inventoryExpenses           InventoryExpense[]
+  inventoryLimits             InventoryLimit[]
+  photoReports                PhotoReport[]
+  requests                    Request[]
+  rooms                       Room[]
+  techCards                   TechCard[]
+}
+
+model Room {
+  id          String         @id @default(cuid())
+  createdAt   DateTime       @default(now())
+  name        String
+  description String?
+  area        Float?
+  objectId    String
+  checklists  Checklist[]
+  object      CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+  techCards   TechCard[]
+}
+
+model TechCard {
+  id          String         @id @default(cuid())
+  createdAt   DateTime       @default(now())
+  name        String
+  workType    String
+  frequency   String
+  description String?
+  objectId    String
+  roomId      String?
+  object      CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  room        Room?          @relation(fields: [roomId], references: [id], onDelete: Cascade)
+}
+
+model Checklist {
+  id                String         @id @default(cuid())
+  createdAt         DateTime       @default(now())
+  date              DateTime       @db.Date
+  name              String?
+  objectId          String
+  roomId            String?
+  creatorId         String
+  completionComment String?
+  completionPhotos  String[]
+  completedAt       DateTime?
+  completedById     String?
+  completedBy       User?          @relation("CompletedChecklists", fields: [completedById], references: [id])
+  creator           User           @relation(fields: [creatorId], references: [id])
+  object            CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  room              Room?          @relation(fields: [roomId], references: [id])
+  photoReports      PhotoReport[]
+  tasks             Task[]
+}
+
+model Task {
+  id                String        @id @default(cuid())
+  createdAt         DateTime      @default(now())
+  description       String
+  status            TaskStatus    @default(NEW)
+  photoUrl          String?
+  objectName        String?
+  roomName          String?
+  scheduledStart    DateTime?
+  scheduledEnd      DateTime?
+  failureReason     String?
+  completionComment String?
+  completionPhotos  String[]
+  checklistId       String?
+  roomId            String?
+  requestId         String?
+  completedById     String?
+  completedAt       DateTime?
+  photoReports      PhotoReport[]
+  checklist         Checklist?    @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  completedBy       User?         @relation(fields: [completedById], references: [id])
+  request           Request?      @relation(fields: [requestId], references: [id])
+  room              Room?         @relation(fields: [roomId], references: [id])
+}
+
+model Request {
+  id           String         @id @default(cuid())
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  title        String
+  description  String
+  status       RequestStatus  @default(NEW)
+  source       String?
+  objectId     String
+  creatorId    String
+  photoReports PhotoReport[]
+  creator      User           @relation(fields: [creatorId], references: [id])
+  object       CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  tasks        Task[]
+}
+
+model InventoryLimit {
+  id          String         @id @default(cuid())
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  amount      Decimal        @db.Decimal(10, 2)
+  month       Int
+  year        Int
+  isRecurring Boolean        @default(false)
+  endDate     DateTime?
+  objectId    String
+  setById     String
+  object      CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  setBy       User           @relation("SetInventoryLimits", fields: [setById], references: [id])
+
+  @@unique([objectId, month, year])
+  @@index([objectId])
+  @@index([month, year])
+}
+
+model InventoryExpense {
+  id           String         @id @default(cuid())
+  createdAt    DateTime       @default(now())
+  amount       Decimal        @db.Decimal(10, 2)
+  description  String?
+  month        Int
+  year         Int
+  objectId     String
+  recordedById String
+  object       CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  recordedBy   User           @relation("InventoryExpenses", fields: [recordedById], references: [id])
+
+  @@index([objectId])
+  @@index([month, year])
+}
+
+
+model PhotoReport {
+  id          String          @id @default(cuid())
+  createdAt   DateTime        @default(now())
+  url         String
+  comment     String?
+  uploaderId  String
+  objectId    String?
+  checklistId String?
+  requestId   String?
+  taskId      String?
+  checklist   Checklist?      @relation(fields: [checklistId], references: [id])
+  object      CleaningObject? @relation(fields: [objectId], references: [id])
+  request     Request?        @relation(fields: [requestId], references: [id])
+  task        Task?           @relation(fields: [taskId], references: [id])
+  uploader    User            @relation(fields: [uploaderId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  action    String
+  entity    String
+  entityId  String
+  details   Json?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model ClientBinding {
+  id         String         @id @default(cuid())
+  createdAt  DateTime       @default(now())
+  email      String?
+  telegramId String?
+  objectId   String
+  object     CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+
+  @@unique([email, objectId])
+  @@unique([telegramId, objectId])
+}
+
+model AdditionalTask {
+  id             String               @id @default(cuid())
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  title          String
+  content        String
+  source         String
+  sourceDetails  Json
+  attachments    String[]
+  status         AdditionalTaskStatus @default(NEW)
+  objectId       String
+  assignedToId   String
+  takenAt        DateTime?
+  completedAt    DateTime?
+  completedById  String?
+  completionNote String?
+  receivedAt     DateTime
+  assignedTo     User                 @relation("AssignedAdditionalTasks", fields: [assignedToId], references: [id])
+  completedBy    User?                @relation("CompletedAdditionalTasks", fields: [completedById], references: [id])
+  object         CleaningObject       @relation(fields: [objectId], references: [id], onDelete: Cascade)
+}
+
+model DeputyAdminAssignment {
+  id            String         @id @default(cuid())
+  createdAt     DateTime       @default(now())
+  deputyAdminId String
+  objectId      String
+  assignedById  String
+  assignedBy    User           @relation("AssignedDeputyAdmins", fields: [assignedById], references: [id])
+  deputyAdmin   User           @relation("DeputyAdminAssignments", fields: [deputyAdminId], references: [id])
+  object        CleaningObject @relation("DeputyAdminObjects", fields: [objectId], references: [id])
+
+  @@unique([deputyAdminId, objectId])
+}
+
+enum Role {
+  ADMIN
+  DEPUTY_ADMIN
+  DEPUTY
+  MANAGER
+  ACCOUNTANT
+  CLIENT
+}
+
+enum TaskStatus {
+  NEW
+  AVAILABLE
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+  FAILED
+  CLOSED_WITH_PHOTO
+}
+
+enum RequestStatus {
+  NEW
+  IN_PROGRESS
+  DONE
+  REJECTED
+}
+
+enum AdditionalTaskStatus {
+  NEW
+  IN_PROGRESS
+  COMPLETED
+}

@@ -1,0 +1,450 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import ManagerAssignmentModal from '@/components/ManagerAssignmentModal';
+import { UserPlus, Users } from 'lucide-react';
+
+interface Manager {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  createdAt: string;
+  stats: {
+    objects: number;
+    checklists: number;
+    requests: number;
+    rooms: number;
+    totalExpenses: number;
+  };
+}
+
+interface User {
+  id: string;
+  role: string;
+  name: string;
+  email: string;
+}
+
+interface Props {
+  user: User;
+}
+
+export default function ManagersClientPage({ user }: Props) {
+  const [managers, setManagers] = useState<Manager[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: ''
+  });
+  const [resetPasswordData, setResetPasswordData] = useState({
+    managerId: '',
+    managerName: '',
+    newPassword: ''
+  });
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
+
+  const fetchManagers = async () => {
+    try {
+      const response = await fetch('/api/managers');
+      if (!response.ok) {
+        throw new Error('Ошибка загрузки менеджеров');
+      }
+      const data = await response.json();
+      setManagers(data);
+    } catch (error) {
+      console.error('Ошибка при загрузке менеджеров:', error);
+      setError('Не удалось загрузить менеджеров');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchManagers();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const response = await fetch('/api/managers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Ошибка при создании менеджера');
+      }
+
+      const newManager = await response.json();
+      setManagers([newManager, ...managers]);
+      setIsAddModalOpen(false);
+      setFormData({ name: '', email: '', phone: '', password: '' });
+    } catch (error: any) {
+      console.error('Ошибка при создании менеджера:', error);
+      setError(error.message || 'Не удалось создать менеджера');
+    }
+  };
+
+  const handleDelete = async (managerId: string) => {
+    if (!confirm('Удалить менеджера? Это действие нельзя отменить.')) return;
+    
+    try {
+      const response = await fetch(`/api/managers/${managerId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Ошибка при удалении менеджера');
+      }
+
+      setManagers(managers.filter(manager => manager.id !== managerId));
+    } catch (error: any) {
+      console.error('Ошибка при удалении:', error);
+      setError(error.message || 'Не удалось удалить менеджера');
+    }
+  };
+
+  const handleResetPassword = (managerId: string, managerName: string) => {
+    setResetPasswordData({
+      managerId,
+      managerName,
+      newPassword: ''
+    });
+    setIsResetPasswordModalOpen(true);
+  };
+
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const response = await fetch(`/api/managers/${resetPasswordData.managerId}/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          newPassword: resetPasswordData.newPassword
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Ошибка при сбросе пароля');
+      }
+
+      setIsResetPasswordModalOpen(false);
+      setResetPasswordData({ managerId: '', managerName: '', newPassword: '' });
+      alert(`Пароль для ${resetPasswordData.managerName} успешно изменен`);
+    } catch (error: any) {
+      console.error('Ошибка при сбросе пароля:', error);
+      setError(error.message || 'Не удалось сбросить пароль');
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('ru-RU', {
+      style: 'currency',
+      currency: 'RUB'
+    }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('ru-RU');
+  };
+
+  if (isLoading) {
+    return <div className="text-center py-8">Загрузка менеджеров...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
+
+      {/* Заголовок и кнопки управления */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">👥 Управление менеджерами</h2>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setIsAssignModalOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Users className="h-4 w-4" />
+            Назначить на объекты
+          </Button>
+          <Button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <UserPlus className="h-4 w-4" />
+            Добавить менеджера
+          </Button>
+        </div>
+      </div>
+
+      {/* Статистика */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-blue-600">{managers.length}</div>
+            <div className="text-sm text-gray-600">Всего менеджеров</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-green-600">
+              {managers.reduce((sum, m) => sum + m.stats.objects, 0)}
+            </div>
+            <div className="text-sm text-gray-600">Всего объектов</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-purple-600">
+              {managers.reduce((sum, m) => sum + m.stats.checklists, 0)}
+            </div>
+            <div className="text-sm text-gray-600">Всего чек-листов</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-orange-600">
+              {formatCurrency(managers.reduce((sum, m) => sum + m.stats.totalExpenses, 0))}
+            </div>
+            <div className="text-sm text-gray-600">Общие расходы</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Список менеджеров */}
+      <div className="grid gap-4">
+        {managers.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center text-gray-500">
+              Менеджеры не найдены. Добавьте первого менеджера.
+            </CardContent>
+          </Card>
+        ) : (
+          managers.map((manager) => (
+            <Card key={manager.id} className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-lg">{manager.name}</CardTitle>
+                    <p className="text-sm text-gray-600">{manager.email}</p>
+                    {manager.phone && (
+                      <p className="text-sm text-blue-600">📞 {manager.phone}</p>
+                    )}
+                    <p className="text-xs text-gray-500">
+                      Создан: {formatDate(manager.createdAt)}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.location.href = `/managers/${manager.id}`}
+                    >
+                      📊 Подробно
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleResetPassword(manager.id, manager.name)}
+                      className="text-blue-600 hover:text-blue-700"
+                    >
+                      🔑 Пароль
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(manager.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      🗑️ Удалить
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                  <div>
+                    <div className="font-semibold text-blue-600">{manager.stats.objects}</div>
+                    <div className="text-gray-600">Объекты</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-green-600">{manager.stats.rooms}</div>
+                    <div className="text-gray-600">Помещения</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-purple-600">{manager.stats.checklists}</div>
+                    <div className="text-gray-600">Чек-листы</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-yellow-600">{manager.stats.requests}</div>
+                    <div className="text-gray-600">Заявки</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-orange-600">
+                      {formatCurrency(manager.stats.totalExpenses)}
+                    </div>
+                    <div className="text-gray-600">Расходы</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Модальное окно добавления менеджера */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Добавить нового менеджера</h3>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="name">Имя</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="phone">Телефон</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="+7 XXX XXX XXXX"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="password">Пароль</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  required
+                  minLength={6}
+                />
+              </div>
+              
+              <div className="flex gap-2 pt-4">
+                <Button type="submit" className="flex-1">
+                  Создать
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsAddModalOpen(false);
+                    setFormData({ name: '', email: '', phone: '', password: '' });
+                  }}
+                  className="flex-1"
+                >
+                  Отмена
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно сброса пароля */}
+      {isResetPasswordModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">
+              Сброс пароля для {resetPasswordData.managerName}
+            </h3>
+            
+            <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="newPassword">Новый пароль</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={resetPasswordData.newPassword}
+                  onChange={(e) => setResetPasswordData({ 
+                    ...resetPasswordData, 
+                    newPassword: e.target.value 
+                  })}
+                  required
+                  minLength={6}
+                  placeholder="Минимум 6 символов"
+                />
+              </div>
+              
+              <div className="flex gap-2 pt-4">
+                <Button type="submit" className="flex-1">
+                  Изменить пароль
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsResetPasswordModalOpen(false);
+                    setResetPasswordData({ managerId: '', managerName: '', newPassword: '' });
+                  }}
+                  className="flex-1"
+                >
+                  Отмена
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно назначения менеджеров */}
+      <ManagerAssignmentModal
+        isOpen={isAssignModalOpen}
+        onClose={() => setIsAssignModalOpen(false)}
+        onAssignmentComplete={() => {
+          fetchManagers();
+          setIsAssignModalOpen(false);
+        }}
+      />
+    </div>
+  );
+}

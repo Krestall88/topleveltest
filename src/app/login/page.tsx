@@ -1,0 +1,93 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || 'Ошибка аутентификации');
+      }
+
+      const { token } = await res.json();
+      // Store token in cookie
+      document.cookie = `token=${token}; path=/; max-age=86400;`; // Expires in 1 day
+
+      router.push('/'); // Redirect to dashboard
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const quickLogin = (userEmail: string, userPassword: string) => {
+    setEmail(userEmail);
+    setPassword(userPassword);
+  };
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="p-8 bg-white rounded shadow-md w-96">
+        <h2 className="text-2xl font-bold mb-6 text-center">Вход в систему</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block mb-2 text-sm font-medium text-gray-700">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div className="mb-6">
+            <label className="block mb-2 text-sm font-medium text-gray-700">Пароль</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}
+          <button
+            type="submit"
+            className="w-full py-2 text-white bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Войти
+          </button>
+        </form>
+        
+        {/* Быстрый вход для тестирования */}
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <p className="text-sm text-gray-600 mb-3 text-center">Быстрый вход для тестирования:</p>
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => quickLogin('admin@cleaning.com', 'admin123')}
+              className="w-full py-2 px-4 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
+            >
+              👑 Администратор
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

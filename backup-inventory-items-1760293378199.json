@@ -1,0 +1,533 @@
+{
+  "timestamp": "2025-10-12T18:22:58.198Z",
+  "count": 31,
+  "items": [
+    {
+      "id": "cmgiupllx0001vyogdpwu1oxc",
+      "createdAt": "2025-10-09T03:21:41.542Z",
+      "updatedAt": "2025-10-09T03:21:41.542Z",
+      "name": "city UP салфетка микрофибра 35*40см 12 шт",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 7,
+      "unit": "л",
+      "pricePerUnit": "185.71",
+      "totalValue": "1300",
+      "minQuantity": 1,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiuplro0003vyog7lu1folq",
+      "createdAt": "2025-10-09T03:21:41.749Z",
+      "updatedAt": "2025-10-09T03:21:41.749Z",
+      "name": "Clean glass 600 мл",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 6,
+      "unit": "л",
+      "pricePerUnit": "191.67",
+      "totalValue": "1150",
+      "minQuantity": 1,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiupluk0005vyogi0g7l3qx",
+      "createdAt": "2025-10-09T03:21:41.852Z",
+      "updatedAt": "2025-10-09T03:21:41.852Z",
+      "name": "DESO CL таблетки (банка 1кг)",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 3,
+      "unit": "кг",
+      "pricePerUnit": "166.67",
+      "totalValue": "500",
+      "minQuantity": 1,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiuplxy0007vyogyg355o3c",
+      "createdAt": "2025-10-09T03:21:41.974Z",
+      "updatedAt": "2025-10-09T03:21:41.974Z",
+      "name": "dezon Средство для твердых поверхностей высокощелочное пенное 5кг",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 33,
+      "unit": "кг",
+      "pricePerUnit": "197.73",
+      "totalValue": "6525",
+      "minQuantity": 6,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiupm0t0009vyog9tuzfxx0",
+      "createdAt": "2025-10-09T03:21:42.077Z",
+      "updatedAt": "2025-10-09T03:21:42.077Z",
+      "name": "dezon Средство кислотное для санитарных зон 0,75кг",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 11,
+      "unit": "кг",
+      "pricePerUnit": "184.09",
+      "totalValue": "2025",
+      "minQuantity": 2,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiupm3p000bvyogi1z8yna9",
+      "createdAt": "2025-10-09T03:21:42.181Z",
+      "updatedAt": "2025-10-09T03:21:42.181Z",
+      "name": "dezon средство кислотное для санитарных зон 5кг",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 21,
+      "unit": "кг",
+      "pricePerUnit": "194.67",
+      "totalValue": "4088",
+      "minQuantity": 4,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiupm6k000dvyog0dctewmd",
+      "createdAt": "2025-10-09T03:21:42.285Z",
+      "updatedAt": "2025-10-09T03:21:42.285Z",
+      "name": "dezon Средство с хлором для санитарных зон 0,75кг",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 9,
+      "unit": "кг",
+      "pricePerUnit": "180",
+      "totalValue": "1620",
+      "minQuantity": 1,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiupm9g000fvyogto3a6yvf",
+      "createdAt": "2025-10-09T03:21:42.388Z",
+      "updatedAt": "2025-10-09T03:21:42.388Z",
+      "name": "Dos Gel 5.3 кг",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 12,
+      "unit": "кг",
+      "pricePerUnit": "193",
+      "totalValue": "2316",
+      "minQuantity": 2,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiupmcc000hvyog1maagyhc",
+      "createdAt": "2025-10-09T03:21:42.492Z",
+      "updatedAt": "2025-10-09T03:21:42.492Z",
+      "name": "Dos sprey 600мл",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 6,
+      "unit": "л",
+      "pricePerUnit": "179.67",
+      "totalValue": "1078",
+      "minQuantity": 1,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiupmf7000jvyogrvxnwf8c",
+      "createdAt": "2025-10-09T03:21:42.595Z",
+      "updatedAt": "2025-10-09T03:21:42.595Z",
+      "name": "Floor wash strong 5.6 кг",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 18,
+      "unit": "кг",
+      "pricePerUnit": "189.5",
+      "totalValue": "3411",
+      "minQuantity": 3,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiupmi3000lvyogn008voz8",
+      "createdAt": "2025-10-09T03:21:42.699Z",
+      "updatedAt": "2025-10-09T03:21:42.699Z",
+      "name": "GRASS A1 Моющее средство для ежедневной уборки туалетов 0,75л",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 8,
+      "unit": "л",
+      "pricePerUnit": "190",
+      "totalValue": "1520",
+      "minQuantity": 1,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiupmky000nvyog5fibm1ut",
+      "createdAt": "2025-10-09T03:21:42.803Z",
+      "updatedAt": "2025-10-09T03:21:42.803Z",
+      "name": "grass milana жидкое мыло Эконом Fresh Fruits 5кг",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 59,
+      "unit": "кг",
+      "pricePerUnit": "199.15",
+      "totalValue": "11750",
+      "minQuantity": 11,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiupmnu000pvyog0fe86pi5",
+      "createdAt": "2025-10-09T03:21:42.906Z",
+      "updatedAt": "2025-10-09T03:21:42.906Z",
+      "name": "grass milana жидкое мыло Эконом Черника 5кг",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 28,
+      "unit": "кг",
+      "pricePerUnit": "198.57",
+      "totalValue": "5560",
+      "minQuantity": 5,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiupmqp000rvyogk2zb68dp",
+      "createdAt": "2025-10-09T03:21:43.009Z",
+      "updatedAt": "2025-10-09T03:21:43.009Z",
+      "name": "белизна 1л",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 27,
+      "unit": "л",
+      "pricePerUnit": "197.33",
+      "totalValue": "5328",
+      "minQuantity": 5,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiupmtn000tvyogf8nvuk81",
+      "createdAt": "2025-10-09T03:21:43.116Z",
+      "updatedAt": "2025-10-09T03:21:43.116Z",
+      "name": "Мыло 90гр",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 63,
+      "unit": "л",
+      "pricePerUnit": "198.86",
+      "totalValue": "12528",
+      "minQuantity": 12,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiupmwj000vvyogwczddq9r",
+      "createdAt": "2025-10-09T03:21:43.219Z",
+      "updatedAt": "2025-10-09T03:21:43.219Z",
+      "name": "Мешок для мусора (30 л) (рулон 30 шт)",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 18,
+      "unit": "л",
+      "pricePerUnit": "199.33",
+      "totalValue": "3588",
+      "minQuantity": 3,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiupmze000xvyogie24zstf",
+      "createdAt": "2025-10-09T03:21:43.323Z",
+      "updatedAt": "2025-10-09T03:21:43.323Z",
+      "name": "мешок для мусора Субботник 120л",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 26,
+      "unit": "л",
+      "pricePerUnit": "196.15",
+      "totalValue": "5100",
+      "minQuantity": 5,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiupn2b000zvyogm9pyi4os",
+      "createdAt": "2025-10-09T03:21:43.427Z",
+      "updatedAt": "2025-10-09T03:21:43.427Z",
+      "name": "Пакет мусорный ПНД 60*80 (30 шт) 60 л.",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 34,
+      "unit": "л",
+      "pricePerUnit": "196.18",
+      "totalValue": "6670",
+      "minQuantity": 6,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiupn560011vyogj2fdvtwq",
+      "createdAt": "2025-10-09T03:21:43.530Z",
+      "updatedAt": "2025-10-09T03:21:43.530Z",
+      "name": "Пакет мусорный ПНД 50*60 \"Тюльпан\" (30) 30 л.",
+      "description": "Инвентарь для объекта АО «ГК «Электрощит» -ТМ Самара»",
+      "quantity": 24,
+      "unit": "л",
+      "pricePerUnit": "193.13",
+      "totalValue": "4635",
+      "minQuantity": 4,
+      "objectId": "cmgakh0u20005vyl4bh6ab3r5",
+      "object": {
+        "name": "АО «ГК «Электрощит» -ТМ Самара»",
+        "address": "г. Самара, пос. Красная Глинка и г. Самара, ул. Заводское шоссе,11А"
+      }
+    },
+    {
+      "id": "cmgiupn810013vyogqtw7hezg",
+      "createdAt": "2025-10-09T03:21:43.633Z",
+      "updatedAt": "2025-10-09T03:21:43.633Z",
+      "name": "GRASS средство для пола щелочное Floor Wash Strong",
+      "description": "Инвентарь для объекта ООО «ПепсиКо Холдингс»",
+      "quantity": 6,
+      "unit": "л",
+      "pricePerUnit": "195",
+      "totalValue": "1170",
+      "minQuantity": 1,
+      "objectId": "cmgakh0zx0007vyl4byresvz3",
+      "object": {
+        "name": "ООО «ПепсиКо Холдингс»",
+        "address": "г. Самара, 5 квартал,3а / г. Самара, ул. Мяги,10а"
+      }
+    },
+    {
+      "id": "cmgiupnaw0015vyogi5c36j9q",
+      "createdAt": "2025-10-09T03:21:43.736Z",
+      "updatedAt": "2025-10-09T03:21:43.736Z",
+      "name": "губка для посуды (10 шт/уп)",
+      "description": "Инвентарь для объекта ООО «ПепсиКо Холдингс»",
+      "quantity": 1,
+      "unit": "л",
+      "pricePerUnit": "77",
+      "totalValue": "77",
+      "minQuantity": 1,
+      "objectId": "cmgakh0zx0007vyl4byresvz3",
+      "object": {
+        "name": "ООО «ПепсиКо Холдингс»",
+        "address": "г. Самара, 5 квартал,3а / г. Самара, ул. Мяги,10а"
+      }
+    },
+    {
+      "id": "cmgiupndr0017vyoghl2rsry5",
+      "createdAt": "2025-10-09T03:21:43.839Z",
+      "updatedAt": "2025-10-09T03:21:43.839Z",
+      "name": "держатель мопа Кентукки (металл) 17см",
+      "description": "Инвентарь для объекта ООО «ПепсиКо Холдингс»",
+      "quantity": 4,
+      "unit": "л",
+      "pricePerUnit": "175",
+      "totalValue": "700",
+      "minQuantity": 1,
+      "objectId": "cmgakh0zx0007vyl4byresvz3",
+      "object": {
+        "name": "ООО «ПепсиКо Холдингс»",
+        "address": "г. Самара, 5 квартал,3а / г. Самара, ул. Мяги,10а"
+      }
+    },
+    {
+      "id": "cmgiupngn0019vyogk0bj6ura",
+      "createdAt": "2025-10-09T03:21:43.943Z",
+      "updatedAt": "2025-10-09T03:21:43.943Z",
+      "name": "Знак \"Осторожно! Мокрый пол!\"",
+      "description": "Инвентарь для объекта ООО «ПепсиКо Холдингс»",
+      "quantity": 3,
+      "unit": "л",
+      "pricePerUnit": "191.67",
+      "totalValue": "575",
+      "minQuantity": 1,
+      "objectId": "cmgakh0zx0007vyl4byresvz3",
+      "object": {
+        "name": "ООО «ПепсиКо Холдингс»",
+        "address": "г. Самара, 5 квартал,3а / г. Самара, ул. Мяги,10а"
+      }
+    },
+    {
+      "id": "cmgiupnji001bvyog9rk23umu",
+      "createdAt": "2025-10-09T03:21:44.046Z",
+      "updatedAt": "2025-10-09T03:21:44.046Z",
+      "name": "Моп мирофибра с легким абразивом 50 см",
+      "description": "Инвентарь для объекта ООО «ПепсиКо Холдингс»",
+      "quantity": 5,
+      "unit": "л",
+      "pricePerUnit": "168",
+      "totalValue": "840",
+      "minQuantity": 1,
+      "objectId": "cmgakh0zx0007vyl4byresvz3",
+      "object": {
+        "name": "ООО «ПепсиКо Холдингс»",
+        "address": "г. Самара, 5 квартал,3а / г. Самара, ул. Мяги,10а"
+      }
+    },
+    {
+      "id": "cmgiupnmd001dvyogmqcb9vu5",
+      "createdAt": "2025-10-09T03:21:44.150Z",
+      "updatedAt": "2025-10-09T03:21:44.150Z",
+      "name": "Моп мирофибра универс. 50 см",
+      "description": "Инвентарь для объекта ООО «ПепсиКо Холдингс»",
+      "quantity": 14,
+      "unit": "шт",
+      "pricePerUnit": "100",
+      "totalValue": "1400",
+      "minQuantity": 2,
+      "objectId": "cmgakh0zx0007vyl4byresvz3",
+      "object": {
+        "name": "ООО «ПепсиКо Холдингс»",
+        "address": "г. Самара, 5 квартал,3а / г. Самара, ул. Мяги,10а"
+      }
+    },
+    {
+      "id": "cmgiupnp9001fvyogwqbzsw4o",
+      "createdAt": "2025-10-09T03:21:44.254Z",
+      "updatedAt": "2025-10-09T03:21:44.254Z",
+      "name": "моп веревочный \"Кентукки\" микрофибра, 400г",
+      "description": "Инвентарь для объекта ООО «ПепсиКо Холдингс»",
+      "quantity": 5,
+      "unit": "шт",
+      "pricePerUnit": "83",
+      "totalValue": "415",
+      "minQuantity": 1,
+      "objectId": "cmgakh0zx0007vyl4byresvz3",
+      "object": {
+        "name": "ООО «ПепсиКо Холдингс»",
+        "address": "г. Самара, 5 квартал,3а / г. Самара, ул. Мяги,10а"
+      }
+    },
+    {
+      "id": "cmgiupns4001hvyogdrxftta5",
+      "createdAt": "2025-10-09T03:21:44.357Z",
+      "updatedAt": "2025-10-09T03:21:44.357Z",
+      "name": "моп верёвочный \"Кентукки\" хлопок 350 г",
+      "description": "Инвентарь для объекта ООО «ПепсиКо Холдингс»",
+      "quantity": 6,
+      "unit": "л",
+      "pricePerUnit": "182.5",
+      "totalValue": "1095",
+      "minQuantity": 1,
+      "objectId": "cmgakh0zx0007vyl4byresvz3",
+      "object": {
+        "name": "ООО «ПепсиКо Холдингс»",
+        "address": "г. Самара, 5 квартал,3а / г. Самара, ул. Мяги,10а"
+      }
+    },
+    {
+      "id": "cmgj0aybn0001vy70m9qzxacx",
+      "createdAt": "2025-10-09T05:58:15.873Z",
+      "updatedAt": "2025-10-09T05:58:15.873Z",
+      "name": "Химия и хоз. инвентарь (общая позиция)",
+      "description": "ФИЛИАЛ \"НИЖЕГОРОДСКИЙ\" АО \"АЛЬФА-БАНК\" - Химия и хоз. инвентарь",
+      "quantity": 15,
+      "unit": "м",
+      "pricePerUnit": "93.67",
+      "totalValue": "1405",
+      "minQuantity": 3,
+      "objectId": "cmga0qve90003vyzw730tfu5t",
+      "object": {
+        "name": "ЗАО \"СБКК\"",
+        "address": "г. Самара"
+      }
+    },
+    {
+      "id": "cmgj0ayhh0003vy70s9xwj0qb",
+      "createdAt": "2025-10-09T05:58:16.084Z",
+      "updatedAt": "2025-10-09T05:58:16.084Z",
+      "name": "Ткань для пола нетканая (холстопрошивное полотно белое)",
+      "description": "Ширина 160см, 50 м в рулоне. Поступление (акт, накладная, УПД) 00БП-000302 от 18.08.2025 17:15:46",
+      "quantity": 15,
+      "unit": "л",
+      "pricePerUnit": "192.41",
+      "totalValue": "2886.16",
+      "minQuantity": 3,
+      "objectId": "cmga0qve90003vyzw730tfu5t",
+      "object": {
+        "name": "ЗАО \"СБКК\"",
+        "address": "г. Самара"
+      }
+    },
+    {
+      "id": "cmgj0ayke0005vy70s7119nou",
+      "createdAt": "2025-10-09T05:58:16.189Z",
+      "updatedAt": "2025-10-09T05:58:16.189Z",
+      "name": "Дезинфицирующее средство Ника 2 с моющим эффектом 5 кг *4",
+      "description": "Поступление (акт, накладная, УПД) 00БП-000301 от 05.08.2025 23:00:00",
+      "quantity": 16,
+      "unit": "кг",
+      "pricePerUnit": "200",
+      "totalValue": "3200",
+      "minQuantity": 4,
+      "objectId": "cmga0qve90003vyzw730tfu5t",
+      "object": {
+        "name": "ЗАО \"СБКК\"",
+        "address": "г. Самара"
+      }
+    },
+    {
+      "id": "cmgj0aynb0007vy70bwx40x2t",
+      "createdAt": "2025-10-09T05:58:16.293Z",
+      "updatedAt": "2025-10-09T05:58:16.293Z",
+      "name": "Дезинфицирующее средство Ника 2 с моющим эффектом 5 кг *4 (дополнительная партия)",
+      "description": "Поступление (акт, накладная, УПД) 00БП-000300 от 18.08.2025 17:04:15",
+      "quantity": 60,
+      "unit": "кг",
+      "pricePerUnit": "200",
+      "totalValue": "12000",
+      "minQuantity": 12,
+      "objectId": "cmga0qve90003vyzw730tfu5t",
+      "object": {
+        "name": "ЗАО \"СБКК\"",
+        "address": "г. Самара"
+      }
+    }
+  ]
+}

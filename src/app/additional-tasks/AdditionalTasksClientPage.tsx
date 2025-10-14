@@ -1,0 +1,397 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Plus, 
+  Filter, 
+  Building, 
+  MessageSquare, 
+  Mail, 
+  FileText,
+  Clock,
+  CheckCircle,
+  PlayCircle,
+  AlertTriangle
+} from 'lucide-react';
+import AdditionalTaskCard from '@/components/AdditionalTaskCard';
+
+interface AdditionalTask {
+  id: string;
+  title: string;
+  content: string;
+  source: string;
+  sourceDetails: any;
+  attachments: string[];
+  status: 'NEW' | 'IN_PROGRESS' | 'COMPLETED';
+  receivedAt: string;
+  takenAt?: string;
+  completedAt?: string;
+  completionNote?: string;
+  object: {
+    id: string;
+    name: string;
+    address: string;
+  };
+  assignedTo: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  completedBy?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+interface CleaningObject {
+  id: string;
+  name: string;
+  address: string;
+}
+
+export default function AdditionalTasksClientPage() {
+  const [tasks, setTasks] = useState<AdditionalTask[]>([]);
+  const [objects, setObjects] = useState<CleaningObject[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  
+  // Фильтры
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [objectFilter, setObjectFilter] = useState<string>('all');
+  const [sourceFilter, setSourceFilter] = useState<string>('all');
+  const [myTasksOnly, setMyTasksOnly] = useState(false);
+
+  // Модальное окно создания
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createFormData, setCreateFormData] = useState({
+    title: '',
+    content: '',
+    objectId: '',
+    attachments: []
+  });
+
+  useEffect(() => {
+    fetchCurrentUser();
+    fetchTasks();
+    fetchObjects();
+  }, [statusFilter, objectFilter, sourceFilter, myTasksOnly]);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await fetch('/api/auth/me');
+      if (response.ok) {
+        const userData = await response.json();
+        setCurrentUser(userData);
+      }
+    } catch (error) {
+      console.error('Ошибка получения пользователя:', error);
+    }
+  };
+
+  const fetchTasks = async () => {
+    try {
+      const params = new URLSearchParams();
+      
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+      if (objectFilter !== 'all') params.set('objectId', objectFilter);
+      if (myTasksOnly) params.set('myTasks', 'true');
+
+      const response = await fetch(`/api/additional-tasks?${params}`);
+      if (response.ok) {
+        const tasksData = await response.json();
+        setTasks(tasksData);
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки заданий:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchObjects = async () => {
+    try {
+      const response = await fetch('/api/objects');
+      if (response.ok) {
+        const objectsData = await response.json();
+        setObjects(objectsData);
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки объектов:', error);
+    }
+  };
+
+  const handleStatusChange = async (taskId: string, action: 'take' | 'complete', note?: string) => {
+    try {
+      const response = await fetch(`/api/additional-tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, completionNote: note })
+      });
+
+      if (response.ok) {
+        await fetchTasks(); // Перезагружаем список
+      } else {
+        const errorData = await response.json();
+        alert(errorData.message || 'Ошибка обновления задания');
+      }
+    } catch (error) {
+      console.error('Ошибка обновления задания:', error);
+      alert('Ошибка соединения с сервером');
+    }
+  };
+
+  const handleCreateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const response = await fetch('/api/additional-tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createFormData)
+      });
+
+      if (response.ok) {
+        setIsCreateModalOpen(false);
+        setCreateFormData({ title: '', content: '', objectId: '', attachments: [] });
+        await fetchTasks();
+      } else {
+        const errorData = await response.json();
+        alert(errorData.message || 'Ошибка создания задания');
+      }
+    } catch (error) {
+      console.error('Ошибка создания задания:', error);
+      alert('Ошибка соединения с сервером');
+    }
+  };
+
+  // Фильтрация заданий
+  const filteredTasks = tasks.filter(task => {
+    if (sourceFilter !== 'all' && task.source !== sourceFilter) return false;
+    return true;
+  });
+
+  // Группировка по статусам
+  const tasksByStatus = {
+    NEW: filteredTasks.filter(task => task.status === 'NEW'),
+    IN_PROGRESS: filteredTasks.filter(task => task.status === 'IN_PROGRESS'),
+    COMPLETED: filteredTasks.filter(task => task.status === 'COMPLETED')
+  };
+
+  const statusStats = {
+    NEW: { count: tasksByStatus.NEW.length, icon: AlertTriangle, color: 'text-red-600' },
+    IN_PROGRESS: { count: tasksByStatus.IN_PROGRESS.length, icon: PlayCircle, color: 'text-yellow-600' },
+    COMPLETED: { count: tasksByStatus.COMPLETED.length, icon: CheckCircle, color: 'text-green-600' }
+  };
+
+  if (isLoading) {
+    return <div className="text-center py-8">Загрузка заданий...</div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Статистика */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {Object.entries(statusStats).map(([status, stats]) => {
+          const Icon = stats.icon;
+          return (
+            <Card key={status}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">
+                      {status === 'NEW' ? 'Новые' : 
+                       status === 'IN_PROGRESS' ? 'В работе' : 'Выполнено'}
+                    </p>
+                    <p className="text-2xl font-bold">{stats.count}</p>
+                  </div>
+                  <Icon className={`h-8 w-8 ${stats.color}`} />
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Фильтры и действия */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Фильтр по статусу */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Статус:</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="all">Все</option>
+                <option value="NEW">Новые</option>
+                <option value="IN_PROGRESS">В работе</option>
+                <option value="COMPLETED">Выполнено</option>
+              </select>
+            </div>
+
+            {/* Фильтр по объекту */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Объект:</label>
+              <select
+                value={objectFilter}
+                onChange={(e) => setObjectFilter(e.target.value)}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="all">Все объекты</option>
+                {objects.map(obj => (
+                  <option key={obj.id} value={obj.id}>{obj.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Фильтр по источнику */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Источник:</label>
+              <select
+                value={sourceFilter}
+                onChange={(e) => setSourceFilter(e.target.value)}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="all">Все</option>
+                <option value="TELEGRAM">Telegram</option>
+                <option value="EMAIL">Email</option>
+                <option value="MANUAL">Ручное</option>
+              </select>
+            </div>
+
+            {/* Только мои задания */}
+            {currentUser?.role === 'MANAGER' && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="myTasks"
+                  checked={myTasksOnly}
+                  onChange={(e) => setMyTasksOnly(e.target.checked)}
+                  className="rounded"
+                />
+                <label htmlFor="myTasks" className="text-sm font-medium">
+                  Только мои задания
+                </label>
+              </div>
+            )}
+
+            {/* Кнопка создания */}
+            {['ADMIN', 'DEPUTY'].includes(currentUser?.role) && (
+              <Button 
+                onClick={() => setIsCreateModalOpen(true)}
+                className="ml-auto"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Создать задание
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Список заданий */}
+      {filteredTasks.length === 0 ? (
+        <Card>
+          <CardContent className="text-center py-12">
+            <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Заданий не найдено
+            </h3>
+            <p className="text-gray-500">
+              {statusFilter !== 'all' || objectFilter !== 'all' || sourceFilter !== 'all'
+                ? 'Попробуйте изменить фильтры'
+                : 'Дополнительные задания появятся здесь после получения сообщений от клиентов'
+              }
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {filteredTasks.map((task) => (
+            <AdditionalTaskCard
+              key={task.id}
+              task={task}
+              onStatusChange={handleStatusChange}
+              showActions={true}
+              isCurrentUser={currentUser?.id === task.assignedTo.id}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Модальное окно создания задания */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold mb-4">Создать задание</h3>
+            
+            <form onSubmit={handleCreateTask} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Заголовок
+                </label>
+                <input
+                  type="text"
+                  value={createFormData.title}
+                  onChange={(e) => setCreateFormData(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Описание
+                </label>
+                <textarea
+                  value={createFormData.content}
+                  onChange={(e) => setCreateFormData(prev => ({ ...prev, content: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={4}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Объект
+                </label>
+                <select
+                  value={createFormData.objectId}
+                  onChange={(e) => setCreateFormData(prev => ({ ...prev, objectId: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">Выберите объект</option>
+                  {objects.map(obj => (
+                    <option key={obj.id} value={obj.id}>{obj.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button type="submit" className="flex-1">
+                  Создать
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="flex-1"
+                >
+                  Отмена
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
