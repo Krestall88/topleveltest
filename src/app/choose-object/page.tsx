@@ -44,7 +44,6 @@ interface ExistingBinding {
 
 export default function ChooseObjectPage() {
   const searchParams = useSearchParams();
-  const email = searchParams.get('email');
   const telegramId = searchParams.get('telegramId');
   
   const [objects, setObjects] = useState<CleaningObject[]>([]);
@@ -64,12 +63,11 @@ export default function ChooseObjectPage() {
       window.Telegram.WebApp.ready();
       window.Telegram.WebApp.expand();
     }
-  }, [email, telegramId]);
+  }, [telegramId]);
 
   const fetchObjects = async () => {
     try {
       const params = new URLSearchParams();
-      if (email) params.set('email', email);
       if (telegramId) params.set('telegramId', telegramId);
 
       const headers: Record<string, string> = {};
@@ -125,8 +123,7 @@ export default function ChooseObjectPage() {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          email: email || undefined,
-          telegramId: telegramId || undefined,
+          telegramId,
           objectId: selectedObject.id
         })
       });
@@ -192,7 +189,7 @@ export default function ChooseObjectPage() {
     setMessage('');
   };
 
-  if (!email && !telegramId) {
+  if (!telegramId) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -203,7 +200,7 @@ export default function ChooseObjectPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Отсутствуют параметры идентификации. Обратитесь к администратору.</p>
+            <p>Отсутствует Telegram ID. Обратитесь к администратору.</p>
           </CardContent>
         </Card>
       </div>
@@ -393,17 +390,9 @@ export default function ChooseObjectPage() {
                 {message || 'Теперь все ваши сообщения будут направляться менеджеру выбранного объекта'}
               </p>
             </div>
-            {email ? (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <p className="text-sm text-blue-800">
-                  📧 <strong>Для работы с почтой:</strong> Вы можете вернуться в свою почту и продолжить переписку. Все новые письма будут автоматически создавать задания для менеджера.
-                </p>
-              </div>
-            ) : (
-              <p className="text-gray-500 text-sm">
-                Окно автоматически закроется через несколько секунд...
-              </p>
-            )}
+            <p className="text-gray-500 text-sm">
+              Окно автоматически закроется через несколько секунд...
+            </p>
           </CardContent>
         </Card>
       </div>

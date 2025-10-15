@@ -170,8 +170,7 @@ COMPLETED COMPLETED
   "ClientBinding" {
     String id "🗝️"
     DateTime createdAt 
-    String email "❓"
-    String telegramId "❓"
+    String telegramId 
     }
   
 

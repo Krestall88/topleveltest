@@ -223,12 +223,10 @@ model AuditLog {
 model ClientBinding {
   id         String         @id @default(cuid())
   createdAt  DateTime       @default(now())
-  email      String?
-  telegramId String?
+  telegramId String
   objectId   String
   object     CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
 
-  @@unique([email, objectId])
   @@unique([telegramId, objectId])
 }
 
