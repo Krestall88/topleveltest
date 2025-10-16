@@ -16,7 +16,8 @@ import {
   Mic,
   CheckCircle,
   PlayCircle,
-  Calendar
+  Calendar,
+  Trash2
 } from 'lucide-react';
 
 interface AdditionalTask {
@@ -51,8 +52,10 @@ interface AdditionalTask {
 interface AdditionalTaskCardProps {
   task: AdditionalTask;
   onStatusChange?: (taskId: string, action: 'take' | 'complete', note?: string) => void;
+  onDelete?: (taskId: string) => void;
   showActions?: boolean;
   isCurrentUser?: boolean;
+  canDelete?: boolean;
 }
 
 const statusConfig = {
@@ -75,15 +78,17 @@ const statusConfig = {
 
 const sourceConfig = {
   TELEGRAM: { label: 'Telegram', icon: MessageSquare, color: 'text-blue-600' },
-  EMAIL: { label: 'Email', icon: Mail, color: 'text-green-600' },
+  ADMIN: { label: 'Администратор', icon: User, color: 'text-purple-600' },
   MANUAL: { label: 'Ручное', icon: FileText, color: 'text-gray-600' }
 };
 
 export default function AdditionalTaskCard({ 
   task, 
   onStatusChange, 
+  onDelete,
   showActions = true,
-  isCurrentUser = false 
+  isCurrentUser = false,
+  canDelete = false
 }: AdditionalTaskCardProps) {
   const [isCompleting, setIsCompleting] = useState(false);
   const [completionNote, setCompletionNote] = useState('');
@@ -280,6 +285,25 @@ export default function AdditionalTaskCard({
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Кнопка удаления для админов */}
+        {canDelete && onDelete && (
+          <div className="border-t pt-3">
+            <Button 
+              onClick={() => {
+                if (confirm('Вы уверены, что хотите удалить это задание?')) {
+                  onDelete(task.id);
+                }
+              }}
+              variant="destructive"
+              size="sm"
+              className="w-full"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Удалить задание
+            </Button>
           </div>
         )}
       </CardContent>

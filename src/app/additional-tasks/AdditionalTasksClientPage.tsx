@@ -17,6 +17,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import AdditionalTaskCard from '@/components/AdditionalTaskCard';
+import CreateTaskModal from '@/components/CreateTaskModal';
 
 interface AdditionalTask {
   id: string;
@@ -67,12 +68,6 @@ export default function AdditionalTasksClientPage() {
 
   // Модальное окно создания
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [createFormData, setCreateFormData] = useState({
-    title: '',
-    content: '',
-    objectId: '',
-    attachments: []
-  });
 
   useEffect(() => {
     fetchCurrentUser();
@@ -144,29 +139,28 @@ export default function AdditionalTasksClientPage() {
     }
   };
 
-  const handleCreateTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleDeleteTask = async (taskId: string) => {
     try {
-      const response = await fetch('/api/additional-tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(createFormData)
+      const response = await fetch(`/api/additional-tasks?id=${taskId}`, {
+        method: 'DELETE'
       });
 
       if (response.ok) {
-        setIsCreateModalOpen(false);
-        setCreateFormData({ title: '', content: '', objectId: '', attachments: [] });
-        await fetchTasks();
+        await fetchTasks(); // Перезагружаем список
       } else {
         const errorData = await response.json();
-        alert(errorData.message || 'Ошибка создания задания');
+        alert(errorData.message || 'Ошибка удаления задания');
       }
     } catch (error) {
-      console.error('Ошибка создания задания:', error);
+      console.error('Ошибка удаления задания:', error);
       alert('Ошибка соединения с сервером');
     }
   };
+
+  const handleTaskCreated = async (newTask: AdditionalTask) => {
+    await fetchTasks(); // Перезагружаем список
+  };
+
 
   // Фильтрация заданий
   const filteredTasks = tasks.filter(task => {
@@ -282,7 +276,7 @@ export default function AdditionalTasksClientPage() {
             )}
 
             {/* Кнопка создания */}
-            {['ADMIN', 'DEPUTY'].includes(currentUser?.role) && (
+            {['ADMIN', 'DEPUTY', 'DEPUTY_ADMIN'].includes(currentUser?.role) && (
               <Button 
                 onClick={() => setIsCreateModalOpen(true)}
                 className="ml-auto"
@@ -318,80 +312,22 @@ export default function AdditionalTasksClientPage() {
               key={task.id}
               task={task}
               onStatusChange={handleStatusChange}
+              onDelete={handleDeleteTask}
               showActions={true}
               isCurrentUser={currentUser?.id === task.assignedTo.id}
+              canDelete={currentUser && ['ADMIN', 'DEPUTY_ADMIN'].includes(currentUser.role)}
             />
           ))}
         </div>
       )}
 
       {/* Модальное окно создания задания */}
-      {isCreateModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold mb-4">Создать задание</h3>
-            
-            <form onSubmit={handleCreateTask} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Заголовок
-                </label>
-                <input
-                  type="text"
-                  value={createFormData.title}
-                  onChange={(e) => setCreateFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Описание
-                </label>
-                <textarea
-                  value={createFormData.content}
-                  onChange={(e) => setCreateFormData(prev => ({ ...prev, content: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={4}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Объект
-                </label>
-                <select
-                  value={createFormData.objectId}
-                  onChange={(e) => setCreateFormData(prev => ({ ...prev, objectId: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="">Выберите объект</option>
-                  {objects.map(obj => (
-                    <option key={obj.id} value={obj.id}>{obj.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                <Button type="submit" className="flex-1">
-                  Создать
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setIsCreateModalOpen(false)}
-                  className="flex-1"
-                >
-                  Отмена
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <CreateTaskModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onTaskCreated={handleTaskCreated}
+        objects={objects}
+      />
     </div>
   );
 }
