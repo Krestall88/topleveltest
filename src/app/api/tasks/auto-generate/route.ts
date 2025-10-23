@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
 import { addDays, startOfDay, endOfDay, parseISO, format } from 'date-fns';
-import { zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
+import { toZonedTime, fromZonedTime } from 'date-fns-tz';
 
 async function getUserFromToken(req: NextRequest) {
   try {
@@ -34,13 +34,13 @@ function calculateNextDueDate(
   workingDays: string[]
 ): Date {
   const now = new Date();
-  const objectNow = utcToZonedTime(now, objectTimezone);
+  const objectNow = toZonedTime(now, objectTimezone);
   
   let nextDate: Date;
   
   if (lastExecution) {
     // Если есть последнее выполнение, добавляем периодичность
-    const lastExecutionDate = utcToZonedTime(lastExecution.executedAt, objectTimezone);
+    const lastExecutionDate = toZonedTime(lastExecution.executedAt, objectTimezone);
     nextDate = addDays(lastExecutionDate, techCard.frequencyDays || 1);
   } else {
     // Если нет выполнений, начинаем с сегодня
@@ -59,7 +59,7 @@ function calculateNextDueDate(
   }
   
   // Конвертируем обратно в UTC
-  return zonedTimeToUtc(nextDate, objectTimezone);
+  return fromZonedTime(nextDate, objectTimezone);
 }
 
 // POST /api/tasks/auto-generate - Автоматическая генерация задач

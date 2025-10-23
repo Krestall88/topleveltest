@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession } from '@/lib/auth';
 
+// Заглушка для authOptions
+export const authOptions = {
+  providers: [],
+  callbacks: {},
+  pages: {}
+};
+
 // Заглушка для NextAuth API роута
 export async function GET(req: NextRequest) {
   try {

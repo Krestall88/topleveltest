@@ -13,10 +13,8 @@ const nextConfig = {
     domains: ['localhost'],
     unoptimized: true
   },
-  // Экспериментальные функции
-  experimental: {
-    serverComponentsExternalPackages: ['prisma']
-  }
+  // Обновленная настройка для Prisma
+  serverExternalPackages: ['prisma']
 }
 
 module.exports = nextConfig

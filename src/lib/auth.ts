@@ -20,3 +20,14 @@ export async function getAuthSession() {
     return null;
   }
 }
+
+// Заглушка для verifyToken
+export async function verifyToken(token: string) {
+  try {
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+    const { payload } = await jwtVerify(token, secret);
+    return { userId: payload.userId as string, role: payload.role as string };
+  } catch (error) {
+    return null;
+  }
+}
