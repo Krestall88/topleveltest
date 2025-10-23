@@ -15,13 +15,14 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Построение фильтров
-    const whereClause: any = {};
+    const filters: Record<string, unknown> = {};
 
     if (userId) {
-      whereClause.userId = userId;
+      filters.userId = userId;
     }
 
     if (action) {
+      filters.action = action;
       whereClause.action = action;
     }
 

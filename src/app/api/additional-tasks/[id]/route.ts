@@ -92,7 +92,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       return NextResponse.json({ message: 'Недостаточно прав' }, { status: 403 });
     }
 
-    let updateData: any = {};
+    let updateData: Record<string, unknown> = {};
     let auditAction = '';
 
     switch (action) {
