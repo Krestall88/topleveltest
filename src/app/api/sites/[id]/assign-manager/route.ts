@@ -10,17 +10,17 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const user = await getAuthSession();
+    const session = await getAuthSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Проверяем права доступа
-    const user = await prisma.user.findUnique({
+    const userRecord = await prisma.user.findUnique({
       where: { id: session.user.id }
     });
 
-    if (!user || !['ADMIN', 'DEPUTY'].includes(user.role)) {
+    if (!userRecord || !['ADMIN', 'DEPUTY'].includes(userRecord.role)) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 

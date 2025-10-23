@@ -1,10 +1,9 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../api/auth/[...nextauth]/route';
+import { getAuthSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import SitesClientPage from './SitesClientPage';
 
 export default async function SitesPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getAuthSession();
   
   if (!session) {
     redirect('/auth/signin');
