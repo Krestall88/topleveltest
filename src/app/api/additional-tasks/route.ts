@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     const myTasks = url.searchParams.get('myTasks') === 'true';
 
     // Строим условия фильтрации
-    let whereClause: any = {};
+    const whereClause: Record<string, unknown> = {};
 
     // Фильтр по ролям
     if (user.role === 'MANAGER') {

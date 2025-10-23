@@ -1,64 +1,31 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Plus, 
-  Filter, 
-  Building, 
-  MessageSquare, 
-  Mail, 
-  FileText,
-  Clock,
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Plus,
   CheckCircle,
+  AlertCircle,
+  AlertTriangle,
   PlayCircle,
-  AlertTriangle
+  MessageSquare,
+  User,
+  Edit,
+  Trash,
+  XCircle
 } from 'lucide-react';
 import AdditionalTaskCard from '@/components/AdditionalTaskCard';
+import type { AdditionalTask, CleaningObject, User as UserType } from '@/types';
 import CreateTaskModal from '@/components/CreateTaskModal';
-
-interface AdditionalTask {
-  id: string;
-  title: string;
-  content: string;
-  source: string;
-  sourceDetails: any;
-  attachments: string[];
-  status: 'NEW' | 'IN_PROGRESS' | 'COMPLETED';
-  receivedAt: string;
-  takenAt?: string;
-  completedAt?: string;
-  completionNote?: string;
-  object: {
-    id: string;
-    name: string;
-    address: string;
-  };
-  assignedTo: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  completedBy?: {
-    id: string;
-    name: string;
-    email: string;
-  };
-}
-
-interface CleaningObject {
-  id: string;
-  name: string;
-  address: string;
-}
 
 export default function AdditionalTasksClientPage() {
   const [tasks, setTasks] = useState<AdditionalTask[]>([]);
   const [objects, setObjects] = useState<CleaningObject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<UserType | null>(null);
   
   // Фильтры
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -87,7 +54,7 @@ export default function AdditionalTasksClientPage() {
     }
   };
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (filters?: Record<string, string>) => {
     try {
       const params = new URLSearchParams();
       
