@@ -76,31 +76,18 @@ export async function GET(
     }
 
     console.log('✅ Найдена задача:', taskRecord.id);
-      objectName: task.checklist?.object?.name,
-      siteName: task.site?.name,
-      zoneName: task.zone?.name,
-      roomName: task.room?.name
-    } : 'Задача не найдена');
 
     return NextResponse.json({
-      id: task.id,
-      description: task.description,
-      status: task.status,
-      completionComment: task.completionComment,
-      completionPhotos: task.completionPhotos || [],
-      completedAt: task.completedAt,
-      completedBy: task.completedBy,
-      checklist: {
-        object: task.checklist?.object,
-        room: task.checklist?.room
-      },
-      // Добавляем полную иерархию
-      site: task.site,
-      zone: task.zone,
-      room: task.room,
-      techCard: task.techCard,
-      adminComments: [], // Пока пустой массив
-      photoReports: [] // Пока пустой массив
+      id: taskRecord.id,
+      description: taskRecord.description,
+      status: taskRecord.status,
+      completionComment: taskRecord.completionComment,
+      completionPhotos: taskRecord.completionPhotos || [],
+      completedAt: taskRecord.completedAt,
+      completedBy: taskRecord.completedBy,
+      room: taskRecord.room,
+      adminComments: [],
+      photoReports: []
     });
 
   } catch (error) {

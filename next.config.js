@@ -8,19 +8,15 @@ const nextConfig = {
     // Временно игнорируем TypeScript ошибки для деплоя
     ignoreBuildErrors: true,
   },
-  // Оптимизация для продакшена
-  swcMinify: true,
   // Настройки для изображений
   images: {
     domains: ['localhost'],
     unoptimized: true
   },
-  // Настройки для API
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb',
-    },
-  },
+  // Экспериментальные функции
+  experimental: {
+    serverComponentsExternalPackages: ['prisma']
+  }
 }
 
 module.exports = nextConfig
