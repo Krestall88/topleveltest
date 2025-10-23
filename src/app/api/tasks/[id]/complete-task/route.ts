@@ -26,10 +26,12 @@ interface Params {
 }
 
 // POST /api/tasks/[id]/complete-task - Завершить отдельную задачу
-export async function POST(req: NextRequest, { params }: Params) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await getUserFromToken(req);
+    const { id: taskId } = await params;
+    console.log(' Complete task API called for task:', taskId);
     
+    const user = await getUserFromToken(req);
     if (!user) {
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
@@ -44,7 +46,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     // Получаем задачу с полной информацией
     const task = await prisma.task.findUnique({
-      where: { id: params.id },
+      where: { id: taskId },
       include: {
         checklist: {
           include: {
@@ -64,21 +66,41 @@ export async function POST(req: NextRequest, { params }: Params) {
       }
     });
 
-    if (!task || !task.checklist) {
+    if (!task) {
       return NextResponse.json({ error: 'Задача не найдена' }, { status: 404 });
     }
 
+    // Если нет checklist, получаем объект напрямую по objectName
+    let objectInfo = null;
+    if (task.checklist) {
+      objectInfo = task.checklist.object;
+    } else {
+      // Ищем объект по имени из задачи
+      const foundObject = await prisma.cleaningObject.findFirst({
+        where: { name: task.objectName || undefined },
+        select: { 
+          id: true,
+          name: true, 
+          managerId: true,
+          requirePhotoForCompletion: true,
+          requireCommentForCompletion: true,
+          completionRequirements: true
+        }
+      });
+      objectInfo = foundObject;
+    }
+
     // Проверяем права доступа к объекту
-    if (user.role === 'MANAGER' && task.checklist.object.managerId !== user.id) {
+    if (user.role === 'MANAGER' && objectInfo && objectInfo.managerId !== user.id) {
       return NextResponse.json({ 
         error: 'Вы можете работать только со своими объектами' 
       }, { status: 403 });
     }
 
     // Проверяем требования к завершению
-    const requirements = (task.checklist.object.completionRequirements as any) || {
-      photo: task.checklist.object.requirePhotoForCompletion || false,
-      comment: task.checklist.object.requireCommentForCompletion || false,
+    const requirements = (objectInfo?.completionRequirements as any) || {
+      photo: objectInfo?.requirePhotoForCompletion || false,
+      comment: objectInfo?.requireCommentForCompletion || false,
     };
 
     // Валидация требований к фото
@@ -108,7 +130,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     // Обновляем задачу
     const updatedTask = await prisma.task.update({
-      where: { id: params.id },
+      where: { id: taskId },
       data: {
         status: 'COMPLETED',
         completionComment: comment?.trim() || null,

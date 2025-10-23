@@ -14,12 +14,19 @@ export default function ObjectsPage() {
             <h1 className="text-2xl font-bold">🏢 Объекты</h1>
             <p className="text-gray-600 mt-1">Управление объектами клининга</p>
           </div>
-          <Link href="/objects/templates">
-            <Button variant="outline">
-              <Settings className="w-4 h-4 mr-2" />
-              Шаблоны объектов
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/objects/templates">
+              <Button variant="outline">
+                <Settings className="w-4 h-4 mr-2" />
+                Шаблоны объектов
+              </Button>
+            </Link>
+            <Link href="/objects/reporting-settings">
+              <Button variant="outline">
+                📋 Настройки отчетности
+              </Button>
+            </Link>
+          </div>
         </div>
         
         <Suspense fallback={<div>Загрузка...</div>}>

@@ -170,16 +170,28 @@ function AddExpenseModal({ isOpen, onClose, balance, onSave }: AddExpenseModalPr
   const [description, setDescription] = useState('');
 
   const handleSave = () => {
-    onSave({
+    if (!amount || !description) {
+      alert('Пожалуйста, заполните все поля');
+      return;
+    }
+    
+    const expenseData = {
       objectId: balance?.objectId,
       amount: parseFloat(amount),
       description,
       month: balance?.month,
       year: balance?.year
-    });
-    onClose();
+    };
+    
+    console.log('📝 Данные из модального окна:', expenseData);
+    console.log('📊 Balance объект:', balance);
+    
+    onSave(expenseData);
+    
+    // Очищаем поля только после успешного сохранения
     setAmount('');
     setDescription('');
+    // onClose() теперь вызывается в handleSaveExpense после успешного ответа
   };
 
   return (
@@ -351,7 +363,9 @@ export default function InventoryFinancialReport({ objectId }: InventoryFinancia
       params.append('month', selectedMonth.toString());
       params.append('year', selectedYear.toString());
 
-      const response = await fetch(`/api/inventory/financial-report?${params}`);
+      const response = await fetch(`/api/inventory/financial-report?${params}`, {
+        credentials: 'include'
+      });
       if (response.ok) {
         const data = await response.json();
         setBalances(data);
@@ -392,30 +406,48 @@ export default function InventoryFinancialReport({ objectId }: InventoryFinancia
       const response = await fetch('/api/inventory/limits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(data)
       });
       
       if (response.ok) {
         fetchBalances();
+        // Закрываем модальное окно
+        setEditLimitModal({isOpen: false, balance: null});
+      } else {
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
+        alert(`Ошибка: ${errorData.error || 'Не удалось установить лимит'}`);
       }
     } catch (error) {
       console.error('Error saving limit:', error);
+      alert('Ошибка сети при установке лимита');
     }
   };
 
   const handleSaveExpense = async (data: any) => {
+    console.log('🔍 Отправляем данные расхода:', data);
+    
     try {
       const response = await fetch('/api/inventory/expenses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(data)
       });
       
       if (response.ok) {
         fetchBalances();
+        // Закрываем модальное окно
+        setAddExpenseModal({isOpen: false, balance: null});
+      } else {
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
+        alert(`Ошибка: ${errorData.error || 'Не удалось создать расход'}`);
       }
     } catch (error) {
       console.error('Error saving expense:', error);
+      alert('Ошибка сети при создании расхода');
     }
   };
 
@@ -424,14 +456,22 @@ export default function InventoryFinancialReport({ objectId }: InventoryFinancia
       const response = await fetch('/api/inventory/bulk-limits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(data)
       });
       
       if (response.ok) {
         fetchBalances();
+        // Закрываем модальное окно
+        setBulkLimitModal(false);
+      } else {
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
+        alert(`Ошибка: ${errorData.error || 'Не удалось установить лимиты'}`);
       }
     } catch (error) {
       console.error('Error saving bulk limits:', error);
+      alert('Ошибка сети при установке лимитов');
     }
   };
 

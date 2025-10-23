@@ -1,0 +1,214 @@
+{
+  "totalObjects": 57,
+  "expectedAfterCleanup": 31,
+  "duplicatesToRemove": [
+    {
+      "id": "cmgz1in0s0009vy7s4ymk6eq6",
+      "name": "Акционерное общество “ТЯЖМАШ” АО “ТЯЖМАШ\"",
+      "sites": 5,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 0
+    },
+    {
+      "id": "cmgzr1obb0001vy0ki40g7b2u",
+      "name": "АО \"ТЯЖМАШ\"",
+      "sites": 5,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 0
+    },
+    {
+      "id": "cmgzpjb9o0001vypoyqj3n5ml",
+      "name": "Волгарь (ЖилЭнерго, ЖЭУ-66)",
+      "sites": 5,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 0
+    },
+    {
+      "id": "cmgza7unc0031vyxkxksg9chf",
+      "name": "ООО «Электрощит-Инжиниринг»",
+      "sites": 1,
+      "rooms": 4,
+      "checklists": 0,
+      "techCards": 24
+    },
+    {
+      "id": "cmgyu421x00x5vyjo2kw2ijjb",
+      "name": "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ «Электрощит-Инжиниринг» 407,2м2.",
+      "sites": 6,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 25
+    },
+    {
+      "id": "cmgzqn0re0001vywc22w4pojr",
+      "name": "ЗАО «ГК «ЭЛЕКТРОЩИТ» ТМ САМАРА»",
+      "sites": 6,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 0
+    },
+    {
+      "id": "cmgz1inia000bvy7sg2vt3w13",
+      "name": "ЗАО «ГК «ЭЛЕКТРОЩИТ» ТМ САМАРА»  159 968.55 м2",
+      "sites": 6,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 0
+    },
+    {
+      "id": "cmgyu35mi00cjvyjoihii1zt1",
+      "name": "МБУ «Лопатинское»,",
+      "sites": 5,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 13
+    },
+    {
+      "id": "cmgz1ilsb0003vy7s4oeyoouz",
+      "name": "МБУ «Лопатинское», ",
+      "sites": 5,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 0
+    },
+    {
+      "id": "cmgyu3h3v00jrvyjoqsfm6vyh",
+      "name": "Медицина АльфаСтрахования МедАС 2232,6 м2",
+      "sites": 5,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 138
+    },
+    {
+      "id": "cmgyu7gpq034fvyjoz7cif1g6",
+      "name": "ООО «Альфа» 1100 м2",
+      "sites": 5,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 10
+    },
+    {
+      "id": "cmgzrc6jw0001vy80r0kms4e3",
+      "name": "ООО «Альфа»",
+      "sites": 5,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 0
+    },
+    {
+      "id": "cmgz1intz000dvy7skovtrcbo",
+      "name": "ООО «Альфа» 1100 м2                                   ",
+      "sites": 5,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 0
+    },
+    {
+      "id": "cmgyu2sdk0045vyjoupbbn3ht",
+      "name": "ОАО «Самарский хлебозавод №5».",
+      "sites": 6,
+      "rooms": 1,
+      "checklists": 0,
+      "techCards": 148
+    },
+    {
+      "id": "cmgz1iljk0001vy7s0kqjiwca",
+      "name": "ОАО «Самарский хлебозавод №5».  ",
+      "sites": 6,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 0
+    },
+    {
+      "id": "cmgyu2lll0001vyjoza1nt975",
+      "name": "ООО БЦ \"Сфера\"",
+      "sites": 5,
+      "rooms": 3,
+      "checklists": 0,
+      "techCards": 9
+    },
+    {
+      "id": "cmgz2ckyr0001vy5kmiwl2qhm",
+      "name": "ООО \"БЦ «Сфера\"",
+      "sites": 5,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 7
+    },
+    {
+      "id": "cmgz12ext002nvyv8z039rwr9",
+      "name": "ООО «Маркет.Операции» 26188,60  м2",
+      "sites": 1,
+      "rooms": 7,
+      "checklists": 0,
+      "techCards": 87
+    },
+    {
+      "id": "cmgyu3tl000rrvyjog3ke88na",
+      "name": "ООО «Маркет.Операции» 26188,60 м2",
+      "sites": 5,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 87
+    },
+    {
+      "id": "cmgztdl3v0001vy7wn9xpcae0",
+      "name": "ООО «Яндекс.Маркет»",
+      "sites": 5,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 0
+    },
+    {
+      "id": "cmgyu3t2p00rhvyjozp6259ob",
+      "name": "ООО «НЛ Континент» 144,2 м2",
+      "sites": 5,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 4
+    },
+    {
+      "id": "cmgz1imcu0005vy7swr1q12m9",
+      "name": "ООО «НЛ Континент» 144,2  м2",
+      "sites": 5,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 0
+    },
+    {
+      "id": "cmgyu5jk801vtvyjo6dgek1sc",
+      "name": "(ТСЖ «Спартак»)",
+      "sites": 5,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 10
+    },
+    {
+      "id": "cmgz1io2r000fvy7szsz7wzhd",
+      "name": "(ООО «ФЛАГМАН»)\"",
+      "sites": 5,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 0
+    },
+    {
+      "id": "cmgyu417m00wnvyjo2wp00v15",
+      "name": "ООО ЧОО Гвардеец",
+      "sites": 5,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 8
+    },
+    {
+      "id": "cmgzrmkqs0001vyh4il4td4gw",
+      "name": "Самараэнерго",
+      "sites": 5,
+      "rooms": 0,
+      "checklists": 0,
+      "techCards": 0
+    }
+  ]
+}

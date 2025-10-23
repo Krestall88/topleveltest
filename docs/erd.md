@@ -39,6 +39,42 @@ IN_PROGRESS IN_PROGRESS
 COMPLETED COMPLETED
         }
     
+
+
+        ReportingTaskStatus {
+            NEW NEW
+IN_PROGRESS IN_PROGRESS
+COMPLETED COMPLETED
+CANCELLED CANCELLED
+        }
+    
+
+
+        ReportingTaskPriority {
+            LOW LOW
+MEDIUM MEDIUM
+HIGH HIGH
+URGENT URGENT
+        }
+    
+
+
+        TaskExecutionStatus {
+            PENDING PENDING
+COMPLETED COMPLETED
+OVERDUE OVERDUE
+SKIPPED SKIPPED
+        }
+    
+
+
+        TaskAdminCommentType {
+            ADMIN_NOTE ADMIN_NOTE
+COMPLETION_FEEDBACK COMPLETION_FEEDBACK
+INSTRUCTION INSTRUCTION
+QUALITY_CHECK QUALITY_CHECK
+        }
+    
   "User" {
     String id "🗝️"
     DateTime createdAt 
@@ -66,6 +102,9 @@ COMPLETED COMPLETED
     Boolean requirePhotoForCompletion 
     Boolean requireCommentForCompletion 
     Json completionRequirements "❓"
+    Float totalArea "❓"
+    String description "❓"
+    String notes "❓"
     }
   
 
@@ -78,6 +117,41 @@ COMPLETED COMPLETED
     }
   
 
+  "Site" {
+    String id "🗝️"
+    DateTime createdAt 
+    String name 
+    String description "❓"
+    Float area "❓"
+    }
+  
+
+  "Zone" {
+    String id "🗝️"
+    DateTime createdAt 
+    String name 
+    String description "❓"
+    Float area "❓"
+    }
+  
+
+  "RoomGroup" {
+    String id "🗝️"
+    DateTime createdAt 
+    String name 
+    String description "❓"
+    Float area "❓"
+    }
+  
+
+  "CleaningObjectItem" {
+    String id "🗝️"
+    DateTime createdAt 
+    String name 
+    String description "❓"
+    }
+  
+
   "TechCard" {
     String id "🗝️"
     DateTime createdAt 
@@ -85,6 +159,16 @@ COMPLETED COMPLETED
     String workType 
     String frequency 
     String description "❓"
+    String period "❓"
+    String seasonality "❓"
+    String notes "❓"
+    String workDetails "❓"
+    Int frequencyDays "❓"
+    String preferredTime "❓"
+    Int maxDelayHours "❓"
+    String timeSlots 
+    Boolean isActive 
+    Boolean autoGenerate 
     }
   
 
@@ -196,6 +280,85 @@ COMPLETED COMPLETED
     DateTime createdAt 
     }
   
+
+  "ObjectStructure" {
+    String id "🗝️"
+    DateTime createdAt 
+    DateTime updatedAt 
+    String objectName 
+    String objectAddress "❓"
+    String siteName "❓"
+    String zoneName "❓"
+    String roomGroupName "❓"
+    String roomName "❓"
+    String cleaningObjectName "❓"
+    String techCardName 
+    String frequency 
+    String notes "❓"
+    String period "❓"
+    String siteId "❓"
+    String zoneId "❓"
+    String roomGroupId "❓"
+    String roomId "❓"
+    String cleaningObjectId "❓"
+    String techCardId 
+    String workType "❓"
+    String description "❓"
+    }
+  
+
+  "ReportingTask" {
+    String id "🗝️"
+    DateTime createdAt 
+    DateTime updatedAt 
+    String title 
+    String description "❓"
+    ReportingTaskStatus status 
+    ReportingTaskPriority priority 
+    DateTime dueDate "❓"
+    DateTime completedAt "❓"
+    String completionComment "❓"
+    }
+  
+
+  "ExcludedObject" {
+    String id "🗝️"
+    DateTime excludedAt 
+    }
+  
+
+  "TaskExecution" {
+    String id "🗝️"
+    DateTime scheduledFor 
+    DateTime dueDate 
+    DateTime executedAt "❓"
+    TaskExecutionStatus status 
+    String comment "❓"
+    String photos 
+    DateTime createdAt 
+    DateTime updatedAt 
+    }
+  
+
+  "task_admin_comments" {
+    String id "🗝️"
+    DateTime createdAt 
+    DateTime updatedAt 
+    String content 
+    TaskAdminCommentType type 
+    }
+  
+
+  "notifications" {
+    String id "🗝️"
+    DateTime createdAt 
+    DateTime updatedAt 
+    String type 
+    String title 
+    String message 
+    Boolean isRead 
+    }
+  
     "User" o|--|| "Role" : "enum:role"
     "User" o{--}o "AdditionalTask" : "assignedAdditionalTasks"
     "User" o{--}o "AdditionalTask" : "completedAdditionalTasks"
@@ -211,6 +374,13 @@ COMPLETED COMPLETED
     "User" o{--}o "PhotoReport" : "photoReports"
     "User" o{--}o "Request" : "createdRequests"
     "User" o{--}o "Task" : "completedTasks"
+    "User" o{--}o "Site" : "managedSites"
+    "User" o{--}o "TaskExecution" : "taskExecutions"
+    "User" o{--}o "ReportingTask" : "createdReportingTasks"
+    "User" o{--}o "ReportingTask" : "assignedReportingTasks"
+    "User" o{--}o "ExcludedObject" : "excludedObjects"
+    "User" o{--}o "task_admin_comments" : "adminComments"
+    "User" o{--}o "notifications" : "notifications"
     "CleaningObject" o{--}o "AdditionalTask" : "additionalTasks"
     "CleaningObject" o{--}o "Checklist" : "checklists"
     "CleaningObject" o|--|| "User" : "creator"
@@ -223,12 +393,30 @@ COMPLETED COMPLETED
     "CleaningObject" o{--}o "Request" : "requests"
     "CleaningObject" o{--}o "Room" : "rooms"
     "CleaningObject" o{--}o "TechCard" : "techCards"
+    "CleaningObject" o{--}o "Site" : "sites"
+    "CleaningObject" o{--}o "ObjectStructure" : "objectStructures"
+    "CleaningObject" o{--}o "TaskExecution" : "taskExecutions"
+    "CleaningObject" o{--}o "ReportingTask" : "reportingTasks"
+    "CleaningObject" o{--}o "ExcludedObject" : "excludedObjects"
     "Room" o{--}o "Checklist" : "checklists"
     "Room" o|--|| "CleaningObject" : "object"
+    "Room" o|--|o "RoomGroup" : "roomGroup"
     "Room" o{--}o "Task" : "tasks"
     "Room" o{--}o "TechCard" : "techCards"
+    "Room" o{--}o "CleaningObjectItem" : "cleaningObjects"
+    "Site" o|--|| "CleaningObject" : "object"
+    "Site" o|--|o "User" : "manager"
+    "Site" o{--}o "Zone" : "zones"
+    "Zone" o|--|| "Site" : "site"
+    "Zone" o{--}o "RoomGroup" : "roomGroups"
+    "RoomGroup" o|--|| "Zone" : "zone"
+    "RoomGroup" o{--}o "Room" : "rooms"
+    "CleaningObjectItem" o|--|| "Room" : "room"
+    "CleaningObjectItem" o{--}o "TechCard" : "techCards"
     "TechCard" o|--|| "CleaningObject" : "object"
     "TechCard" o|--|o "Room" : "room"
+    "TechCard" o|--|o "CleaningObjectItem" : "cleaningObjectItem"
+    "TechCard" o{--}o "TaskExecution" : "executions"
     "Checklist" o|--|o "User" : "completedBy"
     "Checklist" o|--|| "User" : "creator"
     "Checklist" o|--|| "CleaningObject" : "object"
@@ -241,6 +429,8 @@ COMPLETED COMPLETED
     "Task" o|--|o "User" : "completedBy"
     "Task" o|--|o "Request" : "request"
     "Task" o|--|o "Room" : "room"
+    "Task" o{--}o "task_admin_comments" : "adminComments"
+    "Task" o{--}o "notifications" : "notifications"
     "Request" o|--|| "RequestStatus" : "enum:status"
     "Request" o{--}o "PhotoReport" : "photoReports"
     "Request" o|--|| "User" : "creator"
@@ -264,4 +454,23 @@ COMPLETED COMPLETED
     "DeputyAdminAssignment" o|--|| "User" : "assignedBy"
     "DeputyAdminAssignment" o|--|| "User" : "deputyAdmin"
     "DeputyAdminAssignment" o|--|| "CleaningObject" : "object"
+    "ObjectStructure" o|--|| "CleaningObject" : "object"
+    "ReportingTask" o|--|| "ReportingTaskStatus" : "enum:status"
+    "ReportingTask" o|--|| "ReportingTaskPriority" : "enum:priority"
+    "ReportingTask" o|--|| "CleaningObject" : "object"
+    "ReportingTask" o|--|| "User" : "createdBy"
+    "ReportingTask" o|--|| "User" : "assignedTo"
+    "ExcludedObject" o|--|| "CleaningObject" : "object"
+    "ExcludedObject" o|--|| "User" : "excludedBy"
+    "TaskExecution" o|--|| "TechCard" : "techCard"
+    "TaskExecution" o|--|| "CleaningObject" : "object"
+    "TaskExecution" o|--|| "User" : "manager"
+    "TaskExecution" o|--|| "TaskExecutionStatus" : "enum:status"
+    "task_admin_comments" o|--|| "TaskAdminCommentType" : "enum:type"
+    "task_admin_comments" o|--|| "Task" : "task"
+    "task_admin_comments" o|--|| "User" : "admin"
+    "task_admin_comments" o|--|o "task_admin_comments" : "parentComment"
+    "task_admin_comments" o{--}o "task_admin_comments" : "replies"
+    "notifications" o|--|| "User" : "user"
+    "notifications" o|--|o "Task" : "relatedTask"
 ```

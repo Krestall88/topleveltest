@@ -1,0 +1,42 @@
+{
+  "timestamp": "2025-10-21T21:47:51.639Z",
+  "totalObjects": 2,
+  "objects": [
+    {
+      "id": "cmgyu7kxr036zvyjomsbe8fp6",
+      "name": "УК Юг-сервис",
+      "createdAt": "2025-10-20T07:51:59.680Z",
+      "manager": "Гордеев Роман Владимирович",
+      "structure": {
+        "sites": 280,
+        "zones": 56,
+        "roomGroups": 56,
+        "roomsInStructure": 0,
+        "directRooms": 0,
+        "techCards": 1574
+      },
+      "hasMultiLevelStructure": false
+    },
+    {
+      "id": "cmgzsv7ho0001vys41jpmf7uy",
+      "name": "ООО «Юг-Сервис»",
+      "createdAt": "2025-10-21T00:02:08.940Z",
+      "manager": "Васекин Александр Александрович",
+      "structure": {
+        "sites": 8,
+        "zones": 8,
+        "roomGroups": 8,
+        "roomsInStructure": 144,
+        "directRooms": 144,
+        "techCards": 200
+      },
+      "hasMultiLevelStructure": true
+    }
+  ],
+  "recommendation": {
+    "keepObjectId": "cmgzsv7ho0001vys41jpmf7uy",
+    "removeObjectIds": [
+      "cmgyu7kxr036zvyjomsbe8fp6"
+    ]
+  }
+}

@@ -215,7 +215,7 @@ export default function TaskManager({ checklistId, roomId, requestId, onTaskUpda
     }
   };
 
-  const handleTaskCompletionSuccess = () => {
+  const handleTaskCompletionSuccess = (completedTask: any) => {
     fetchTasks();
     setSelectedTaskForCompletion(null);
     setShowTaskCompletionModal(false);

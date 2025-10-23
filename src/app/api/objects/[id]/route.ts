@@ -25,6 +25,9 @@ export async function GET(req: NextRequest, { params }: Params) {
           },
           orderBy: { name: 'asc' }
         },
+        techCards: {
+          orderBy: { name: 'asc' }
+        },
         _count: {
           select: {
             rooms: true,
@@ -47,8 +50,8 @@ export async function GET(req: NextRequest, { params }: Params) {
   }
 }
 
-// PATCH /api/objects/[id] - Обновить объект
-export async function PATCH(req: NextRequest, { params }: Params) {
+// PUT /api/objects/[id] - Обновить объект
+export async function PUT(req: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
     const body = await req.json();

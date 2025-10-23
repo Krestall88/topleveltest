@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создание задач из техкарт</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Создание задач из техкарт</h1>
+        <p>Эта утилита создает реальные записи задач в базе данных на основе существующих техкарт.</p>
+        
+        <form id="createTasksForm">
+            <div class="form-group">
+                <label for="date">Дата для создания задач:</label>
+                <input type="date" id="date" name="date" required>
+            </div>
+            
+            <button type="submit" id="submitBtn">Создать задачи</button>
+        </form>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        // Устанавливаем сегодняшнюю дату по умолчанию
+        document.getElementById('date').valueAsDate = new Date();
+        
+        document.getElementById('createTasksForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const result = document.getElementById('result');
+            const date = document.getElementById('date').value;
+            
+            // Показываем загрузку
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Создание задач...';
+            result.style.display = 'block';
+            result.className = 'result loading';
+            result.innerHTML = '⏳ Создание задач из техкарт...';
+            
+            try {
+                const response = await fetch('/api/tasks/create-from-techcards', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ date })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        <h3>✅ Успешно!</h3>
+                        <p><strong>Создано задач:</strong> ${data.createdTasks}</p>
+                        <p><strong>Всего техкарт:</strong> ${data.totalTechCards}</p>
+                        <p><strong>Дата:</strong> ${date}</p>
+                        ${data.errors ? `<p><strong>Ошибок:</strong> ${data.errors.length}</p>` : ''}
+                        <p>Теперь вы можете перейти в календарь и увидеть реальные задачи!</p>
+                    `;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = `
+                        <h3>❌ Ошибка</h3>
+                        <p>${data.message || data.error || 'Неизвестная ошибка'}</p>
+                    `;
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `
+                    <h3>❌ Ошибка сети</h3>
+                    <p>Не удалось подключиться к серверу: ${error.message}</p>
+                `;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Создать задачи';
+            }
+        });
+    </script>
+</body>
+</html>

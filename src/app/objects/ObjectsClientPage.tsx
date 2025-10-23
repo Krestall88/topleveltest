@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import RoomManager from '@/components/RoomManager';
+import CreateObjectForm from '@/components/CreateObjectForm';
+import ObjectEditModal from '@/components/ObjectEditModal';
 
 interface CleaningObject {
   id: string;
@@ -25,8 +27,11 @@ export default function ObjectsClientPage() {
   const [error, setError] = useState('');
   const [selectedObject, setSelectedObject] = useState<CleaningObject | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingObject, setEditingObject] = useState<CleaningObject | null>(null);
+  const [isNewEditModalOpen, setIsNewEditModalOpen] = useState(false);
+  const [editingObjectId, setEditingObjectId] = useState<string>('');
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -110,16 +115,8 @@ export default function ObjectsClientPage() {
   };
 
   const handleEdit = (object: CleaningObject) => {
-    setEditingObject(object);
-    setFormData({
-      name: object.name,
-      address: object.address,
-      managerId: (object as any).managerId || object.manager?.id || '',
-      workingHours: (object as any).workingHours || { start: '08:00', end: '20:00' },
-      workingDays: (object as any).workingDays || ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'],
-      timezone: (object as any).timezone || ''
-    });
-    setIsEditModalOpen(true);
+    setEditingObjectId(object.id);
+    setIsNewEditModalOpen(true);
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -222,11 +219,20 @@ export default function ObjectsClientPage() {
       {/* Заголовок и кнопки */}
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Управление объектами</h2>
-        <Button
-          onClick={() => setIsAddModalOpen(true)}
-        >
-          + Добавить объект
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setIsCreateModalOpen(true)}
+            variant="default"
+          >
+            + Создать объект с техкартами
+          </Button>
+          <Button
+            onClick={() => setIsAddModalOpen(true)}
+            variant="outline"
+          >
+            + Быстрое добавление
+          </Button>
+        </div>
       </div>
 
       {/* Список объектов */}
@@ -693,6 +699,44 @@ export default function ObjectsClientPage() {
           </div>
         </div>
       )}
+
+      {/* Модальное окно создания объекта с техкартами */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-7xl max-h-[95vh] flex flex-col">
+            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold">Создание нового объекта</h3>
+              <Button
+                onClick={() => setIsCreateModalOpen(false)}
+                variant="outline"
+                size="sm"
+              >
+                ✕
+              </Button>
+            </div>
+            <div className="flex-1 overflow-y-auto overflow-x-visible">
+              <CreateObjectForm
+                onSuccess={() => {
+                  setIsCreateModalOpen(false);
+                  fetchObjects(); // Обновляем список объектов
+                }}
+                onCancel={() => setIsCreateModalOpen(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Новое модальное окно редактирования объекта */}
+      <ObjectEditModal
+        isOpen={isNewEditModalOpen}
+        onClose={() => setIsNewEditModalOpen(false)}
+        objectId={editingObjectId}
+        onUpdate={() => {
+          fetchObjects();
+          setIsNewEditModalOpen(false);
+        }}
+      />
     </div>
   );
 }

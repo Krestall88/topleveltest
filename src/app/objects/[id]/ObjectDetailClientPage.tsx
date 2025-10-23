@@ -12,6 +12,8 @@ import ChecklistCompletionModal from '@/components/ChecklistCompletionModal';
 import CompletionRequirementsManager from '@/components/CompletionRequirementsManager';
 import TaskScheduleManager from '@/components/TaskScheduleManager';
 import TechCardManager from '@/components/TechCardManager';
+import DynamicObjectTree from '@/components/DynamicObjectTree';
+import TechTasksPanel from '@/components/TechTasksPanel';
 
 interface Room {
   id: string;
@@ -74,13 +76,15 @@ export default function ObjectDetailClientPage() {
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [managers, setManagers] = useState<{id: string, name: string}[]>([]);
-  const [isEditingManager, setIsEditingManager] = useState(false);
-  const [showTechCardManager, setShowTechCardManager] = useState(false);
-  const [selectedChecklistForCompletion, setSelectedChecklistForCompletion] = useState<Checklist | null>(null);
-  const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [showRequirementsManager, setShowRequirementsManager] = useState(false);
   const [showScheduleManager, setShowScheduleManager] = useState(false);
+  const [showTechCardManager, setShowTechCardManager] = useState(false);
+  const [selectedChecklistForCompletion, setSelectedChecklistForCompletion] = useState<any>(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [managers, setManagers] = useState<any[]>([]);
+  const [isEditingManager, setIsEditingManager] = useState(false);
+  const [selectedTechTasks, setSelectedTechTasks] = useState<any[]>([]);
+  const [selectedContext, setSelectedContext] = useState<string>('');
 
   const fetchObjectData = async () => {
     if (!id) return;
@@ -187,6 +191,11 @@ export default function ObjectDetailClientPage() {
     } catch (error) {
       console.error('Ошибка обновления менеджера:', error);
     }
+  };
+
+  const handleSelectTechTasks = (techTasks: any[], context: string) => {
+    setSelectedTechTasks(techTasks);
+    setSelectedContext(context);
   };
 
   useEffect(() => {
@@ -352,7 +361,7 @@ export default function ObjectDetailClientPage() {
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">{object._count.techCards}</div>
-              <div className="text-sm text-gray-600">Техкарт</div>
+              <div className="text-sm text-gray-600">Техзаданий</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-600">{object._count.checklists}</div>
@@ -366,198 +375,105 @@ export default function ObjectDetailClientPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Левая колонка - Помещения */}
-        <div className="lg:col-span-1">
-          <Card>
+      {/* Новый двухколоночный дизайн */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Левая колонка - Иерархия объекта */}
+        <div>
+          <Card className="h-[700px]">
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>🏠 Помещения</span>
-                <Badge variant="secondary">{object.rooms.length}</Badge>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Структура объекта
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              {object.rooms.map((room) => (
-                <div
-                  key={room.id}
-                  onClick={() => setSelectedRoom(room)}
-                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                    selectedRoom?.id === room.id
-                      ? 'bg-blue-50 border-blue-200'
-                      : 'hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="font-medium text-sm">{room.name}</div>
-                  <div className="text-xs text-gray-600 mt-1">
-                    {room.area ? `${room.area} м²` : ''} • {room.techCards.length} техкарт
-                  </div>
-                  {room.description && (
-                    <div className="text-xs text-gray-500 mt-1 line-clamp-2">
-                      {room.description}
-                    </div>
-                  )}
-                </div>
-              ))}
-              
-              {object.rooms.length === 0 && (
-                <div className="text-center py-4 text-gray-500">
-                  Помещения не добавлены
-                </div>
-              )}
+            <CardContent className="p-0">
+              <DynamicObjectTree 
+                objectId={object.id} 
+                onSelectTechTasks={handleSelectTechTasks}
+              />
             </CardContent>
           </Card>
-
-          {/* Последние чек-листы */}
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>📋 Последние чек-листы</span>
-                <Button 
-                  onClick={() => handleCreateChecklist()}
-                  size="sm"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Создать
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {checklists.slice(0, 5).map((checklist) => (
-                <div
-                  key={checklist.id}
-                  className="p-3 rounded-lg border hover:bg-gray-50"
-                >
-                  <div className="flex items-center justify-between">
-                    <div 
-                      className="flex-1 cursor-pointer"
-                      onClick={() => router.push(`/checklists/${checklist.id}`)}
-                    >
-                      <div className="text-sm font-medium">
-                        {new Date(checklist.date).toLocaleDateString('ru-RU')}
-                      </div>
-                      {checklist.room && (
-                        <div className="text-xs text-gray-600 mt-1">
-                          {checklist.room.name}
-                        </div>
-                      )}
-                      <div className="text-xs text-gray-500 mt-1">
-                        {checklist.completedTasks}/{checklist.totalTasks} задач
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <Badge 
-                        variant={checklist.completedAt ? 'default' : 'secondary'}
-                      >
-                        {checklist.completedAt ? 'Завершен' : 'В работе'}
-                      </Badge>
-                      
-                      {!checklist.completedAt && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCompleteChecklist(checklist.id);
-                          }}
-                        >
-                          <CheckCircle2 className="w-3 h-3 mr-1" />
-                          Завершить
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              {checklists.length === 0 && (
-                <div className="text-center py-4 text-gray-500">
-                  Чек-листы не созданы
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
         </div>
 
-        {/* Правая колонка - Техкарты выбранного помещения */}
-        <div className="lg:col-span-2">
-          {selectedRoom ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div>
-                    <span>📝 Техкарты: {selectedRoom.name}</span>
-                    <div className="text-sm font-normal text-gray-600 mt-1">
-                      {selectedRoom.area ? `Площадь: ${selectedRoom.area} м²` : ''}
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button 
-                      onClick={() => setShowTechCardManager(true)}
-                      size="sm"
-                      variant="outline"
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Управление техкартами
-                    </Button>
-                    <Button 
-                      onClick={() => handleCreateChecklist(selectedRoom.id)}
-                      size="sm"
-                    >
-                      <CheckSquare className="w-4 h-4 mr-2" />
-                      Создать чек-лист
-                    </Button>
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {selectedRoom.techCards.map((techCard) => (
-                  <Card key={techCard.id} className="border-l-4 border-l-green-500">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg">{techCard.name}</CardTitle>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <FileText className="w-4 h-4 mr-1" />
-                          {techCard.workType}
-                        </div>
-                        <div className="flex items-center">
-                          <Clock className="w-4 h-4 mr-1" />
-                          {techCard.frequency}
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="whitespace-pre-line text-sm bg-gray-50 p-3 rounded">
-                        {techCard.description}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                
-                {selectedRoom.techCards.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    <FileText className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                    <p>Техкарты для этого помещения не созданы</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="text-center py-12">
-                <FileText className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Выберите помещение
-                </h3>
-                <p className="text-gray-600">
-                  Выберите помещение слева для просмотра техкарт
-                </p>
-              </CardContent>
-            </Card>
-          )}
+        {/* Правая колонка - Техзадания */}
+        <div>
+          <TechTasksPanel 
+            techTasks={selectedTechTasks}
+            context={selectedContext}
+          />
         </div>
       </div>
+
+      {/* Последние чек-листы */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>📋 Последние чек-листы</span>
+            <Button 
+              onClick={() => handleCreateChecklist()}
+              size="sm"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Создать
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {checklists.slice(0, 5).map((checklist) => (
+            <div
+              key={checklist.id}
+              className="p-3 rounded-lg border hover:bg-gray-50"
+            >
+              <div className="flex items-center justify-between">
+                <div 
+                  className="flex-1 cursor-pointer"
+                  onClick={() => router.push(`/checklists/${checklist.id}`)}
+                >
+                  <div className="text-sm font-medium">
+                    {new Date(checklist.date).toLocaleDateString('ru-RU')}
+                  </div>
+                  {checklist.room && (
+                    <div className="text-xs text-gray-600 mt-1">
+                      {checklist.room.name}
+                    </div>
+                  )}
+                  <div className="text-xs text-gray-500 mt-1">
+                    {checklist.completedTasks}/{checklist.totalTasks} задач
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Badge 
+                    variant={checklist.completedAt ? 'default' : 'secondary'}
+                  >
+                    {checklist.completedAt ? 'Завершен' : 'В работе'}
+                  </Badge>
+                  
+                  {!checklist.completedAt && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCompleteChecklist(checklist.id);
+                      }}
+                    >
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      Завершить
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+          
+          {checklists.length === 0 && (
+            <div className="text-center py-4 text-gray-500">
+              Чек-листы не созданы
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Модальное окно управления техкартами */}
       {showTechCardManager && selectedRoom && (

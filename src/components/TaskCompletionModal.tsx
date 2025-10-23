@@ -17,6 +17,7 @@ interface Task {
   scheduledEnd?: string;
   completionComment?: string;
   completionPhotos?: string[];
+  completedAt?: string;
   checklist: {
     id: string;
     date: string;
@@ -45,7 +46,7 @@ interface TaskCompletionModalProps {
   task: Task | null;
   isOpen: boolean;
   onClose: () => void;
-  onComplete: () => void;
+  onComplete: (completedTask: Task) => void;
 }
 
 export default function TaskCompletionModal({ 
@@ -134,13 +135,15 @@ export default function TaskCompletionModal({
         }
       }
 
-      // Завершаем задачу
-      const response = await fetch(`/api/tasks/${task.id}/complete-task`, {
+      // Завершаем задачу (используем API с поддержкой виртуальных задач)
+      const response = await fetch(`/api/tasks/${task.id}/complete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
+          status: 'COMPLETED',
           comment: comment.trim(),
           photos: photoUrls,
         }),
@@ -151,7 +154,24 @@ export default function TaskCompletionModal({
         throw new Error(errorData.error || 'Не удалось завершить задачу');
       }
 
-      onComplete();
+      // Получаем обновленные данные с сервера
+      const responseData = await response.json();
+      console.log('🔍 ДИАГНОСТИКА: Ответ от API:', responseData);
+      
+      // Создаем объект завершенной задачи с данными от сервера
+      const completedTask: Task = {
+        ...task!,
+        ...responseData.task,
+        status: 'COMPLETED',
+        completionComment: comment.trim(),
+        completionPhotos: photoUrls,
+        completedAt: responseData.task.completedAt || new Date().toISOString()
+      };
+
+      console.log('🔍 ДИАГНОСТИКА: Исходная задача:', task);
+      console.log('🔍 ДИАГНОСТИКА: Завершенная задача:', completedTask);
+      console.log('🔍 ДИАГНОСТИКА: Вызываем onComplete...');
+      onComplete(completedTask);
       handleClose();
     } catch (error) {
       console.error('Ошибка завершения задачи:', error);

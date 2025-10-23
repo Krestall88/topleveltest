@@ -108,22 +108,22 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   Настройки завершения
                 </Link>
               )}
-              {canViewUsers && (
+              <Link
+                href="/manager-calendar"
+                className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/manager-calendar')}`}
+              >
+                <span className="mr-3">📅</span>
+                Календарь задач
+              </Link>
+              {(user?.role === 'ADMIN' || user?.role === 'DEPUTY') && (
                 <Link
-                  href="/deputy-admins"
-                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/deputy-admins')}`}
+                  href="/admin-dashboard"
+                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/admin-dashboard')}`}
                 >
-                  <span className="mr-3">👥</span>
-                  Заместители админов
+                  <span className="mr-3">🔧</span>
+                  Панель админа
                 </Link>
               )}
-              <Link
-                href="/checklists"
-                className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/checklists')}`}
-              >
-                <span className="mr-3">✅</span>
-                Чек-листы
-              </Link>
               <Link
                 href="/additional-tasks"
                 className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/additional-tasks')}`}
@@ -138,6 +138,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 <span className="mr-3">📷</span>
                 Фотоотчёты
               </Link>
+              {(user?.role === 'ADMIN' || user?.role === 'DEPUTY') && (
+                <Link
+                  href="/reporting"
+                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/reporting')}`}
+                >
+                  <span className="mr-3">📋</span>
+                  Отчетность по чек-листам
+                </Link>
+              )}
               <Link
                 href="/inventory"
                 className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/inventory')}`}

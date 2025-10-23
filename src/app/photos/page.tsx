@@ -1,81 +1,14 @@
+import { Metadata } from 'next';
 import { Suspense } from 'react';
-import { prisma } from '@/lib/prisma';
 import AppLayout from '@/components/AppLayout';
-import PhotosClientPage from './PhotosClientPage';
+import PhotoGalleryPage from '@/components/PhotoGalleryPage';
 
-async function getPhotos() {
-  try {
-    const photos = await prisma.photoReport.findMany({
-      include: {
-        object: {
-          select: {
-            id: true,
-            name: true,
-            address: true,
-          },
-        },
-        request: {
-          select: {
-            id: true,
-            title: true,
-          },
-        },
-        uploader: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        task: {
-          include: {
-            checklist: {
-              include: {
-                object: { select: { name: true } },
-                room: { select: { name: true } }
-              }
-            }
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+export const metadata: Metadata = {
+  title: 'Фотоотчёты',
+  description: 'Просмотр всех фотоотчётов из системы',
+};
 
-    return photos;
-  } catch (error) {
-    console.error('Ошибка при загрузке фотоотчётов:', error);
-    return [];
-  }
-}
-
-async function getObjects() {
-  try {
-    const objects = await prisma.cleaningObject.findMany({
-      select: {
-        id: true,
-        name: true,
-        address: true,
-      },
-      orderBy: {
-        name: 'asc',
-      },
-    });
-
-    return objects;
-  } catch (error) {
-    console.error('Ошибка при загрузке объектов:', error);
-    return [];
-  }
-}
-
-export default async function PhotosPage() {
-  const [photos, objects] = await Promise.all([
-    getPhotos(),
-    getObjects(),
-  ]);
-
+export default function PhotosPage() {
   return (
     <AppLayout>
       <div className="container mx-auto px-4 py-8">
@@ -87,10 +20,7 @@ export default async function PhotosPage() {
         </div>
 
         <Suspense fallback={<div>Загрузка фотоотчётов...</div>}>
-          <PhotosClientPage 
-            initialPhotos={photos} 
-            objects={objects}
-          />
+          <PhotoGalleryPage />
         </Suspense>
       </div>
     </AppLayout>

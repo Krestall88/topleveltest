@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
 import { prisma } from '@/lib/prisma';
 import AppLayout from '@/components/AppLayout';
-import SimpleDashboard from '@/components/SimpleDashboard';
+import ModernDashboard from '@/components/ModernDashboard';
 
 async function getUserFromCookie() {
   const cookieStore = await cookies();
@@ -42,7 +42,7 @@ export default async function DashboardPage() {
 
   return (
     <AppLayout>
-      <SimpleDashboard userRole={user.role} userId={user.id} />
+      <ModernDashboard userRole={user.role} userId={user.id} />
     </AppLayout>
   );
 }

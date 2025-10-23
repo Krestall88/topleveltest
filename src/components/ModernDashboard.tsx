@@ -75,6 +75,7 @@ interface ModernDashboardProps {
 export default function ModernDashboard({ userRole, userId }: ModernDashboardProps) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
 
   useEffect(() => {
@@ -86,13 +87,25 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
 
   const fetchDashboardData = async () => {
     try {
-      const response = await fetch(`/api/dashboard/modern?role=${userRole}&userId=${userId}`);
+      setError(null);
+      console.log('🔍 Загружаем дашборд для:', { userRole, userId });
+      const response = await fetch(`/api/dashboard/modern?role=${userRole}&userId=${userId}`, {
+        credentials: 'include'
+      });
+      console.log('🔍 Ответ API дашборда:', response.status);
+      
       if (response.ok) {
         const dashboardData = await response.json();
+        console.log('🔍 Данные дашборда:', dashboardData);
         setData(dashboardData);
+      } else {
+        const errorText = await response.text();
+        console.error('❌ Ошибка API дашборда:', response.status, errorText);
+        setError(`Ошибка загрузки: ${response.status}`);
       }
     } catch (error) {
-      console.error('Ошибка загрузки данных дашборда:', error);
+      console.error('❌ Ошибка загрузки данных дашборда:', error);
+      setError('Ошибка подключения к серверу');
     } finally {
       setLoading(false);
     }
@@ -126,6 +139,22 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
             </Card>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center">
+        <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Ошибка загрузки данных</h3>
+        <p className="text-gray-600 mb-4">{error}</p>
+        <button 
+          onClick={fetchDashboardData}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Попробовать снова
+        </button>
       </div>
     );
   }

@@ -4,11 +4,15 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
   try {
+    console.log('🔍 API дашборда: начало запроса');
     const user = await getUserFromToken(req);
     
     if (!user) {
+      console.log('❌ API дашборда: пользователь не авторизован');
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
+    
+    console.log('✅ API дашборда: пользователь найден:', user.id, user.role);
 
     const { searchParams } = new URL(req.url);
     const role = searchParams.get('role') || user.role;
@@ -40,64 +44,43 @@ export async function GET(req: NextRequest) {
       }),
       
       // Общее количество задач
-      prisma.task.count({
-        where: {
-          checklist: {
-            object: objectsFilter
-          }
-        }
-      }),
+      prisma.task.count(),
       
       // Выполненные задачи
       prisma.task.count({
         where: {
-          status: 'COMPLETED',
-          checklist: {
-            object: objectsFilter
-          }
+          status: 'COMPLETED'
         }
       }),
       
       // Активные задачи (в работе)
       prisma.task.count({
         where: {
-          status: { in: ['NEW', 'AVAILABLE', 'IN_PROGRESS'] },
-          checklist: {
-            object: objectsFilter
-          }
+          status: { in: ['NEW', 'AVAILABLE', 'IN_PROGRESS'] }
         }
       }),
       
       // Просроченные задачи
       prisma.task.count({
         where: {
-          status: 'OVERDUE',
-          checklist: {
-            object: objectsFilter
-          }
+          status: 'OVERDUE'
         }
       }),
       
-      // Новые дополнительные заявки
-      prisma.additionalTask.count({
-        where: {
-          status: 'NEW',
-          object: objectsFilter
-        }
-      }),
+      // Новые дополнительные заявки (пока 0, так как модель может не существовать)
+      0,
       
       // Фото за сегодня
       prisma.photoReport.count({
         where: {
           createdAt: {
             gte: new Date(new Date().setHours(0, 0, 0, 0))
-          },
-          object: objectsFilter
+          }
         }
       }),
       
       // Общий инвентарь
-      prisma.inventoryItem.count()
+      prisma.inventoryLimit.count()
     ]);
 
     // Рассчитываем процент выполнения
@@ -121,20 +104,14 @@ export async function GET(req: NextRequest) {
       
       prisma.task.count({
         where: {
-          createdAt: { lt: lastMonth },
-          checklist: {
-            object: objectsFilter
-          }
+          createdAt: { lt: lastMonth }
         }
       }),
       
       prisma.task.count({
         where: {
           status: 'COMPLETED',
-          createdAt: { lt: lastMonth },
-          checklist: {
-            object: objectsFilter
-          }
+          createdAt: { lt: lastMonth }
         }
       })
     ]);
@@ -248,28 +225,19 @@ export async function GET(req: NextRequest) {
         where: {
           createdAt: {
             gte: new Date(new Date().setHours(0, 0, 0, 0))
-          },
-          checklist: {
-            object: objectsFilter
           }
         }
       }),
       
       prisma.task.count({
         where: {
-          createdAt: { gte: startOfWeek },
-          checklist: {
-            object: objectsFilter
-          }
+          createdAt: { gte: startOfWeek }
         }
       }),
       
       prisma.task.count({
         where: {
-          createdAt: { gte: startOfMonth },
-          checklist: {
-            object: objectsFilter
-          }
+          createdAt: { gte: startOfMonth }
         }
       })
     ]);

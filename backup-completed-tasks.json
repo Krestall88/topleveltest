@@ -1,0 +1,25 @@
+[
+  {
+    "id": "cmgyu3cz000h7vyjos0mivkm0-2025-10-23",
+    "createdAt": "2025-10-23T05:47:04.978Z",
+    "description": "Влажная уборка пола с дезинфекцией",
+    "status": "COMPLETED",
+    "photoUrl": null,
+    "objectName": "ООО «ИНКАТЕХ»",
+    "roomName": "Тарный участок комната отдыха (32 м²)",
+    "scheduledStart": "2025-10-23T05:46:59.285Z",
+    "scheduledEnd": "2025-10-23T13:46:59.285Z",
+    "failureReason": null,
+    "completionComment": "123",
+    "completionPhotos": [],
+    "checklistId": "checklist-cmgyu37k900dnvyjormxgwbha-2025-10-23",
+    "roomId": "cmgz4wwpi003bvygkbdszfxhg",
+    "requestId": null,
+    "completedById": "cmga0qv530000vyzw7j2vmszs",
+    "completedAt": "2025-10-23T10:04:34.923Z",
+    "completedBy": {
+      "name": "Администратор",
+      "email": "admin@cleaning.com"
+    }
+  }
+]

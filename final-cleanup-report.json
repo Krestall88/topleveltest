@@ -1,0 +1,40 @@
+{
+  "timestamp": "2025-10-21T21:09:54.052Z",
+  "totalObjects": 29,
+  "targetAchieved": true,
+  "structure": {
+    "multiLevel": 20,
+    "sitesOnly": 9,
+    "roomsOnly": 0,
+    "empty": 0
+  },
+  "managersAssigned": 29,
+  "objectsWithoutManagers": 0,
+  "topObjectsBySites": [
+    {
+      "name": "УК Юг-сервис",
+      "sites": 280,
+      "manager": "Гордеев Роман Владимирович"
+    },
+    {
+      "name": "ЗАО «ГК «ЭЛЕКТРОЩИТ» ТМ САМАРА» 159 968.55 м2",
+      "sites": 9,
+      "manager": "Гайнуллина Айна Алиевна"
+    },
+    {
+      "name": "Акционерное общество “ТЯЖМАШ” АО “ТЯЖМАШ",
+      "sites": 8,
+      "manager": "Васекин Александр Александрович"
+    },
+    {
+      "name": "ООО «Производственная компания ФАБРИКА КАЧЕСТВА»",
+      "sites": 8,
+      "manager": "Галиев Рустам Рафикович"
+    },
+    {
+      "name": "Волгарь(ЖилЭнерго,ЖЭУ-66)",
+      "sites": 7,
+      "manager": "Бобровская Елена Владимировна"
+    }
+  ]
+}
