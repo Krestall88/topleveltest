@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -56,6 +56,14 @@ const PeriodTasksModal: React.FC<PeriodTasksModalProps> = ({
   const [commentText, setCommentText] = useState('');
   const [commentType, setCommentType] = useState('admin_note');
   const [taskCompletionModal, setTaskCompletionModalState] = useState<any>(null);
+  
+  // 🔥 ЛОКАЛЬНОЕ СОСТОЯНИЕ ЗАДАЧ - обновляется при завершении
+  const [localTasks, setLocalTasks] = useState<any[]>(tasks);
+  
+  // Обновляем локальные задачи при изменении пропса tasks
+  useEffect(() => {
+    setLocalTasks(tasks);
+  }, [tasks]);
   
   const setTaskCompletionModal = (task: any) => {
     setTaskCompletionModalState(task);
@@ -151,9 +159,9 @@ const PeriodTasksModal: React.FC<PeriodTasksModalProps> = ({
   };
 
   // Группируем задачи по статусу
-  const overdueTasks = tasks.filter(task => task.status === 'OVERDUE');
-  const todayTasks = tasks.filter(task => task.status === 'TODAY' || task.status === 'AVAILABLE');
-  const completedTasks = tasks.filter(task => task.status === 'COMPLETED');
+  const overdueTasks = localTasks.filter(task => task.status === 'OVERDUE');
+  const todayTasks = localTasks.filter(task => task.status === 'TODAY' || task.status === 'AVAILABLE');
+  const completedTasks = localTasks.filter(task => task.status === 'COMPLETED');
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -163,7 +171,7 @@ const PeriodTasksModal: React.FC<PeriodTasksModalProps> = ({
             <div>
               <span>{getFrequencyLabel(frequency)}</span>
               <div className="text-sm font-normal text-gray-600 mt-1">
-                Менеджер: {managerName} • Всего задач: {tasks.length}
+                Менеджер: {managerName} • Всего задач: {localTasks.length}
               </div>
             </div>
             <Button variant="ghost" size="sm" onClick={onClose}>
@@ -239,6 +247,24 @@ const PeriodTasksModal: React.FC<PeriodTasksModalProps> = ({
             onComplete={(completedTask) => {
               console.log('🔍 ДИАГНОСТИКА: PeriodTasksModal получил completedTask:', completedTask);
               setTaskCompletionModalState(null);
+              
+              // 🔥 ОБНОВЛЯЕМ ЛОКАЛЬНОЕ СОСТОЯНИЕ ЗАДАЧ
+              setLocalTasks(prevTasks => 
+                prevTasks.map(task => 
+                  task.id === completedTask.id 
+                    ? {
+                        ...task,
+                        ...completedTask,
+                        status: 'COMPLETED',
+                        completionComment: completedTask.completionComment,
+                        completionPhotos: completedTask.completionPhotos || [],
+                        completedAt: completedTask.completedAt,
+                        completedBy: completedTask.completedBy || { name: 'Текущий пользователь' }
+                      }
+                    : task
+                )
+              );
+              
               // Передаем данные о завершенной задаче для мгновенного обновления
               console.log('🔍 ДИАГНОСТИКА: Вызываем onTaskUpdate с:', completedTask);
               onTaskUpdate && onTaskUpdate(completedTask);
