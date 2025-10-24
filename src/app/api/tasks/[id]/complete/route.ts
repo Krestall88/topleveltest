@@ -161,6 +161,16 @@ export async function POST(req: NextRequest, { params }: Params) {
     const previousStatus = task.status;
     const completedAt = status === 'COMPLETED' || status === 'CLOSED_WITH_PHOTO' ? new Date() : null;
 
+    console.log('🔍 ОТЛАДКА: Завершаем задачу:', {
+      taskId: task.id,
+      status,
+      objectName: task.objectName,
+      checklistId: task.checklistId,
+      completedAt,
+      comment,
+      photosCount: photos?.length || 0
+    });
+
     // Обновляем задачу
     const updatedTask = await prisma.task.update({
       where: { id: task.id },

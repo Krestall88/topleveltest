@@ -259,6 +259,8 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    console.log('🔍 ОТЛАДКА: Ищем завершенные задачи с условием:', JSON.stringify(taskWhereClause, null, 2));
+    
     const completedTasks = await prisma.task.findMany({
       where: taskWhereClause,
       include: {
@@ -271,6 +273,17 @@ export async function GET(req: NextRequest) {
         }
       },
       orderBy: { completedAt: 'desc' }
+    });
+    
+    console.log('🔍 ОТЛАДКА: Найдено завершенных задач:', completedTasks.length);
+    completedTasks.forEach(task => {
+      console.log('🔍 ЗАДАЧА:', {
+        id: task.id,
+        status: task.status,
+        objectName: task.objectName,
+        checklistId: task.checklistId,
+        completedAt: task.completedAt
+      });
     });
 
     // Преобразуем завершенные задачи в нужный формат
