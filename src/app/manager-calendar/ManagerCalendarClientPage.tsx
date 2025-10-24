@@ -84,6 +84,8 @@ export default function ManagerCalendarClientPage() {
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [adminTaskDetailId, setAdminTaskDetailId] = useState<string | null>(null);
   const [taskCompletionModal, setTaskCompletionModal] = useState<any>(null);
+  const [dataCache, setDataCache] = useState<{[key: string]: any}>({});
+  const [loadingTimeout, setLoadingTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Загрузка объектов менеджера
   const loadObjects = async () => {
@@ -199,11 +201,11 @@ export default function ManagerCalendarClientPage() {
     
     // Затем подтягиваем актуальные данные с сервера
     setTimeout(() => {
-      loadStats();
+      debouncedLoadStats(true);
     }, 500);
   };
 
-  const loadStats = async () => {
+  const loadStats = async (forceReload = false) => {
     try {
       const params = new URLSearchParams({
         date: currentDate.toISOString().split('T')[0],
@@ -214,10 +216,34 @@ export default function ManagerCalendarClientPage() {
         params.append('objectId', selectedObject);
       }
 
+      const cacheKey = params.toString();
+      
+      // Проверяем кэш, если не принудительная перезагрузка
+      if (!forceReload && dataCache[cacheKey]) {
+        const cachedData = dataCache[cacheKey];
+        const newStats: ManagerStats = {
+          totalTasks: cachedData.total || 0,
+          overdueTasks: cachedData.overdue?.length || 0,
+          todayTasks: cachedData.today?.length || 0,
+          completedToday: cachedData.completed?.length || 0,
+          completionRate: cachedData.total > 0 ? Math.round((cachedData.completed?.length || 0) / cachedData.total * 100) : 0
+        };
+        setStats(newStats);
+        setTasks(cachedData);
+        setLoading(false);
+        return;
+      }
+
       // Используем упрощенный API для получения задач на основе техкарт
       const response = await fetch(`/api/tasks/calendar-simple?${params}`);
       if (response.ok) {
         const data = await response.json();
+        
+        // Кэшируем данные
+        setDataCache(prev => ({
+          ...prev,
+          [cacheKey]: data
+        }));
         
         const newStats: ManagerStats = {
           totalTasks: data.total || 0,
@@ -242,13 +268,35 @@ export default function ManagerCalendarClientPage() {
     }
   };
 
+  // Дебаунсированная версия loadStats
+  const debouncedLoadStats = (forceReload = false) => {
+    if (loadingTimeout) {
+      clearTimeout(loadingTimeout);
+    }
+    
+    const timeout = setTimeout(() => {
+      loadStats(forceReload);
+    }, 300); // Задержка 300мс
+    
+    setLoadingTimeout(timeout);
+  };
+
   useEffect(() => {
     loadObjects();
   }, []);
 
   useEffect(() => {
-    loadStats();
+    debouncedLoadStats();
   }, [currentDate, selectedObject]);
+
+  // Очистка таймаута при размонтировании
+  useEffect(() => {
+    return () => {
+      if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+      }
+    };
+  }, [loadingTimeout]);
 
   const handleDateChange = (direction: 'prev' | 'next') => {
     if (view === 'day') {
@@ -261,7 +309,7 @@ export default function ManagerCalendarClientPage() {
   };
 
   const handleTaskRefresh = () => {
-    loadStats(); // Обновляем статистику после выполнения задачи
+    debouncedLoadStats(true); // Принудительно обновляем статистику после выполнения задачи
   };
 
   // Обработчик действий с задачами
@@ -282,7 +330,7 @@ export default function ManagerCalendarClientPage() {
 
       if (response.ok) {
         // Обновляем данные после выполнения
-        loadStats();
+        debouncedLoadStats(true);
       } else {
         console.error('Ошибка выполнения задачи');
       }
@@ -315,7 +363,7 @@ export default function ManagerCalendarClientPage() {
             };
             handleTaskCompleted(taskId, updatedTask);
           } else {
-            loadStats();
+            debouncedLoadStats(true);
           }
           console.log('Задача выполнена успешно');
         }
@@ -340,7 +388,7 @@ export default function ManagerCalendarClientPage() {
     console.log('Выполнение задачи:', taskId, data);
     
     // Обновляем данные
-    loadStats();
+    debouncedLoadStats(true);
     
     // Закрываем модальное окно
     setSelectedManagerId(null);
@@ -378,7 +426,7 @@ export default function ManagerCalendarClientPage() {
 
       if (response.ok) {
         // Обновляем данные после добавления комментария
-        loadStats();
+        debouncedLoadStats(true);
         console.log('Комментарий добавлен успешно');
       }
     } catch (error) {
@@ -777,7 +825,7 @@ export default function ManagerCalendarClientPage() {
           taskId={selectedTaskId}
           userRole={userRole}
           onTaskUpdate={() => {
-            loadStats();
+            debouncedLoadStats(true);
             setSelectedTaskId(null);
           }}
         />
@@ -787,7 +835,7 @@ export default function ManagerCalendarClientPage() {
           onClose={() => setSelectedTaskId(null)}
           taskId={selectedTaskId}
           onTaskUpdate={() => {
-            loadStats();
+            debouncedLoadStats(true);
             setSelectedTaskId(null);
           }}
         />
@@ -815,8 +863,8 @@ export default function ManagerCalendarClientPage() {
               console.log('🔍 ДИАГНОСТИКА: Вызываем handleTaskCompleted с ID:', completedTask.id);
               handleTaskCompleted(completedTask.id, completedTask);
             } else {
-              console.log('🔍 ДИАГНОСТИКА: Нет completedTask, вызываем loadStats');
-              loadStats();
+              console.log('🔍 ДИАГНОСТИКА: Нет completedTask, вызываем debouncedLoadStats');
+              debouncedLoadStats(true);
             }
           }}
         />
@@ -831,7 +879,7 @@ export default function ManagerCalendarClientPage() {
           userRole={userRole}
           onTaskUpdate={() => {
             // Обновляем данные после изменения задачи
-            loadStats();
+            debouncedLoadStats(true);
           }}
         />
       )}
