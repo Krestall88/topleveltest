@@ -224,13 +224,13 @@ export default function ManagerCalendarClientPage() {
       });
     }
     
-    // Затем подтягиваем актуальные данные с сервера
-    setTimeout(() => {
-      debouncedLoadStats(true);
-    }, 500);
+    // НЕ перезагружаем данные автоматически - локальные изменения уже корректны
+    // setTimeout(() => {
+    //   loadStats();
+    // }, 500);
   };
 
-  const loadStats = async (forceReload = false) => {
+  const loadStats = async () => {
     try {
       const params = new URLSearchParams({
         date: currentDate.toISOString().split('T')[0],
@@ -241,34 +241,10 @@ export default function ManagerCalendarClientPage() {
         params.append('objectId', selectedObject);
       }
 
-      const cacheKey = params.toString();
-      
-      // Проверяем кэш, если не принудительная перезагрузка
-      if (!forceReload && dataCache[cacheKey]) {
-        const cachedData = dataCache[cacheKey];
-        const newStats: ManagerStats = {
-          totalTasks: cachedData.total || 0,
-          overdueTasks: cachedData.overdue?.length || 0,
-          todayTasks: cachedData.today?.length || 0,
-          completedToday: cachedData.completed?.length || 0,
-          completionRate: cachedData.total > 0 ? Math.round((cachedData.completed?.length || 0) / cachedData.total * 100) : 0
-        };
-        setStats(newStats);
-        setTasks(cachedData);
-        setLoading(false);
-        return;
-      }
-
       // Используем упрощенный API для получения задач на основе техкарт
       const response = await fetch(`/api/tasks/calendar-simple?${params}`);
       if (response.ok) {
         const data = await response.json();
-        
-        // Кэшируем данные
-        setDataCache(prev => ({
-          ...prev,
-          [cacheKey]: data
-        }));
         
         const newStats: ManagerStats = {
           totalTasks: data.total || 0,
@@ -294,27 +270,13 @@ export default function ManagerCalendarClientPage() {
   };
 
   // Дебаунсированная версия loadStats
-  const debouncedLoadStats = (forceReload = false) => {
+  const debouncedLoadStats = () => {
     if (loadingTimeout) {
       clearTimeout(loadingTimeout);
     }
     
-    // Проверяем, не заблокирована ли загрузка после завершения задачи
-    const now = Date.now();
-    if (!forceReload && (now < lastLoadTime)) {
-      console.log('⚡ Загрузка заблокирована после завершения задачи');
-      return;
-    }
-    
-    // 🔥 ВРЕМЕННО ОТКЛЮЧАЕМ ВСЕ ПРИНУДИТЕЛЬНЫЕ ПЕРЕЗАГРУЗКИ
-    if (forceReload) {
-      console.log('🚫 ПРИНУДИТЕЛЬНАЯ ПЕРЕЗАГРУЗКА ОТКЛЮЧЕНА ДЛЯ ОТЛАДКИ');
-      return;
-    }
-    
     const timeout = setTimeout(() => {
-      setLastLoadTime(Date.now());
-      loadStats(forceReload);
+      loadStats();
     }, 300); // Задержка 300мс
     
     setLoadingTimeout(timeout);
@@ -348,7 +310,7 @@ export default function ManagerCalendarClientPage() {
   };
 
   const handleTaskRefresh = () => {
-    debouncedLoadStats(true); // Принудительно обновляем статистику после выполнения задачи
+    debouncedLoadStats(); // Обновляем статистику после выполнения задачи
   };
 
   // Обработчик действий с задачами
@@ -402,7 +364,7 @@ export default function ManagerCalendarClientPage() {
             };
             handleTaskCompleted(taskId, updatedTask);
           } else {
-            debouncedLoadStats(true);
+            debouncedLoadStats();
           }
           console.log('Задача выполнена успешно');
         }
@@ -464,7 +426,7 @@ export default function ManagerCalendarClientPage() {
 
       if (response.ok) {
         // Обновляем данные после добавления комментария
-        debouncedLoadStats(true);
+        debouncedLoadStats();
         console.log('Комментарий добавлен успешно');
       }
     } catch (error) {
