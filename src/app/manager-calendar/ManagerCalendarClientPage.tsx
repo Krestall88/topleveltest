@@ -195,7 +195,51 @@ export default function ManagerCalendarClientPage() {
       completionRate: prevStats.totalTasks > 0 ? 
         Math.round(((prevStats.completedToday + 1) / prevStats.totalTasks) * 100) : 0
     }));
-
+    
+    // 🔥 ОБНОВЛЯЕМ tasks.byManager, чтобы при повторном открытии модального окна данные были актуальными
+    setTasks((prevTasks: any) => {
+      if (prevTasks.byManager) {
+        const updatedByManager = prevTasks.byManager.map((managerData: any) => ({
+          ...managerData,
+          tasks: managerData.tasks?.map((task: any) => 
+            task.id === completedTaskId 
+              ? {
+                  ...task,
+                  ...completedTask,
+                  status: 'COMPLETED',
+                  completedAt: completedTask.completedAt || new Date().toISOString(),
+                  completedBy: completedTask.completedBy || { name: 'Текущий пользователь' },
+                  completionComment: completedTask.completionComment,
+                  completionPhotos: completedTask.completionPhotos || []
+                }
+              : task
+          ) || [],
+          byPeriodicity: managerData.byPeriodicity?.map((periodData: any) => ({
+            ...periodData,
+            tasks: periodData.tasks?.map((task: any) => 
+              task.id === completedTaskId 
+                ? {
+                    ...task,
+                    ...completedTask,
+                    status: 'COMPLETED',
+                    completedAt: completedTask.completedAt || new Date().toISOString(),
+                    completedBy: completedTask.completedBy || { name: 'Текущий пользователь' },
+                    completionComment: completedTask.completionComment,
+                    completionPhotos: completedTask.completionPhotos || []
+                  }
+                : task
+            ) || []
+          })) || []
+        }));
+        
+        return {
+          ...prevTasks,
+          byManager: updatedByManager
+        };
+      }
+      return prevTasks;
+    });
+    
     // 🔥 ОБНОВЛЯЕМ periodModalData, чтобы модальное окно показало изменения
     if (periodModalData) {
       setPeriodModalData((prevData: any) => {
