@@ -854,8 +854,7 @@ export default function ManagerCalendarClientPage() {
           taskId={selectedTaskId}
           userRole={userRole}
           onTaskUpdate={() => {
-            // НЕ перезагружаем данные автоматически - задача уже обновлена локально
-            console.log('⚡ AdminTaskDetailModal onTaskUpdate - НЕ перезагружаем данные');
+            loadStats();
             setSelectedTaskId(null);
           }}
         />
@@ -865,8 +864,7 @@ export default function ManagerCalendarClientPage() {
           onClose={() => setSelectedTaskId(null)}
           taskId={selectedTaskId}
           onTaskUpdate={() => {
-            // НЕ перезагружаем данные автоматически - задача уже обновлена локально
-            console.log('⚡ TaskDetailModal onTaskUpdate - НЕ перезагружаем данные');
+            loadStats();
             setSelectedTaskId(null);
           }}
         />
@@ -909,8 +907,8 @@ export default function ManagerCalendarClientPage() {
           taskId={adminTaskDetailId}
           userRole={userRole}
           onTaskUpdate={() => {
-            // НЕ перезагружаем данные автоматически - задача уже обновлена локально
-            console.log('⚡ AdminTaskDetailModal (admin) onTaskUpdate - НЕ перезагружаем данные');
+            // Обновляем данные после изменения задачи
+            loadStats();
           }}
         />
       )}
