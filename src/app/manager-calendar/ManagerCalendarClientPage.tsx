@@ -160,7 +160,10 @@ export default function ManagerCalendarClientPage() {
             ...completedTask,
             status: 'COMPLETED',
             completedAt: completedTask.completedAt || new Date().toISOString(),
-            completedBy: completedTask.completedBy || { name: 'Текущий пользователь' }
+            completedBy: completedTask.completedBy || { name: 'Текущий пользователь' },
+            // Сохраняем комментарии и фото
+            completionComment: completedTask.completionComment,
+            completionPhotos: completedTask.completionPhotos || []
           } : task
         );
         return newTasks;
@@ -171,7 +174,10 @@ export default function ManagerCalendarClientPage() {
         ...completedTask,
         status: 'COMPLETED',
         completedAt: completedTask.completedAt || new Date().toISOString(),
-        completedBy: completedTask.completedBy || { name: 'Текущий пользователь' }
+        completedBy: completedTask.completedBy || { name: 'Текущий пользователь' },
+        // Сохраняем комментарии и фото
+        completionComment: completedTask.completionComment,
+        completionPhotos: completedTask.completionPhotos || []
       };
       
       newTasks.completed.unshift(completedTaskData);
@@ -201,7 +207,10 @@ export default function ManagerCalendarClientPage() {
               ...task,
               status: 'COMPLETED',
               completedAt: completedTask.completedAt || new Date().toISOString(),
-              completedBy: completedTask.completedBy || 'Текущий пользователь'
+              completedBy: completedTask.completedBy || 'Текущий пользователь',
+              // Сохраняем комментарии и фото
+              completionComment: completedTask.completionComment,
+              completionPhotos: completedTask.completionPhotos || []
             };
           }
           return task;
