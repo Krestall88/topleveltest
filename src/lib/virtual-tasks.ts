@@ -252,7 +252,9 @@ export async function materializeTask(
       roomName: techCard.room?.name || 'Неизвестное помещение',
       scheduledStart: date,
       scheduledEnd: new Date(date.getTime() + 8 * 60 * 60 * 1000), // +8 часов
-      roomId: techCard.roomId
+      roomId: techCard.roomId,
+      // 🔥 ДОБАВЛЯЕМ СВЯЗЬ С ЧЕКЛИСТОМ для правильной фильтрации
+      checklistId: techCard.id
     }
   });
   
