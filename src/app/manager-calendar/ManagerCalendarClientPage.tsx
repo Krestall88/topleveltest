@@ -290,6 +290,11 @@ export default function ManagerCalendarClientPage() {
       if (response.ok) {
         const data = await response.json();
         
+        console.log('🔍 КЛИЕНТ: Получили данные от API:', {
+          completedCount: data.completed?.length || 0,
+          completed: data.completed?.slice(0, 3) || [] // Первые 3 для проверки
+        });
+        
         const newStats: ManagerStats = {
           totalTasks: data.total || 0,
           overdueTasks: data.overdue?.length || 0,
