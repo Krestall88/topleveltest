@@ -79,8 +79,7 @@ export async function POST(req: NextRequest) {
         completionComment: comment,
         objectName: techCard.object.name,
         roomName: 'Общее',
-        completionType: completionType,
-        photos: photos || []
+        completionPhotos: photos || []
       }
     });
 

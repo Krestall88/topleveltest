@@ -221,24 +221,46 @@ export async function GET(req: NextRequest) {
     const endOfDay = new Date(baseDate);
     endOfDay.setHours(23, 59, 59, 999);
     
+    // Строим условия для поиска завершенных задач
+    const taskWhereClause: any = {
+      OR: [
+        { status: 'COMPLETED' },
+        { status: 'CLOSED_WITH_PHOTO' }
+      ],
+      completedAt: {
+        gte: startOfDay,
+        lte: endOfDay
+      }
+    };
+
+    // Добавляем фильтр по правам доступа для задач
+    if (user.role === 'MANAGER') {
+      // Для менеджера - задачи объектов, которыми он управляет
+      const managerObjects = await prisma.cleaningObject.findMany({
+        where: { managerId: user.id },
+        select: { name: true }
+      });
+      const objectNames = managerObjects.map(obj => obj.name);
+      
+      if (objectNames.length > 0) {
+        taskWhereClause.objectName = { in: objectNames };
+      } else {
+        // Если у менеджера нет объектов, не показываем задачи
+        taskWhereClause.objectName = { in: [] };
+      }
+    } else if (objectId) {
+      // Для админа с выбранным объектом
+      const selectedObject = await prisma.cleaningObject.findUnique({
+        where: { id: objectId },
+        select: { name: true }
+      });
+      if (selectedObject) {
+        taskWhereClause.objectName = selectedObject.name;
+      }
+    }
+
     const completedTasks = await prisma.task.findMany({
-      where: {
-        AND: [
-          whereClause,
-          {
-            OR: [
-              { status: 'COMPLETED' },
-              { status: 'CLOSED_WITH_PHOTO' }
-            ]
-          },
-          {
-            completedAt: {
-              gte: startOfDay,
-              lte: endOfDay
-            }
-          }
-        ]
-      },
+      where: taskWhereClause,
       include: {
         completedBy: { select: { name: true } },
         checklist: {
