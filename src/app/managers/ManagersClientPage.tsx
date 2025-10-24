@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import ManagerAssignmentModal from '@/components/ManagerAssignmentModal';
+import ManagerDetailModal from '@/components/ManagerDetailModal';
 import { UserPlus, Users } from 'lucide-react';
 
 interface Manager {
@@ -14,13 +15,14 @@ interface Manager {
   email: string;
   phone?: string;
   createdAt: string;
-  stats: {
-    objects: number;
-    checklists: number;
-    requests: number;
-    rooms: number;
-    totalExpenses: number;
-  };
+  objectsCount: number;
+  sitesInfo: string;
+  objectNames?: string; // Добавляем поле для названий объектов
+  sites: Array<{
+    name: string;
+    objectName: string;
+    comment?: string;
+  }>;
 }
 
 interface User {
@@ -52,6 +54,8 @@ export default function ManagersClientPage({ user }: Props) {
     newPassword: ''
   });
   const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
+  const [selectedManagerId, setSelectedManagerId] = useState<string>('');
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const fetchManagers = async () => {
     try {
@@ -129,6 +133,11 @@ export default function ManagersClientPage({ user }: Props) {
     setIsResetPasswordModalOpen(true);
   };
 
+  const handleShowDetails = (managerId: string) => {
+    setSelectedManagerId(managerId);
+    setIsDetailModalOpen(true);
+  };
+
   const handleResetPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -203,7 +212,7 @@ export default function ManagersClientPage({ user }: Props) {
       </div>
 
       {/* Статистика */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-blue-600">{managers.length}</div>
@@ -213,7 +222,7 @@ export default function ManagersClientPage({ user }: Props) {
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-green-600">
-              {managers.reduce((sum, m) => sum + m.stats.objects, 0)}
+              {managers.reduce((sum, m) => sum + m.objectsCount, 0)}
             </div>
             <div className="text-sm text-gray-600">Всего объектов</div>
           </CardContent>
@@ -221,17 +230,9 @@ export default function ManagersClientPage({ user }: Props) {
         <Card>
           <CardContent className="p-4">
             <div className="text-2xl font-bold text-purple-600">
-              {managers.reduce((sum, m) => sum + m.stats.checklists, 0)}
+              {managers.reduce((sum, m) => sum + m.sites.length, 0)}
             </div>
-            <div className="text-sm text-gray-600">Всего чек-листов</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-orange-600">
-              {formatCurrency(managers.reduce((sum, m) => sum + m.stats.totalExpenses, 0))}
-            </div>
-            <div className="text-sm text-gray-600">Общие расходы</div>
+            <div className="text-sm text-gray-600">Всего участков</div>
           </CardContent>
         </Card>
       </div>
@@ -263,7 +264,7 @@ export default function ManagersClientPage({ user }: Props) {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.location.href = `/managers/${manager.id}`}
+                      onClick={() => handleShowDetails(manager.id)}
                     >
                       📊 Подробно
                     </Button>
@@ -287,29 +288,27 @@ export default function ManagersClientPage({ user }: Props) {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-                  <div>
-                    <div className="font-semibold text-blue-600">{manager.stats.objects}</div>
-                    <div className="text-gray-600">Объекты</div>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Объекты:</span>
+                    <span className="font-semibold text-blue-600">{manager.objectsCount}</span>
                   </div>
-                  <div>
-                    <div className="font-semibold text-green-600">{manager.stats.rooms}</div>
-                    <div className="text-gray-600">Помещения</div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Участки:</span>
+                    <span className="font-semibold text-green-600">{manager.sites.length}</span>
                   </div>
-                  <div>
-                    <div className="font-semibold text-purple-600">{manager.stats.checklists}</div>
-                    <div className="text-gray-600">Чек-листы</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-yellow-600">{manager.stats.requests}</div>
-                    <div className="text-gray-600">Заявки</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-orange-600">
-                      {formatCurrency(manager.stats.totalExpenses)}
+                  {manager.objectNames && (
+                    <div className="mt-2 p-2 bg-blue-50 rounded text-sm">
+                      <div className="text-blue-600 mb-1">Объекты:</div>
+                      <div className="text-blue-800 font-medium">{manager.objectNames}</div>
                     </div>
-                    <div className="text-gray-600">Расходы</div>
-                  </div>
+                  )}
+                  {manager.sitesInfo && (
+                    <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                      <div className="text-gray-600 mb-1">Комментарии:</div>
+                      <div className="text-gray-800">{manager.sitesInfo}</div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -443,6 +442,16 @@ export default function ManagersClientPage({ user }: Props) {
         onAssignmentComplete={() => {
           fetchManagers();
           setIsAssignModalOpen(false);
+        }}
+      />
+
+      {/* Модальное окно с деталями менеджера */}
+      <ManagerDetailModal
+        managerId={selectedManagerId}
+        isOpen={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedManagerId('');
         }}
       />
     </div>

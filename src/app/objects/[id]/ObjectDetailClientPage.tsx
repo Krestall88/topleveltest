@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Calendar, CheckSquare, FileText, MapPin, User, Clock, Plus, Settings, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Calendar, CheckSquare, FileText, MapPin, User, Clock, Plus, Settings, CheckCircle2, Edit } from 'lucide-react';
 import TaskManager from '@/components/TaskManager';
 import TestChecklistCreator from '@/components/TestChecklistCreator';
 import ChecklistCompletionModal from '@/components/ChecklistCompletionModal';
@@ -39,6 +39,12 @@ interface CleaningObject {
   manager?: { id: string; name: string; email: string };
   creator?: { id: string; name: string };
   rooms: Room[];
+  sites?: Array<{
+    id: string;
+    name: string;
+    comment?: string;
+    manager?: { id: string; name: string; email: string };
+  }>;
   _count: {
     rooms: number;
     techCards: number;
@@ -82,7 +88,9 @@ export default function ObjectDetailClientPage() {
   const [selectedChecklistForCompletion, setSelectedChecklistForCompletion] = useState<any>(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [managers, setManagers] = useState<any[]>([]);
-  const [isEditingManager, setIsEditingManager] = useState(false);
+  const [isEditingManagers, setIsEditingManagers] = useState(false);
+  const [selectedManagerId, setSelectedManagerId] = useState('');
+  const [siteManagers, setSiteManagers] = useState<{[key: string]: string}>({});
   const [selectedTechTasks, setSelectedTechTasks] = useState<any[]>([]);
   const [selectedContext, setSelectedContext] = useState<string>('');
 
@@ -186,11 +194,77 @@ export default function ObjectDetailClientPage() {
       if (response.ok) {
         const updatedObject = await response.json();
         setObject(updatedObject);
-        setIsEditingManager(false);
+        setIsEditingManagers(false);
       }
     } catch (error) {
       console.error('Ошибка обновления менеджера:', error);
     }
+  };
+
+  const saveAllManagers = async () => {
+    try {
+      // Сохраняем основного менеджера
+      if (selectedManagerId !== (object?.manager?.id || '')) {
+        const response = await fetch(`/api/objects/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ managerId: selectedManagerId || null }),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Ошибка обновления основного менеджера');
+        }
+      }
+
+      // Сохраняем менеджеров участков
+      for (const [siteId, managerId] of Object.entries(siteManagers)) {
+        const currentSite = object?.sites?.find(s => s.id === siteId);
+        if (currentSite && managerId !== (currentSite.manager?.id || '')) {
+          const response = await fetch(`/api/sites/${siteId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ managerId: managerId || null }),
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Ошибка обновления менеджера участка ${currentSite.name}`);
+          }
+        }
+      }
+
+      // Обновляем данные объекта
+      await fetchObjectData();
+      setIsEditingManagers(false);
+      setSiteManagers({});
+      
+    } catch (error) {
+      console.error('Ошибка сохранения менеджеров:', error);
+      alert(`Ошибка сохранения: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+    }
+  };
+
+  const startEditingManagers = () => {
+    setIsEditingManagers(true);
+    setSelectedManagerId(object?.manager?.id || '');
+    
+    // Инициализируем только менеджеров участков, которые уже назначены
+    const initialSiteManagers: {[key: string]: string} = {};
+    object?.sites?.forEach(site => {
+      if (site.manager) {
+        initialSiteManagers[site.id] = site.manager.id;
+      }
+    });
+    setSiteManagers(initialSiteManagers);
+  };
+
+  const cancelEditingManagers = () => {
+    setIsEditingManagers(false);
+    setSelectedManagerId(object?.manager?.id || '');
+    setSiteManagers({});
   };
 
   const handleSelectTechTasks = (techTasks: any[], context: string) => {
@@ -282,51 +356,14 @@ export default function ObjectDetailClientPage() {
           <CardTitle className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold mb-2">{object.name}</h1>
-              <div className="flex items-center text-gray-600 space-x-4">
+              <div className="flex items-center text-gray-600">
                 <div className="flex items-center">
                   <MapPin className="w-4 h-4 mr-1" />
                   {object.address}
                 </div>
-                <div className="flex items-center">
-                  <User className="w-4 h-4 mr-1" />
-                  {isEditingManager ? (
-                    <div className="flex items-center space-x-2">
-                      <select
-                        defaultValue={object.manager?.id || ''}
-                        onChange={(e) => updateManager(e.target.value)}
-                        className="text-sm border border-gray-300 rounded px-2 py-1"
-                      >
-                        <option value="">Не назначен</option>
-                        {managers.map((manager) => (
-                          <option key={manager.id} value={manager.id}>
-                            {manager.name}
-                          </option>
-                        ))}
-                      </select>
-                      <Button
-                        onClick={() => setIsEditingManager(false)}
-                        size="sm"
-                        variant="outline"
-                      >
-                        Отмена
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center space-x-2">
-                      <span>{object.manager?.name || 'Не назначен'}</span>
-                      <Button
-                        onClick={() => setIsEditingManager(true)}
-                        size="sm"
-                        variant="outline"
-                      >
-                        Изменить
-                      </Button>
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
-            <div className="text-right space-y-2">
+            <div className="flex flex-col space-y-2">
               <div className="flex space-x-2">
                 <Button
                   onClick={() => setShowRequirementsManager(true)}
@@ -344,32 +381,161 @@ export default function ObjectDetailClientPage() {
                   className="flex items-center"
                 >
                   <Clock className="w-4 h-4 mr-1" />
-                  Расписание задач
+                  Расписание
                 </Button>
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 text-right">
                 Создан: {new Date(object.createdAt).toLocaleDateString('ru-RU')}
               </div>
             </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{object._count.rooms}</div>
-              <div className="text-sm text-gray-600">Помещений</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{object._count.techCards}</div>
-              <div className="text-sm text-gray-600">Техзаданий</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">{object._count.checklists}</div>
-              <div className="text-sm text-gray-600">Чек-листов</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{object._count.requests}</div>
-              <div className="text-sm text-gray-600">Заявок</div>
+          <div className="space-y-4">
+            {/* Менеджеры объекта - КОМПАКТНЫЙ ДИЗАЙН */}
+            <div className="bg-white rounded-lg border border-gray-200 p-3">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-gray-900 flex items-center">
+                  <User className="w-4 h-4 mr-2 text-blue-600" />
+                  Менеджеры
+                </h3>
+                {!isEditingManagers ? (
+                  <Button
+                    onClick={startEditingManagers}
+                    size="sm"
+                    variant="outline"
+                    className="h-6 px-2 text-xs"
+                  >
+                    <Edit className="w-3 h-3 mr-1" />
+                    Изменить
+                  </Button>
+                ) : (
+                  <div className="flex space-x-1">
+                    <Button
+                      onClick={cancelEditingManagers}
+                      size="sm"
+                      variant="outline"
+                      className="h-6 px-2 text-xs"
+                    >
+                      Отмена
+                    </Button>
+                    <Button
+                      onClick={saveAllManagers}
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                    >
+                      Сохранить
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                {/* Основной менеджер */}
+                {object.manager && (
+                  <div className="flex items-center justify-between p-2 bg-blue-50 rounded border-l-2 border-blue-500">
+                    <div className="flex items-center">
+                      <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center mr-2">
+                        <span className="text-white text-xs font-bold">★</span>
+                      </div>
+                      <div className="flex-1">
+                        {isEditingManagers ? (
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-blue-700">Основной менеджер:</label>
+                            <select
+                              value={selectedManagerId}
+                              onChange={(e) => setSelectedManagerId(e.target.value)}
+                              className="w-full p-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                              <option value="">-- Выберите менеджера --</option>
+                              {managers.map((manager) => (
+                                <option key={manager.id} value={manager.id}>
+                                  {manager.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        ) : (
+                          <div>
+                            <span className="text-sm font-medium text-blue-900">{object.manager.name}</span>
+                            <span className="text-xs text-blue-600 block">Основной менеджер</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Менеджеры участков - показываем только назначенных */}
+                {object.sites && object.sites.length > 0 && (
+                  <>
+                    {object.sites
+                      .filter(site => site.manager && site.manager.id !== object.manager?.id)
+                      .map((site) => (
+                        <div key={site.id} className="flex items-center justify-between p-2 bg-gray-50 rounded border-l-2 border-gray-300">
+                          <div className="flex items-center flex-1">
+                            <div className="w-5 h-5 bg-gray-500 rounded-full flex items-center justify-center mr-2">
+                              <span className="text-white text-xs">●</span>
+                            </div>
+                            <div className="flex-1">
+                              {isEditingManagers ? (
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-gray-700">
+                                    {site.comment || site.name}:
+                                  </label>
+                                  <select
+                                    value={siteManagers[site.id] || ''}
+                                    onChange={(e) => setSiteManagers(prev => ({
+                                      ...prev,
+                                      [site.id]: e.target.value
+                                    }))}
+                                    className="w-full p-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                  >
+                                    <option value="">-- Выберите менеджера --</option>
+                                    {managers.map((manager) => (
+                                      <option key={manager.id} value={manager.id}>
+                                        {manager.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              ) : (
+                                <div>
+                                  <span className="text-sm font-medium text-gray-800">{site.manager?.name}</span>
+                                  <span className="text-xs text-gray-600 block">
+                                    {site.comment || site.name}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    }
+                  </>
+                )}
+
+                {/* Если нет менеджеров вообще */}
+                {!object.manager && (!object.sites || object.sites.filter(s => s.manager).length === 0) && (
+                  <div className="flex items-center justify-between p-2 bg-yellow-50 rounded border-l-2 border-yellow-400">
+                    <div className="flex items-center">
+                      <div className="w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center mr-2">
+                        <span className="text-white text-xs">!</span>
+                      </div>
+                      <span className="text-sm text-yellow-800">Менеджеры не назначены</span>
+                    </div>
+                    <Button
+                      onClick={startEditingManagers}
+                      size="sm"
+                      variant="outline"
+                      className="h-6 px-2 text-xs"
+                    >
+                      Назначить
+                    </Button>
+                  </div>
+                )}
+
+              </div>
             </div>
           </div>
         </CardContent>
@@ -404,76 +570,6 @@ export default function ObjectDetailClientPage() {
         </div>
       </div>
 
-      {/* Последние чек-листы */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>📋 Последние чек-листы</span>
-            <Button 
-              onClick={() => handleCreateChecklist()}
-              size="sm"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Создать
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {checklists.slice(0, 5).map((checklist) => (
-            <div
-              key={checklist.id}
-              className="p-3 rounded-lg border hover:bg-gray-50"
-            >
-              <div className="flex items-center justify-between">
-                <div 
-                  className="flex-1 cursor-pointer"
-                  onClick={() => router.push(`/checklists/${checklist.id}`)}
-                >
-                  <div className="text-sm font-medium">
-                    {new Date(checklist.date).toLocaleDateString('ru-RU')}
-                  </div>
-                  {checklist.room && (
-                    <div className="text-xs text-gray-600 mt-1">
-                      {checklist.room.name}
-                    </div>
-                  )}
-                  <div className="text-xs text-gray-500 mt-1">
-                    {checklist.completedTasks}/{checklist.totalTasks} задач
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Badge 
-                    variant={checklist.completedAt ? 'default' : 'secondary'}
-                  >
-                    {checklist.completedAt ? 'Завершен' : 'В работе'}
-                  </Badge>
-                  
-                  {!checklist.completedAt && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCompleteChecklist(checklist.id);
-                      }}
-                    >
-                      <CheckCircle2 className="w-3 h-3 mr-1" />
-                      Завершить
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-          
-          {checklists.length === 0 && (
-            <div className="text-center py-4 text-gray-500">
-              Чек-листы не созданы
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Модальное окно управления техкартами */}
       {showTechCardManager && selectedRoom && (

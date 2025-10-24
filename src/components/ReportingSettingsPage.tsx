@@ -147,7 +147,7 @@ export default function ReportingSettingsPage() {
   const filteredObjects = objects.filter(obj =>
     obj.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     obj.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    obj.manager.name.toLowerCase().includes(searchTerm.toLowerCase())
+    (obj.manager?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -263,7 +263,7 @@ export default function ReportingSettingsPage() {
                     </div>
                     <div className="flex items-center gap-1">
                       <User className="h-3 w-3" />
-                      <span>{object.manager.name}</span>
+                      <span>{object.manager?.name || 'Менеджер не назначен'}</span>
                     </div>
                   </div>
                 </div>

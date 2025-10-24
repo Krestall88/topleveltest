@@ -25,6 +25,14 @@ export async function GET(req: NextRequest, { params }: Params) {
           },
           orderBy: { name: 'asc' }
         },
+        sites: {
+          include: {
+            manager: {
+              select: { id: true, name: true, email: true }
+            }
+          },
+          orderBy: { name: 'asc' }
+        },
         techCards: {
           orderBy: { name: 'asc' }
         },
@@ -73,6 +81,14 @@ export async function PUT(req: NextRequest, { params }: Params) {
         rooms: {
           include: {
             techCards: true
+          },
+          orderBy: { name: 'asc' }
+        },
+        sites: {
+          include: {
+            manager: {
+              select: { id: true, name: true, email: true }
+            }
           },
           orderBy: { name: 'asc' }
         },

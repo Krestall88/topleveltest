@@ -47,47 +47,63 @@ export async function GET(req: NextRequest) {
         email: true,
         phone: true,
         createdAt: true,
+        managedObjects: {
+          select: {
+            id: true,
+            name: true,
+          }
+        },
+        managedSites: {
+          select: {
+            id: true,
+            name: true,
+            comment: true,
+            object: {
+              select: {
+                name: true
+              }
+            }
+          }
+        }
       },
       orderBy: { createdAt: 'desc' }
     });
 
-    // Получаем дополнительную статистику для каждого менеджера
-    const managersWithStats = await Promise.all(
-      managers.map(async (manager) => {
-        const objectsCount = await prisma.cleaningObject.count({
-          where: { managerId: manager.id }
-        });
+    // Получаем информацию об участках для каждого менеджера
+    const managersWithSites = managers.map((manager) => {
+      const sites = manager.managedSites.map(site => ({
+        name: site.name,
+        objectName: site.object.name,
+        comment: site.comment
+      }));
 
-        const checklistsCount = await prisma.checklist.count({
-          where: { 
-            object: { managerId: manager.id }
-          }
-        });
+      // Формируем информацию о комментариях для отображения
+      const commentsInfo = sites.length > 0 
+        ? sites
+            .filter(site => site.comment) // Только участки с комментариями
+            .map(site => site.comment)
+            .join(', ')
+        : '';
 
-        const requestsCount = await prisma.request.count({
-          where: { 
-            object: { managerId: manager.id }
-          }
-        });
+      // Считаем уникальные объекты: прямо назначенные + через участки
+      const directObjects = manager.managedObjects.map(obj => obj.name);
+      const siteObjects = sites.map(site => site.objectName);
+      const allUniqueObjects = [...new Set([...directObjects, ...siteObjects])];
 
-        // Временно упрощаем до базовой статистики
-        const roomsCount = 0; // Будет реализовано после обновления Prisma
-        const totalExpenses = 0; // Будет реализовано после обновления Prisma
+      return {
+        id: manager.id,
+        name: manager.name,
+        email: manager.email,
+        phone: manager.phone,
+        createdAt: manager.createdAt,
+        objectsCount: allUniqueObjects.length, // Считаем все уникальные объекты
+        sitesInfo: commentsInfo, // Теперь показываем комментарии вместо названий участков
+        sites: sites,
+        objectNames: allUniqueObjects.join(', ') // Добавляем названия объектов для отображения
+      };
+    });
 
-        return {
-          ...manager,
-          stats: {
-            objects: objectsCount,
-            checklists: checklistsCount,
-            requests: requestsCount,
-            rooms: roomsCount,
-            totalExpenses: totalExpenses,
-          }
-        };
-      })
-    );
-
-    return NextResponse.json(managersWithStats);
+    return NextResponse.json(managersWithSites);
   } catch (error) {
     console.error('Error fetching managers:', error);
     return NextResponse.json(

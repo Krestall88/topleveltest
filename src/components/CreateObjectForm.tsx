@@ -123,13 +123,13 @@ export default function CreateObjectForm({ onSuccess, onCancel }: CreateObjectFo
 
   const loadManagers = async () => {
     try {
-      const response = await fetch('/api/managers', {
+      const response = await fetch('/api/users?role=MANAGER', {
         credentials: 'include' // Включаем cookies
       });
 
       if (response.ok) {
         const data = await response.json();
-        setManagers(data.managers || []);
+        setManagers(data || []);
       } else {
         console.error('Ошибка загрузки менеджеров:', response.status);
       }
@@ -524,7 +524,7 @@ export default function CreateObjectForm({ onSuccess, onCancel }: CreateObjectFo
                   checked={autoChecklistEnabled}
                   onCheckedChange={(checked) => setAutoChecklistEnabled(checked === true)}
                 />
-                <Label htmlFor="autoChecklist">Автоматические чек-листы</Label>
+                <Label htmlFor="autoChecklist">Автоматическое планирование задач</Label>
               </div>
               
               <div className="flex items-center space-x-2">

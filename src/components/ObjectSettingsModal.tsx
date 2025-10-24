@@ -342,7 +342,7 @@ export default function ObjectSettingsModal({
               </CardContent>
             </Card>
 
-            {/* Автоматические чек-листы */}
+            {/* Настройки планирования */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2 text-base">

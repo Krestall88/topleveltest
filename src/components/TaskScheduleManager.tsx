@@ -130,7 +130,7 @@ export default function TaskScheduleManager({
   };
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && schedules.length === 0) {
       fetchSchedules();
     }
   }, [isOpen, objectId, roomId]);

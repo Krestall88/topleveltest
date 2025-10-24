@@ -13,11 +13,6 @@ interface CleaningObject {
   name: string;
   address: string;
   manager?: { id: string; name: string | null } | null;
-  _count?: {
-    rooms: number;
-    requests: number;
-    checklists: number;
-  };
 }
 
 export default function ObjectsClientPage() {
@@ -281,11 +276,6 @@ export default function ObjectsClientPage() {
                     <span className="font-medium">Менеджер:</span>{' '}
                     {obj.manager?.name || 'Не назначен'}
                   </div>
-                  <div className="grid grid-cols-3 gap-4 text-xs text-gray-500">
-                    <div>Помещений: {obj._count?.rooms || 0}</div>
-                    <div>Заявок: {obj._count?.requests || 0}</div>
-                    <div>Чек-листов: {obj._count?.checklists || 0}</div>
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -508,9 +498,6 @@ export default function ObjectsClientPage() {
                 <div className="space-y-2 text-sm">
                   <div><span className="font-medium">Адрес:</span> {selectedObject.address}</div>
                   <div><span className="font-medium">Менеджер:</span> {selectedObject.manager?.name || 'Не назначен'}</div>
-                  <div><span className="font-medium">Помещений:</span> {selectedObject._count?.rooms || 0}</div>
-                  <div><span className="font-medium">Активных заявок:</span> {selectedObject._count?.requests || 0}</div>
-                  <div><span className="font-medium">Чек-листов:</span> {selectedObject._count?.checklists || 0}</div>
                 </div>
               </div>
               

@@ -123,6 +123,7 @@ QUALITY_CHECK QUALITY_CHECK
     String name 
     String description "❓"
     Float area "❓"
+    String comment "❓"
     }
   
 

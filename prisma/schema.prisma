@@ -113,6 +113,7 @@ model Site {
   name        String         // Название участка
   description String?        // Описание участка
   area        Float?         // Площадь участка
+  comment     String?        // Комментарий к участку (переименовано из areaInfo)
   objectId    String
   managerId   String?        // Менеджер участка
   

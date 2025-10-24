@@ -172,7 +172,7 @@ export default function AutoChecklistManager() {
       {/* Заголовок */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">🤖 Автоматические чек-листы</h2>
+          <h2 className="text-2xl font-bold">🤖 Планировщик задач</h2>
           <p className="text-gray-600">
             Управление автоматическим созданием чек-листов и очисткой данных
           </p>

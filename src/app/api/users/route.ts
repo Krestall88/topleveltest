@@ -35,14 +35,21 @@ export async function GET(req: NextRequest) {
   try {
     const user = await getUserFromToken(req);
     
-    // Только админ может управлять пользователями
-    if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json({ message: 'Доступ запрещен' }, { status: 403 });
-    }
-
     // Получаем параметр фильтрации по роли
     const { searchParams } = new URL(req.url);
     const roleFilter = searchParams.get('role');
+    
+    // Для получения списка менеджеров разрешаем всем авторизованным пользователям
+    if (roleFilter === 'MANAGER') {
+      if (!user) {
+        return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
+      }
+    } else {
+      // Для управления пользователями только админ
+      if (!user || user.role !== 'ADMIN') {
+        return NextResponse.json({ message: 'Доступ запрещен' }, { status: 403 });
+      }
+    }
 
     // Получаем всех пользователей кроме клиентов
     const whereClause = roleFilter 
