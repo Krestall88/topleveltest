@@ -86,6 +86,7 @@ export default function ManagerCalendarClientPage() {
   const [taskCompletionModal, setTaskCompletionModal] = useState<any>(null);
   const [dataCache, setDataCache] = useState<{[key: string]: any}>({});
   const [loadingTimeout, setLoadingTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [lastLoadTime, setLastLoadTime] = useState<number>(0);
 
   // Загрузка объектов менеджера
   const loadObjects = async () => {
@@ -116,6 +117,11 @@ export default function ManagerCalendarClientPage() {
   // Мгновенное обновление состояния после завершения задачи
   const handleTaskCompleted = (completedTaskId: string, completedTask: any) => {
     console.log('🔍 ДИАГНОСТИКА: handleTaskCompleted вызван с:', { completedTaskId, completedTask });
+    
+    // 🔥 ОТКЛЮЧАЕМ автоматическую перезагрузку на 3 секунды
+    const now = Date.now();
+    setLastLoadTime(now + 3000); // Блокируем загрузку на 3 секунды
+    
     setTasks((prevTasks: any) => {
       console.log('🔍 ДИАГНОСТИКА: Текущие задачи до обновления:', prevTasks);
       const newTasks = { ...prevTasks };
@@ -146,7 +152,17 @@ export default function ManagerCalendarClientPage() {
       // Проверяем, что задача еще не добавлена в completed (избегаем дублирования)
       const alreadyCompleted = newTasks.completed.some((task: any) => task.id === completedTaskId);
       if (alreadyCompleted) {
-        console.log('🔍 ДИАГНОСТИКА: Задача уже в completed, пропускаем');
+        console.log('🔍 ДИАГНОСТИКА: Задача уже в completed, обновляем данные');
+        // Обновляем существующую задачу
+        newTasks.completed = newTasks.completed.map((task: any) => 
+          task.id === completedTaskId ? {
+            ...task,
+            ...completedTask,
+            status: 'COMPLETED',
+            completedAt: completedTask.completedAt || new Date().toISOString(),
+            completedBy: completedTask.completedBy || { name: 'Текущий пользователь' }
+          } : task
+        );
         return newTasks;
       }
       
@@ -155,7 +171,7 @@ export default function ManagerCalendarClientPage() {
         ...completedTask,
         status: 'COMPLETED',
         completedAt: completedTask.completedAt || new Date().toISOString(),
-        completedBy: completedTask.completedBy || 'Текущий пользователь'
+        completedBy: completedTask.completedBy || { name: 'Текущий пользователь' }
       };
       
       newTasks.completed.unshift(completedTaskData);
@@ -274,9 +290,17 @@ export default function ManagerCalendarClientPage() {
       clearTimeout(loadingTimeout);
     }
     
+    // Проверяем, не заблокирована ли загрузка после завершения задачи
+    const now = Date.now();
+    if (!forceReload && (now < lastLoadTime)) {
+      console.log('⚡ Загрузка заблокирована после завершения задачи');
+      return;
+    }
+    
     const timeout = setTimeout(() => {
+      setLastLoadTime(Date.now());
       loadStats(forceReload);
-    }, 300); // Задержка 300мс
+    }, forceReload ? 0 : 300); // Задержка 300мс
     
     setLoadingTimeout(timeout);
   };
@@ -329,8 +353,8 @@ export default function ManagerCalendarClientPage() {
       });
 
       if (response.ok) {
-        // Обновляем данные после выполнения
-        debouncedLoadStats(true);
+        // НЕ обновляем данные автоматически - пусть handleTaskCompleted сделает это
+        console.log('Задача выполнена через execute-simple');
       } else {
         console.error('Ошибка выполнения задачи');
       }
@@ -387,8 +411,7 @@ export default function ManagerCalendarClientPage() {
     // Здесь будет логика выполнения задачи с фотоотчетами
     console.log('Выполнение задачи:', taskId, data);
     
-    // Обновляем данные
-    debouncedLoadStats(true);
+    // НЕ обновляем данные автоматически - пусть handleTaskCompleted сделает это
     
     // Закрываем модальное окно
     setSelectedManagerId(null);
