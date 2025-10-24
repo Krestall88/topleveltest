@@ -63,6 +63,22 @@ export async function GET(
               }
             }
           }
+        },
+        adminComments: {
+          include: {
+            admin: {
+              select: { name: true }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        },
+        photoReports: {
+          include: {
+            uploader: {
+              select: { name: true }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
         }
       }
     });
@@ -86,8 +102,8 @@ export async function GET(
       completedAt: taskRecord.completedAt,
       completedBy: taskRecord.completedBy,
       room: taskRecord.room,
-      adminComments: [],
-      photoReports: []
+      adminComments: taskRecord.adminComments || [],
+      photoReports: taskRecord.photoReports || []
     });
 
   } catch (error) {
