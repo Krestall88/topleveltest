@@ -720,8 +720,8 @@ export default function ManagerCalendarClientPage() {
                       {group.tasks.slice(0, 5).map((task: any) => (
                         <div key={task.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                           <div>
-                            <span className="font-medium">{task.techCard.name}</span>
-                            <span className="text-sm text-gray-500 ml-2">({task.room?.name || 'Общее'})</span>
+                            <span className="font-medium">{task.techCard?.name || task.description}</span>
+                            <span className="text-sm text-gray-500 ml-2">({task.room?.name || task.roomName || 'Общее'})</span>
                           </div>
                           <Badge variant={task.status === 'COMPLETED' ? 'default' : 'outline'}>
                             {task.status === 'COMPLETED' ? 'Выполнено' : 'В работе'}
