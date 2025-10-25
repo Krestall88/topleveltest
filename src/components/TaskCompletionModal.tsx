@@ -100,13 +100,24 @@ export default function TaskCompletionModal({
   const handleSubmit = async () => {
     if (!task) return;
 
-    // Проверка требований к фото
-    if (photoRequired && photos.length < minPhotos) {
-      setError(`Требуется минимум ${minPhotos} фото для завершения задачи`);
+    console.log('🔍 ДИАГНОСТИКА: Попытка завершить задачу:', {
+      taskId: task.id,
+      currentStatus: task.status,
+      isAlreadyCompleted: task.status === 'COMPLETED',
+      hasCompletedAt: !!task.completedAt,
+      completedBy: task.completedBy
+    });
+
+    // Проверяем, не завершена ли задача уже
+    if (task.status === 'COMPLETED') {
+      console.log('❌ ОШИБКА: Попытка завершить уже завершенную задачу!');
+      setError('Задача уже завершена');
+      setIsSubmitting(false);
       return;
     }
 
-    // Проверка требований к комментарию
+    setIsSubmitting(true);
+    setError('');
     if (commentRequired && !comment.trim()) {
       setError('Для завершения задачи требуется комментарий');
       return;
