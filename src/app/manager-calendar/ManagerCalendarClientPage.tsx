@@ -292,7 +292,9 @@ export default function ManagerCalendarClientPage() {
         
         console.log('🔍 КЛИЕНТ: Получили данные от API:', {
           completedCount: data.completed?.length || 0,
-          completed: data.completed?.slice(0, 3) || [] // Первые 3 для проверки
+          completed: data.completed?.slice(0, 3) || [], // Первые 3 для проверки
+          byManagerCount: data.byManager?.length || 0,
+          byManager: data.byManager?.slice(0, 2) || [] // Первые 2 менеджера для проверки
         });
         
         const newStats: ManagerStats = {
@@ -446,6 +448,15 @@ export default function ManagerCalendarClientPage() {
   // Обработчик просмотра задач периода
   const handleViewPeriodTasks = (managerId: string, frequency: string, periodTasks: any[]) => {
     const manager = tasks.byManager?.find((m: any) => m.manager.id === managerId);
+    
+    console.log('🔍 КЛИЕНТ: Открываем модальное окно с задачами:', {
+      managerId,
+      frequency,
+      tasksCount: periodTasks.length,
+      completedTasks: periodTasks.filter(t => t.status === 'COMPLETED').length,
+      tasks: periodTasks.slice(0, 3) // Первые 3 для проверки
+    });
+    
     setPeriodModalData({
       managerId,
       managerName: manager?.manager.name || 'Неизвестный менеджер',
