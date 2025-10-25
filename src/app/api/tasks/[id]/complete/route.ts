@@ -69,18 +69,22 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     // Если задача не найдена в БД, пытаемся материализовать виртуальную задачу
     if (!task) {
-      console.log('📋 Задача не найдена в БД, пытаемся материализовать виртуальную...');
+      console.log('📋 Задача не найдена в БД, пытаемся материализовать виртуальную...', { taskId });
       
       // Парсим ID виртуальной задачи (формат: techCardId-date)
       const parts = taskId.split('-');
+      console.log('🔍 ПАРСИНГ ID:', { taskId, parts, partsLength: parts.length });
+      
       if (parts.length >= 4) { // например: cmgyu3afm00fjvyjo1rk1i08j-2025-10-23
         const dateStr = parts.slice(-3).join('-'); // последние 3 части - дата
         const techCardId = parts.slice(0, -3).join('-'); // все остальное - ID техкарты
         
+        console.log('🔍 РЕЗУЛЬТАТ ПАРСИНГА:', { techCardId, dateStr });
+        
         try {
           const date = new Date(dateStr);
           if (!isNaN(date.getTime())) {
-            console.log('🔧 Материализуем задачу:', { techCardId, dateStr });
+            console.log('🔧 Материализуем задачу:', { techCardId, dateStr, date });
             
             // Материализуем задачу
             const materializedTask = await materializeTask(techCardId, date, 'complete');

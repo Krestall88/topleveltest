@@ -229,6 +229,8 @@ export async function materializeTask(
     return task; // Задача уже существует
   }
   
+  console.log('🔍 МАТЕРИАЛИЗАЦИЯ: Ищем техкарту:', { techCardId, dateStr });
+  
   // Получаем техкарту для создания задачи
   const techCard = await prisma.techCard.findUnique({
     where: { id: techCardId },
@@ -238,8 +240,15 @@ export async function materializeTask(
     }
   });
   
+  console.log('🔍 МАТЕРИАЛИЗАЦИЯ: Результат поиска техкарты:', { 
+    found: !!techCard, 
+    techCardId: techCard?.id,
+    objectName: techCard?.object?.name 
+  });
+  
   if (!techCard) {
-    throw new Error('Техкарта не найдена');
+    console.log('❌ ОШИБКА: Техкарта не найдена!', { techCardId });
+    throw new Error(`Техкарта не найдена: ${techCardId}`);
   }
   
   // Создаем реальную задачу
