@@ -307,6 +307,13 @@ export async function GET(req: NextRequest) {
       // 🔥 ОБЪЕДИНЯЕМ виртуальные задачи и завершенные для правильной группировки
       const allTasksWithCompleted = [...allTasks, ...completed];
       
+      console.log('🔍 API CALENDAR: Объединяем задачи:', {
+        virtualTasks: allTasks.length,
+        completedTasks: completed.length,
+        totalTasks: allTasksWithCompleted.length,
+        completedSample: completed.slice(0, 2).map(t => ({ id: t.id, status: t.status }))
+      });
+      
       // Группировка по менеджерам
       byManager = allTasksWithCompleted.reduce((acc: any, task: any) => {
         // 🔥 УЧИТЫВАЕМ разную структуру виртуальных и завершенных задач
@@ -334,6 +341,7 @@ export async function GET(req: NextRequest) {
         
         if (task.status === 'OVERDUE') acc[managerId].stats.overdue++;
         else if (task.status === 'AVAILABLE') acc[managerId].stats.today++;
+        else if (task.status === 'COMPLETED') acc[managerId].stats.completed++;
         
         // Добавляем объект в список (если еще нет)
         const objectExists = acc[managerId].objects.find((obj: any) => obj.id === taskObject?.id);
@@ -382,6 +390,7 @@ export async function GET(req: NextRequest) {
         
         if (task.status === 'OVERDUE') acc[objectId].stats.overdue++;
         else if (task.status === 'AVAILABLE') acc[objectId].stats.today++;
+        else if (task.status === 'COMPLETED') acc[objectId].stats.completed++;
         
         return acc;
       }, {});
