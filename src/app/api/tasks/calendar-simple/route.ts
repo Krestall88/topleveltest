@@ -304,8 +304,11 @@ export async function GET(req: NextRequest) {
     let byObject = {};
     
     if (user.role === 'ADMIN' || user.role === 'DEPUTY') {
+      // 🔥 ОБЪЕДИНЯЕМ виртуальные задачи и завершенные для правильной группировки
+      const allTasksWithCompleted = [...allTasks, ...completed];
+      
       // Группировка по менеджерам
-      byManager = allTasks.reduce((acc: any, task: any) => {
+      byManager = allTasksWithCompleted.reduce((acc: any, task: any) => {
         const managerId = task.object.manager?.id || 'unassigned';
         const managerName = task.object.manager?.name || 'Не назначен';
         const managerPhone = task.object.manager?.phone || null;
@@ -358,7 +361,7 @@ export async function GET(req: NextRequest) {
       }, {});
 
       // Группировка по объектам
-      byObject = allTasks.reduce((acc: any, task: any) => {
+      byObject = allTasksWithCompleted.reduce((acc: any, task: any) => {
         const objectId = task.object.id;
         const objectName = task.object.name;
         
