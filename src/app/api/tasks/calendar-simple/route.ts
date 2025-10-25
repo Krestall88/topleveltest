@@ -309,9 +309,11 @@ export async function GET(req: NextRequest) {
       
       // Группировка по менеджерам
       byManager = allTasksWithCompleted.reduce((acc: any, task: any) => {
-        const managerId = task.object.manager?.id || 'unassigned';
-        const managerName = task.object.manager?.name || 'Не назначен';
-        const managerPhone = task.object.manager?.phone || null;
+        // 🔥 УЧИТЫВАЕМ разную структуру виртуальных и завершенных задач
+        const taskObject = task.object || task.checklist?.object;
+        const managerId = taskObject?.manager?.id || taskObject?.managerId || 'unassigned';
+        const managerName = taskObject?.manager?.name || 'Не назначен';
+        const managerPhone = taskObject?.manager?.phone || null;
         
         if (!acc[managerId]) {
           acc[managerId] = {
@@ -334,11 +336,11 @@ export async function GET(req: NextRequest) {
         else if (task.status === 'AVAILABLE') acc[managerId].stats.today++;
         
         // Добавляем объект в список (если еще нет)
-        const objectExists = acc[managerId].objects.find((obj: any) => obj.id === task.object.id);
-        if (!objectExists) {
+        const objectExists = acc[managerId].objects.find((obj: any) => obj.id === taskObject?.id);
+        if (!objectExists && taskObject?.id) {
           acc[managerId].objects.push({
-            id: task.object.id,
-            name: task.object.name
+            id: taskObject.id,
+            name: taskObject.name
           });
         }
         
@@ -362,8 +364,10 @@ export async function GET(req: NextRequest) {
 
       // Группировка по объектам
       byObject = allTasksWithCompleted.reduce((acc: any, task: any) => {
-        const objectId = task.object.id;
-        const objectName = task.object.name;
+        // 🔥 УЧИТЫВАЕМ разную структуру виртуальных и завершенных задач
+        const taskObject = task.object || task.checklist?.object;
+        const objectId = taskObject?.id;
+        const objectName = taskObject?.name;
         
         if (!acc[objectId]) {
           acc[objectId] = {
