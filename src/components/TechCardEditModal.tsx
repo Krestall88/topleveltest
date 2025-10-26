@@ -24,29 +24,6 @@ interface TechCardEditModalProps {
   onSave: () => void;
 }
 
-// Стандартные значения периодичности после унификации
-const FREQUENCY_OPTIONS = [
-  'Ежедневно',
-  'Еженедельно',
-  '2 раза в неделю',
-  '3 раза в неделю',
-  '3-4 раза в неделю',
-  '5 раз в неделю',
-  'Ежемесячно',
-  '4 раза в месяц',
-  '2 раза в день',
-  '3 раза в день',
-  '2 раза в год',
-  'Ежеквартально',
-  'С Пн по Пт (1 раз в день)',
-  'С Пн по Пт (2 раза в день)',
-  'С Пн по Пт (2 раза в неделю)',
-  'С Пн по Пт (1 раз в неделю)',
-  'Суббота и Воскресенье (1 раз)',
-  'По мере необходимости',
-  'Ежемесячно',
-];
-
 // Типы работ
 const WORK_TYPE_OPTIONS = [
   'Общие работы',
@@ -175,21 +152,16 @@ export default function TechCardEditModal({ isOpen, onClose, techCard, onSave }:
 
           <div>
             <Label htmlFor="frequency">Периодичность *</Label>
-            <Select
+            <Input
+              id="frequency"
               value={formData.frequency}
-              onValueChange={(value) => setFormData({ ...formData, frequency: value })}
-            >
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Выберите периодичность" />
-              </SelectTrigger>
-              <SelectContent className="z-[60] max-h-[300px]">
-                {FREQUENCY_OPTIONS.map((freq) => (
-                  <SelectItem key={freq} value={freq}>
-                    {freq}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
+              placeholder="Например: Ежедневно, 2 раза в неделю, По мере необходимости"
+              className="mt-1"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Примеры: Ежедневно, Еженедельно, 2 раза в неделю, Ежемесячно, По мере необходимости
+            </p>
           </div>
 
           <div>
