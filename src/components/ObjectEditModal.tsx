@@ -290,6 +290,9 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Загрузка данных объекта</DialogTitle>
+          </DialogHeader>
           <div className="flex items-center justify-center p-8">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
