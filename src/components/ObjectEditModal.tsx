@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Trash2, Plus, Edit, Save, X } from 'lucide-react';
+import TechCardEditModal from '@/components/TechCardEditModal';
 
 interface Manager {
   id: string;
@@ -84,6 +85,8 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
   const [editingItem, setEditingItem] = useState<{ type: string; id: string } | null>(null);
+  const [editingTechCard, setEditingTechCard] = useState<TechCard | null>(null);
+  const [showTechCardEditModal, setShowTechCardEditModal] = useState(false);
 
   // Загрузка данных объекта
   useEffect(() => {
@@ -239,34 +242,15 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
   };
 
   // Редактирование техкарты
-  const editTechCard = async (techCard: TechCard) => {
-    const name = prompt('Название техкарты:', techCard.name);
-    if (!name) return;
+  const editTechCard = (techCard: TechCard) => {
+    setEditingTechCard(techCard);
+    setShowTechCardEditModal(true);
+  };
 
-    const workType = prompt('Тип работы:', techCard.workType);
-    if (!workType) return;
-
-    const frequency = prompt('Периодичность:', techCard.frequency);
-    if (!frequency) return;
-
-    try {
-      const response = await fetch(`/api/techcards/${techCard.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          workType,
-          frequency,
-          description: techCard.description
-        })
-      });
-
-      if (response.ok) {
-        loadObjectData();
-      }
-    } catch (error) {
-      console.error('Ошибка редактирования техкарты:', error);
-    }
+  const handleTechCardSaved = () => {
+    loadObjectData();
+    setShowTechCardEditModal(false);
+    setEditingTechCard(null);
   };
 
   // Удаление техкарты
@@ -583,6 +567,17 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
           </TabsContent>
         </Tabs>
       </DialogContent>
+
+      {/* Модальное окно редактирования техкарты */}
+      <TechCardEditModal
+        isOpen={showTechCardEditModal}
+        onClose={() => {
+          setShowTechCardEditModal(false);
+          setEditingTechCard(null);
+        }}
+        techCard={editingTechCard}
+        onSave={handleTechCardSaved}
+      />
     </Dialog>
   );
 }
