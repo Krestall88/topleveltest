@@ -21,7 +21,7 @@ interface Site {
   name: string;
   description?: string;
   area?: number;
-  zones: Zone[];
+  zones?: Zone[];
 }
 
 interface Zone {
@@ -29,7 +29,7 @@ interface Zone {
   name: string;
   description?: string;
   area?: number;
-  roomGroups: RoomGroup[];
+  roomGroups?: RoomGroup[];
 }
 
 interface RoomGroup {
@@ -37,7 +37,7 @@ interface RoomGroup {
   name: string;
   description?: string;
   area?: number;
-  rooms: Room[];
+  rooms?: Room[];
 }
 
 interface Room {
@@ -435,7 +435,7 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
                     <h4 className="font-medium">{site.name}</h4>
                     <div className="flex gap-2">
                       <Badge variant="outline">
-                        {site.zones.length} зон
+                        {site.zones?.length || 0} зон
                       </Badge>
                       <Button
                         onClick={() => deleteSite(site.id)}
@@ -455,7 +455,7 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
                     <p className="text-sm text-gray-500">Площадь: {site.area} м²</p>
                   )}
 
-                  {site.zones.length > 0 && (
+                  {site.zones && site.zones.length > 0 && (
                     <div className="mt-3 pl-4 border-l-2 border-gray-200">
                       <h5 className="font-medium text-sm mb-2">Зоны:</h5>
                       {site.zones.map((zone) => (
@@ -463,7 +463,7 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
                           <div className="flex items-center justify-between">
                             <span className="text-sm">{zone.name}</span>
                             <Badge variant="secondary" className="text-xs">
-                              {zone.roomGroups.reduce((sum, rg) => sum + rg.rooms.length, 0)} помещений
+                              {zone.roomGroups?.reduce((sum, rg) => sum + (rg.rooms?.length || 0), 0) || 0} помещений
                             </Badge>
                           </div>
                         </div>
@@ -555,7 +555,7 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
               
               <div className="bg-green-50 p-4 rounded-lg">
                 <div className="text-2xl font-bold text-green-600">
-                  {object.sites.reduce((sum, site) => sum + site.zones.length, 0)}
+                  {object.sites.reduce((sum, site) => sum + (site.zones?.length || 0), 0)}
                 </div>
                 <div className="text-sm text-green-800">Зон</div>
               </div>
