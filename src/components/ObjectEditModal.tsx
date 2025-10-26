@@ -238,6 +238,54 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
     }
   };
 
+  // Редактирование техкарты
+  const editTechCard = async (techCard: TechCard) => {
+    const name = prompt('Название техкарты:', techCard.name);
+    if (!name) return;
+
+    const workType = prompt('Тип работы:', techCard.workType);
+    if (!workType) return;
+
+    const frequency = prompt('Периодичность:', techCard.frequency);
+    if (!frequency) return;
+
+    try {
+      const response = await fetch(`/api/techcards/${techCard.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          workType,
+          frequency,
+          description: techCard.description
+        })
+      });
+
+      if (response.ok) {
+        loadObjectData();
+      }
+    } catch (error) {
+      console.error('Ошибка редактирования техкарты:', error);
+    }
+  };
+
+  // Удаление техкарты
+  const deleteTechCard = async (techCardId: string) => {
+    if (!confirm('Удалить техкарту? Это также удалит все связанные задачи.')) return;
+
+    try {
+      const response = await fetch(`/api/techcards/${techCardId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        loadObjectData();
+      }
+    } catch (error) {
+      console.error('Ошибка удаления техкарты:', error);
+    }
+  };
+
   if (loading) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -471,9 +519,22 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
                         )}
                       </div>
                     </div>
-                    <Button size="sm" variant="ghost">
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => editTechCard(techCard)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => deleteTechCard(techCard.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
