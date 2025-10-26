@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import AppLayout from '@/components/AppLayout';
-import ManagerCalendarClientPage from './ManagerCalendarClientPage';
+// import ManagerCalendarClientPage from './ManagerCalendarClientPage'; // СТАРАЯ СИСТЕМА
+import UnifiedCalendarPage from '@/components/UnifiedCalendarPage'; // НОВАЯ СИСТЕМА
 
 export const metadata: Metadata = {
   title: 'Календарь задач - Менеджер',
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 export default function ManagerCalendarPage() {
   return (
     <AppLayout>
-      <ManagerCalendarClientPage />
+      <UnifiedCalendarPage />
     </AppLayout>
   );
 }

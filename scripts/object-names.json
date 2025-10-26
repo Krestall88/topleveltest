@@ -1,0 +1,137 @@
+[
+  {
+    "objectId": "cmgz12a8v0001vyv85ac7mtll",
+    "oldName": "ООО “БЦ «Сфера”",
+    "newName": "ООО «БЦ «Сфера»",
+    "managerName": "Штельмашенко Ирина Николаевна",
+    "techCardsCount": 3,
+    "roomsCount": 1,
+    "checklistsCount": 1
+  },
+  {
+    "objectId": "cmgyu2oqo001tvyjo7czqa5i3",
+    "oldName": "ООО «УК «Амонд-ЖилКомСервис»",
+    "newName": "ООО «УК «Амонд-ЖилКомСервис»",
+    "managerName": "Будкова Светлана Владимировна",
+    "techCardsCount": 83,
+    "roomsCount": 3,
+    "checklistsCount": 1
+  },
+  {
+    "objectId": "cmgz3mgg20001vyaw622revyh",
+    "oldName": "ОАО «Самарский хлебозавод №5»",
+    "newName": "ОАО «Самарский хлебозавод №5»",
+    "managerName": "Напольская Людмила Петровна",
+    "techCardsCount": 289,
+    "roomsCount": 13,
+    "checklistsCount": 1
+  },
+  {
+    "objectId": "cmgz4kve30001vyi4ibfuu3vq",
+    "oldName": "МБУ «Лопатинское»",
+    "newName": "МБУ «Лопатинское»",
+    "managerName": "Штельмашенко Ирина Николаевна",
+    "techCardsCount": 26,
+    "roomsCount": 1,
+    "checklistsCount": 1
+  },
+  {
+    "objectId": "cmgz4ol7n0001vyg4zg1h9moc",
+    "oldName": "ООО «Единые Транспортные ЭнергоСистемы» (ЕТЭС)",
+    "newName": "ООО «Единые Транспортные ЭнергоСистемы» (ООО «ЕТЭС»)",
+    "managerName": "Васекин Александр Александрович",
+    "techCardsCount": 10,
+    "roomsCount": 4,
+    "checklistsCount": 1
+  },
+  {
+    "objectId": "cmgyu37k900dnvyjormxgwbha",
+    "oldName": "ООО «Инкатех»",
+    "newName": "ООО «Инкатех»",
+    "managerName": "Кобзева Анна Вячеславовна",
+    "techCardsCount": 174,
+    "roomsCount": 26,
+    "checklistsCount": 1
+  },
+  {
+    "objectId": "cmgz4zcl20001vyv01yyshh09",
+    "oldName": "ИП Широков Дмитрий Владимирович (автосервис)",
+    "newName": "ИП Широков Дмитрий Владимирович (автосервис)",
+    "managerName": "Штельмашенко Ирина Николаевна",
+    "techCardsCount": 7,
+    "roomsCount": 3,
+    "checklistsCount": 1
+  },
+  {
+    "objectId": "cmgz5a5jk0001vyk8y44toffc",
+    "oldName": "Медицина АльфаСтрахования МедАС",
+    "newName": "ООО \"Медицина-АльфаСтрахования\" (ООО \"МедАС)",
+    "managerName": "Ягода Ирина Александровна",
+    "techCardsCount": 227,
+    "roomsCount": 5,
+    "checklistsCount": 1
+  },
+  {
+    "objectId": "cmgza7quz000pvyxkj8mgwdve",
+    "oldName": "ООО «Маркет.Операции»",
+    "newName": "ООО «Маркет.Операции» (Яндекс)",
+    "managerName": "Штельмашенко Ирина Николаевна",
+    "techCardsCount": 18,
+    "roomsCount": 3,
+    "checklistsCount": 1
+  },
+  {
+    "objectId": "cmgyu5kkn01wfvyjoha61m1ck",
+    "oldName": "Акционерное общество “ТЯЖМАШ” АО “ТЯЖМАШ",
+    "newName": "АО \"Тяжмаш\"",
+    "managerName": "Тимохина Анна Анатольевна",
+    "techCardsCount": 203,
+    "roomsCount": 5,
+    "checklistsCount": 1
+  },
+  {
+    "objectId": "cmgyu60mt026tvyjogkmiztvs",
+    "oldName": "ООО «Производственная компания ФАБРИКА КАЧЕСТВА»",
+    "newName": "ООО «Производственная компания ФАБРИКА КАЧЕСТВА»",
+    "managerName": "Крапивко Лариса Владимировна",
+    "techCardsCount": 181,
+    "roomsCount": 1,
+    "checklistsCount": 1
+  },
+  {
+    "objectId": "cmgyu7f17033hvyjoueac6ssq",
+    "oldName": "ПАО «БыстроБанк»",
+    "newName": "ПАО «БыстроБанк»",
+    "managerName": "Ягода Ирина Александровна",
+    "techCardsCount": 6,
+    "roomsCount": 0,
+    "checklistsCount": 1
+  },
+  {
+    "objectId": "cmgyu7hq80351vyjom2jmmzbd",
+    "oldName": "ФГБОУ ВО СамГМУ Минздрава России",
+    "newName": "ФГБОУ ВО СамГМУ Минздрава России",
+    "managerName": "Галиев Рустам Рафикович",
+    "techCardsCount": 4,
+    "roomsCount": 2,
+    "checklistsCount": 1
+  },
+  {
+    "objectId": "cmgyu7ieh035fvyjogrm4ufjg",
+    "oldName": "(ООО «ФЛАГМАН»)",
+    "newName": "ООО «ФЛАГМАН»",
+    "managerName": "Васекин Александр Александрович",
+    "techCardsCount": 4,
+    "roomsCount": 0,
+    "checklistsCount": 1
+  },
+  {
+    "objectId": "cmgyu7iwm035pvyjobgo90bby",
+    "oldName": "УФПСО санаторий «Красная Глинка»",
+    "newName": "УФПСО санаторий «Красная Глинка»",
+    "managerName": "Исайчева Маргарита Николаевна",
+    "techCardsCount": 21,
+    "roomsCount": 0,
+    "checklistsCount": 1
+  }
+]
