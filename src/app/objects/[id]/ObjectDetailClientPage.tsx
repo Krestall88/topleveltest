@@ -14,6 +14,7 @@ import TaskScheduleManager from '@/components/TaskScheduleManager';
 import TechCardManager from '@/components/TechCardManager';
 import DynamicObjectTree from '@/components/DynamicObjectTree';
 import TechTasksPanel from '@/components/TechTasksPanel';
+import ObjectEditModal from '@/components/ObjectEditModal';
 
 interface Room {
   id: string;
@@ -93,6 +94,7 @@ export default function ObjectDetailClientPage() {
   const [siteManagers, setSiteManagers] = useState<{[key: string]: string}>({});
   const [selectedTechTasks, setSelectedTechTasks] = useState<any[]>([]);
   const [selectedContext, setSelectedContext] = useState<string>('');
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const fetchObjectData = async () => {
     if (!id) return;
@@ -366,6 +368,15 @@ export default function ObjectDetailClientPage() {
             <div className="flex flex-col space-y-2">
               <div className="flex space-x-2">
                 <Button
+                  onClick={() => setShowEditModal(true)}
+                  size="sm"
+                  variant="default"
+                  className="flex items-center bg-blue-600 hover:bg-blue-700"
+                >
+                  <Edit className="w-4 h-4 mr-1" />
+                  Редактировать объект
+                </Button>
+                <Button
                   onClick={() => setShowRequirementsManager(true)}
                   size="sm"
                   variant="outline"
@@ -618,6 +629,17 @@ export default function ObjectDetailClientPage() {
         isOpen={showScheduleManager}
         onClose={() => setShowScheduleManager(false)}
         objectId={object.id}
+      />
+
+      {/* Модальное окно редактирования объекта */}
+      <ObjectEditModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        objectId={object.id}
+        onUpdate={() => {
+          fetchObjectData();
+          setShowEditModal(false);
+        }}
       />
     </div>
   );

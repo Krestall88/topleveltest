@@ -51,7 +51,8 @@ export default function ManagersClientPage({ user }: Props) {
   const [resetPasswordData, setResetPasswordData] = useState({
     managerId: '',
     managerName: '',
-    newPassword: ''
+    newPassword: '',
+    newEmail: ''
   });
   const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
   const [selectedManagerId, setSelectedManagerId] = useState<string>('');
@@ -125,10 +126,12 @@ export default function ManagersClientPage({ user }: Props) {
   };
 
   const handleResetPassword = (managerId: string, managerName: string) => {
+    const manager = managers.find(m => m.id === managerId);
     setResetPasswordData({
       managerId,
       managerName,
-      newPassword: ''
+      newPassword: '',
+      newEmail: manager?.email || ''
     });
     setIsResetPasswordModalOpen(true);
   };
@@ -148,7 +151,8 @@ export default function ManagersClientPage({ user }: Props) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          newPassword: resetPasswordData.newPassword
+          newPassword: resetPasswordData.newPassword,
+          newEmail: resetPasswordData.newEmail
         }),
       });
 
@@ -157,9 +161,18 @@ export default function ManagersClientPage({ user }: Props) {
         throw new Error(errorData.message || 'Ошибка при сбросе пароля');
       }
 
+      const result = await response.json();
+      
+      // Обновляем список менеджеров с новыми данными
+      setManagers(managers.map(manager => 
+        manager.id === resetPasswordData.managerId 
+          ? { ...manager, email: result.manager.email }
+          : manager
+      ));
+
       setIsResetPasswordModalOpen(false);
-      setResetPasswordData({ managerId: '', managerName: '', newPassword: '' });
-      alert(`Пароль для ${resetPasswordData.managerName} успешно изменен`);
+      setResetPasswordData({ managerId: '', managerName: '', newPassword: '', newEmail: '' });
+      alert(result.message);
     } catch (error: any) {
       console.error('Ошибка при сбросе пароля:', error);
       setError(error.message || 'Не удалось сбросить пароль');
@@ -289,14 +302,6 @@ export default function ManagersClientPage({ user }: Props) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Объекты:</span>
-                    <span className="font-semibold text-blue-600">{manager.objectsCount}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Участки:</span>
-                    <span className="font-semibold text-green-600">{manager.sites.length}</span>
-                  </div>
                   {manager.objectNames && (
                     <div className="mt-2 p-2 bg-blue-50 rounded text-sm">
                       <div className="text-blue-600 mb-1">Объекты:</div>
@@ -399,6 +404,21 @@ export default function ManagersClientPage({ user }: Props) {
             
             <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
               <div>
+                <Label htmlFor="newEmail">Email (логин)</Label>
+                <Input
+                  id="newEmail"
+                  type="email"
+                  value={resetPasswordData.newEmail}
+                  onChange={(e) => setResetPasswordData({ 
+                    ...resetPasswordData, 
+                    newEmail: e.target.value 
+                  })}
+                  required
+                  placeholder="manager@cleaning.com"
+                />
+              </div>
+              
+              <div>
                 <Label htmlFor="newPassword">Новый пароль</Label>
                 <Input
                   id="newPassword"
@@ -423,7 +443,7 @@ export default function ManagersClientPage({ user }: Props) {
                   variant="outline"
                   onClick={() => {
                     setIsResetPasswordModalOpen(false);
-                    setResetPasswordData({ managerId: '', managerName: '', newPassword: '' });
+                    setResetPasswordData({ managerId: '', managerName: '', newPassword: '', newEmail: '' });
                   }}
                   className="flex-1"
                 >

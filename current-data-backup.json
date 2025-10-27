@@ -1,0 +1,371 @@
+{
+  "timestamp": "2025-10-27T11:28:11.898Z",
+  "users": [
+    {
+      "id": "cmh8yobkn0001vy6sih8jalcm",
+      "createdAt": "2025-10-27T09:54:40.919Z",
+      "updatedAt": "2025-10-27T09:54:40.919Z",
+      "email": "manager@example.com",
+      "name": "Тестовый Менеджер",
+      "phone": null,
+      "password": "$2a$10$6Yg6YdefwNlPEe2jM1K0neSjROxbjzinmU2EzzWJ4WTAjGqct.8za",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90opm90000vy9s1l0jpe2i",
+      "createdAt": "2025-10-27T10:50:58.353Z",
+      "updatedAt": "2025-10-27T10:50:58.353Z",
+      "email": "yagoda.irina@cleaning.com",
+      "name": "Ягода Ирина Александровна",
+      "phone": "+7 9371782997",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90oq2i0003vy9sxf2djrjf",
+      "createdAt": "2025-10-27T10:50:58.939Z",
+      "updatedAt": "2025-10-27T10:50:58.939Z",
+      "email": "plenkina.natalya@cleaning.com",
+      "name": "Пленкина Наталья Алексеевна",
+      "phone": "+7 9874416835",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90oqcc0006vy9sh1c7r0de",
+      "createdAt": "2025-10-27T10:50:59.293Z",
+      "updatedAt": "2025-10-27T10:50:59.293Z",
+      "email": "gainullina.aina@cleaning.com",
+      "name": "Гайнуллина Айна Алиевна",
+      "phone": "+7 9371841382",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90oqis0007vy9srlv7d2hg",
+      "createdAt": "2025-10-27T10:50:59.524Z",
+      "updatedAt": "2025-10-27T10:50:59.524Z",
+      "email": "isaicheva.margarita@cleaning.com",
+      "name": "Исайчева Маргарита Николаевна",
+      "phone": "+7 9277576436",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90or5e000evy9smk8sx6fi",
+      "createdAt": "2025-10-27T10:51:00.338Z",
+      "updatedAt": "2025-10-27T10:51:00.338Z",
+      "email": "shtelmashenko.irina@cleaning.com",
+      "name": "Штельмашенко Ирина Николаевна",
+      "phone": "+7 927 261 8137",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90orbr000fvy9s9lxfps5l",
+      "createdAt": "2025-10-27T10:51:00.567Z",
+      "updatedAt": "2025-10-27T10:51:00.567Z",
+      "email": "halidova.liliya@cleaning.com",
+      "name": "Халидова Лилия Ильшатовна",
+      "phone": "+7 937 072 7651",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90ori5000gvy9s0v86leag",
+      "createdAt": "2025-10-27T10:51:00.797Z",
+      "updatedAt": "2025-10-27T10:51:00.797Z",
+      "email": "shodieva.muharam@cleaning.com",
+      "name": "Шодиева Мухарам Джураевна",
+      "phone": "+7 937 980 1704",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90oroo000hvy9sgjqnq6ln",
+      "createdAt": "2025-10-27T10:51:01.033Z",
+      "updatedAt": "2025-10-27T10:51:01.033Z",
+      "email": "budkova.svetlana@cleaning.com",
+      "name": "Будкова Светлана Владимировна",
+      "phone": "+79277406883",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90oryg000kvy9sbz0mw5hp",
+      "createdAt": "2025-10-27T10:51:01.385Z",
+      "updatedAt": "2025-10-27T10:51:01.385Z",
+      "email": "napolskaya.ludmila@cleaning.com",
+      "name": "Напольская Людмила Петровна",
+      "phone": "+7 9370715422",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90osbf000nvy9su9k99g7i",
+      "createdAt": "2025-10-27T10:51:01.851Z",
+      "updatedAt": "2025-10-27T10:51:01.851Z",
+      "email": "laskin.pavel@cleaning.com",
+      "name": "Ласкин Павел Александрович",
+      "phone": "+79277570553",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90osht000ovy9syfgin1dp",
+      "createdAt": "2025-10-27T10:51:02.081Z",
+      "updatedAt": "2025-10-27T10:51:02.081Z",
+      "email": "vasekin.alexander@cleaning.com",
+      "name": "Васекин Александр Александрович",
+      "phone": "+7 927 716 5189",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90osxy000tvy9st0hc8jot",
+      "createdAt": "2025-10-27T10:51:02.663Z",
+      "updatedAt": "2025-10-27T10:51:02.663Z",
+      "email": "galiev.rustam@cleaning.com",
+      "name": "Галиев Рустам Рафикович",
+      "phone": "+7 967 722 8013",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90otuh0012vy9szyss9j2s",
+      "createdAt": "2025-10-27T10:51:03.833Z",
+      "updatedAt": "2025-10-27T10:51:03.833Z",
+      "email": "kobzeva.anna@cleaning.com",
+      "name": "Кобзева Анна Вячеславовна",
+      "phone": "+7 9279035948",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90ou0w0013vy9sp80pzbau",
+      "createdAt": "2025-10-27T10:51:04.064Z",
+      "updatedAt": "2025-10-27T10:51:04.064Z",
+      "email": "nuvaltseva.maria@cleaning.com",
+      "name": "Нувальцева Мария Александровна",
+      "phone": "+7 9179582793",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90ouk80018vy9s0r2v0wde",
+      "createdAt": "2025-10-27T10:51:04.760Z",
+      "updatedAt": "2025-10-27T10:51:04.760Z",
+      "email": "gordeev.roman@cleaning.com",
+      "name": "Гордеев Роман Владимирович",
+      "phone": "+7 987 955 1196",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90outu001bvy9s9karmp2j",
+      "createdAt": "2025-10-27T10:51:05.107Z",
+      "updatedAt": "2025-10-27T10:51:05.107Z",
+      "email": "sokolova.olga@cleaning.com",
+      "name": "Соколова Ольга Константиновна",
+      "phone": "+7 9170173062",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90ov3f001evy9s388cv4rw",
+      "createdAt": "2025-10-27T10:51:05.452Z",
+      "updatedAt": "2025-10-27T10:51:05.452Z",
+      "email": "timohina.anna@cleaning.com",
+      "name": "Тимохина Анна Анатольевна",
+      "phone": "+7 919 803 0999",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90ovg7001hvy9sfkhw1jfl",
+      "createdAt": "2025-10-27T10:51:05.911Z",
+      "updatedAt": "2025-10-27T10:51:05.911Z",
+      "email": "krapivko.larisa@cleaning.com",
+      "name": "Крапивко Лариса Владимировна",
+      "phone": "+7 987 987 3566",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90oxf80022vy9sreg3z233",
+      "createdAt": "2025-10-27T10:51:08.469Z",
+      "updatedAt": "2025-10-27T10:51:08.469Z",
+      "email": "bobrovskaya.elena@cleaning.com",
+      "name": "Бобровская Елена Владимировна",
+      "phone": "+7 937 994 9424",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh90oxoy0025vy9szmbhwn81",
+      "createdAt": "2025-10-27T10:51:08.818Z",
+      "updatedAt": "2025-10-27T10:51:08.818Z",
+      "email": "bragina.katerina@cleaning.com",
+      "name": "Брагина Катерина Юрьевна",
+      "phone": "+7 917 976 2778",
+      "password": "$2b$10$rGHnQqgx5oQVHKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4eKJ8u.Vf4e",
+      "role": "MANAGER"
+    },
+    {
+      "id": "cmh8y019s0000vyacw80zcmxl",
+      "createdAt": "2025-10-27T09:35:47.823Z",
+      "updatedAt": "2025-10-27T10:52:49.423Z",
+      "email": "admin@cleaning.com",
+      "name": "Администратор",
+      "phone": null,
+      "password": "$2b$10$Bc9ToWFshkZSgvnBh0jMB.0KdgUvxngWJf5F8pTWscAJb6wvCGnDm",
+      "role": "ADMIN"
+    }
+  ],
+  "reportingTasks": [
+    {
+      "id": "cmh8yp8ws0005vyl84c7c2xub",
+      "createdAt": "2025-10-27T09:55:24.124Z",
+      "updatedAt": "2025-10-27T09:55:24.124Z",
+      "title": "Тестовая задача управления",
+      "description": "Описание тестовой задачи для проверки функционала",
+      "status": "NEW",
+      "priority": "HIGH",
+      "dueDate": "2025-10-28T09:55:24.122Z",
+      "completedAt": null,
+      "objectId": "test-object-id",
+      "createdById": "cmh8y019s0000vyacw80zcmxl",
+      "assignedToId": "cmh8yobkn0001vy6sih8jalcm",
+      "completionComment": null,
+      "createdBy": {
+        "id": "cmh8y019s0000vyacw80zcmxl",
+        "createdAt": "2025-10-27T09:35:47.823Z",
+        "updatedAt": "2025-10-27T10:52:49.423Z",
+        "email": "admin@cleaning.com",
+        "name": "Администратор",
+        "phone": null,
+        "password": "$2b$10$Bc9ToWFshkZSgvnBh0jMB.0KdgUvxngWJf5F8pTWscAJb6wvCGnDm",
+        "role": "ADMIN"
+      },
+      "assignedTo": {
+        "id": "cmh8yobkn0001vy6sih8jalcm",
+        "createdAt": "2025-10-27T09:54:40.919Z",
+        "updatedAt": "2025-10-27T09:54:40.919Z",
+        "email": "manager@example.com",
+        "name": "Тестовый Менеджер",
+        "phone": null,
+        "password": "$2a$10$6Yg6YdefwNlPEe2jM1K0neSjROxbjzinmU2EzzWJ4WTAjGqct.8za",
+        "role": "MANAGER"
+      },
+      "object": {
+        "id": "test-object-id",
+        "createdAt": "2025-10-27T09:54:41.577Z",
+        "updatedAt": "2025-10-27T09:54:41.577Z",
+        "name": "Тестовый объект для задач",
+        "address": "Тестовый адрес, 123",
+        "documents": null,
+        "timezone": null,
+        "workingHours": null,
+        "workingDays": [],
+        "autoChecklistEnabled": true,
+        "lastChecklistDate": null,
+        "requirePhotoForCompletion": false,
+        "requireCommentForCompletion": false,
+        "completionRequirements": null,
+        "creatorId": "cmh8y019s0000vyacw80zcmxl",
+        "managerId": "cmh8yobkn0001vy6sih8jalcm",
+        "totalArea": null,
+        "description": null,
+        "notes": null
+      }
+    },
+    {
+      "id": "cmh8ys19g0001vydk59i6lby2",
+      "createdAt": "2025-10-27T09:57:34.181Z",
+      "updatedAt": "2025-10-27T09:57:34.181Z",
+      "title": "Прямая тестовая задача",
+      "description": "Создана напрямую через Prisma для тестирования",
+      "status": "NEW",
+      "priority": "MEDIUM",
+      "dueDate": null,
+      "completedAt": null,
+      "objectId": "cmh8ykeo20005vyg0qiqufw4d",
+      "createdById": "cmh8y019s0000vyacw80zcmxl",
+      "assignedToId": "cmh8yobkn0001vy6sih8jalcm",
+      "completionComment": null,
+      "createdBy": {
+        "id": "cmh8y019s0000vyacw80zcmxl",
+        "createdAt": "2025-10-27T09:35:47.823Z",
+        "updatedAt": "2025-10-27T10:52:49.423Z",
+        "email": "admin@cleaning.com",
+        "name": "Администратор",
+        "phone": null,
+        "password": "$2b$10$Bc9ToWFshkZSgvnBh0jMB.0KdgUvxngWJf5F8pTWscAJb6wvCGnDm",
+        "role": "ADMIN"
+      },
+      "assignedTo": {
+        "id": "cmh8yobkn0001vy6sih8jalcm",
+        "createdAt": "2025-10-27T09:54:40.919Z",
+        "updatedAt": "2025-10-27T09:54:40.919Z",
+        "email": "manager@example.com",
+        "name": "Тестовый Менеджер",
+        "phone": null,
+        "password": "$2a$10$6Yg6YdefwNlPEe2jM1K0neSjROxbjzinmU2EzzWJ4WTAjGqct.8za",
+        "role": "MANAGER"
+      },
+      "object": {
+        "id": "cmh8ykeo20005vyg0qiqufw4d",
+        "createdAt": "2025-10-27T09:51:38.306Z",
+        "updatedAt": "2025-10-27T09:51:38.306Z",
+        "name": "Тестовый объект для задач",
+        "address": "Тестовый адрес",
+        "documents": null,
+        "timezone": "Europe/Moscow",
+        "workingHours": {
+          "end": "20:00",
+          "start": "08:00"
+        },
+        "workingDays": [
+          "MONDAY",
+          "TUESDAY",
+          "WEDNESDAY",
+          "THURSDAY",
+          "FRIDAY"
+        ],
+        "autoChecklistEnabled": true,
+        "lastChecklistDate": null,
+        "requirePhotoForCompletion": false,
+        "requireCommentForCompletion": false,
+        "completionRequirements": null,
+        "creatorId": "cmh8y019s0000vyacw80zcmxl",
+        "managerId": null,
+        "totalArea": null,
+        "description": null,
+        "notes": null
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "cmh8yp98g0009vyl8s6z5c4ez",
+      "createdAt": "2025-10-27T09:55:24.544Z",
+      "fileName": "test-photo.jpg",
+      "originalName": "Тестовое фото.jpg",
+      "fileSize": 1024000,
+      "mimeType": "image/jpeg",
+      "filePath": "/uploads/test-photo.jpg",
+      "taskId": "cmh8yp8ws0005vyl84c7c2xub",
+      "uploadedById": "cmh8y019s0000vyacw80zcmxl",
+      "uploadedBy": {
+        "id": "cmh8y019s0000vyacw80zcmxl",
+        "createdAt": "2025-10-27T09:35:47.823Z",
+        "updatedAt": "2025-10-27T10:52:49.423Z",
+        "email": "admin@cleaning.com",
+        "name": "Администратор",
+        "phone": null,
+        "password": "$2b$10$Bc9ToWFshkZSgvnBh0jMB.0KdgUvxngWJf5F8pTWscAJb6wvCGnDm",
+        "role": "ADMIN"
+      }
+    }
+  ]
+}

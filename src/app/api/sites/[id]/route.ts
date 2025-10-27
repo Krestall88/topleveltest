@@ -165,6 +165,52 @@ export async function PUT(
   }
 }
 
+// PATCH /api/sites/[id] - обновить участок (упрощенная версия)
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getAuthSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const body = await request.json();
+    const { name, description, area, comment, managerId } = body;
+
+    const updatedSite = await prisma.site.update({
+      where: { id },
+      data: {
+        name,
+        description,
+        area: area ? parseFloat(area) : null,
+        comment,
+        managerId: managerId || null,
+      },
+      include: {
+        manager: {
+          select: {
+            id: true,
+            name: true,
+          }
+        },
+        zones: true,
+      }
+    });
+
+    console.log('✅ Обновлен участок:', updatedSite.name);
+    return NextResponse.json(updatedSite);
+  } catch (error) {
+    console.error('❌ Ошибка обновления участка:', error);
+    return NextResponse.json(
+      { error: 'Failed to update site' },
+      { status: 500 }
+    );
+  }
+}
+
 // DELETE /api/sites/[id] - удалить участок
 export async function DELETE(
   request: NextRequest,

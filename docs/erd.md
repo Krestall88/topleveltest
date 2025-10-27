@@ -3,11 +3,11 @@ erDiagram
 
         Role {
             ADMIN ADMIN
-DEPUTY_ADMIN DEPUTY_ADMIN
 DEPUTY DEPUTY
 MANAGER MANAGER
-ACCOUNTANT ACCOUNTANT
 CLIENT CLIENT
+DEPUTY_ADMIN DEPUTY_ADMIN
+ACCOUNTANT ACCOUNTANT
         }
     
 
@@ -81,9 +81,9 @@ QUALITY_CHECK QUALITY_CHECK
     DateTime updatedAt 
     String email 
     String name "❓"
-    String phone "❓"
     String password 
     Role role 
+    String phone "❓"
     }
   
 
@@ -100,11 +100,11 @@ QUALITY_CHECK QUALITY_CHECK
     Boolean autoChecklistEnabled 
     DateTime lastChecklistDate "❓"
     Boolean requirePhotoForCompletion 
-    Boolean requireCommentForCompletion 
     Json completionRequirements "❓"
-    Float totalArea "❓"
+    Boolean requireCommentForCompletion 
     String description "❓"
     String notes "❓"
+    Float totalArea "❓"
     }
   
 
@@ -160,16 +160,16 @@ QUALITY_CHECK QUALITY_CHECK
     String workType 
     String frequency 
     String description "❓"
-    String period "❓"
-    String seasonality "❓"
     String notes "❓"
+    String period "❓"
     String workDetails "❓"
+    String seasonality "❓"
     Int frequencyDays "❓"
-    String preferredTime "❓"
     Int maxDelayHours "❓"
-    String timeSlots 
-    Boolean isActive 
+    String preferredTime "❓"
     Boolean autoGenerate 
+    Boolean isActive 
+    String timeSlots 
     }
   
 
@@ -177,10 +177,10 @@ QUALITY_CHECK QUALITY_CHECK
     String id "🗝️"
     DateTime createdAt 
     DateTime date 
-    String name "❓"
+    DateTime completedAt "❓"
     String completionComment "❓"
     String completionPhotos 
-    DateTime completedAt "❓"
+    String name "❓"
     }
   
 
@@ -195,9 +195,9 @@ QUALITY_CHECK QUALITY_CHECK
     DateTime scheduledStart "❓"
     DateTime scheduledEnd "❓"
     String failureReason "❓"
+    DateTime completedAt "❓"
     String completionComment "❓"
     String completionPhotos 
-    DateTime completedAt "❓"
     }
   
 
@@ -310,15 +310,26 @@ QUALITY_CHECK QUALITY_CHECK
 
   "ReportingTask" {
     String id "🗝️"
-    DateTime createdAt 
-    DateTime updatedAt 
     String title 
     String description "❓"
-    ReportingTaskStatus status 
-    ReportingTaskPriority priority 
+    DateTime createdAt 
+    DateTime updatedAt 
     DateTime dueDate "❓"
     DateTime completedAt "❓"
     String completionComment "❓"
+    ReportingTaskStatus status 
+    ReportingTaskPriority priority 
+    }
+  
+
+  "ReportingTaskAttachment" {
+    String id "🗝️"
+    DateTime createdAt 
+    String fileName 
+    String originalName 
+    Int fileSize 
+    String mimeType 
+    String filePath 
     }
   
 
@@ -370,54 +381,55 @@ QUALITY_CHECK QUALITY_CHECK
     "User" o{--}o "CleaningObject" : "managedObjects"
     "User" o{--}o "DeputyAdminAssignment" : "assignedDeputyAdmins"
     "User" o{--}o "DeputyAdminAssignment" : "deputyAdminAssignments"
+    "User" o{--}o "ExcludedObject" : "excludedObjects"
     "User" o{--}o "InventoryExpense" : "inventoryExpenses"
     "User" o{--}o "InventoryLimit" : "setInventoryLimits"
     "User" o{--}o "PhotoReport" : "photoReports"
-    "User" o{--}o "Request" : "createdRequests"
-    "User" o{--}o "Task" : "completedTasks"
-    "User" o{--}o "Site" : "managedSites"
-    "User" o{--}o "TaskExecution" : "taskExecutions"
-    "User" o{--}o "ReportingTask" : "createdReportingTasks"
     "User" o{--}o "ReportingTask" : "assignedReportingTasks"
-    "User" o{--}o "ExcludedObject" : "excludedObjects"
-    "User" o{--}o "task_admin_comments" : "adminComments"
+    "User" o{--}o "ReportingTask" : "createdReportingTasks"
+    "User" o{--}o "Request" : "createdRequests"
+    "User" o{--}o "Site" : "managedSites"
+    "User" o{--}o "Task" : "completedTasks"
+    "User" o{--}o "TaskExecution" : "taskExecutions"
     "User" o{--}o "notifications" : "notifications"
+    "User" o{--}o "task_admin_comments" : "adminComments"
+    "User" o{--}o "ReportingTaskAttachment" : "reportingTaskAttachments"
     "CleaningObject" o{--}o "AdditionalTask" : "additionalTasks"
     "CleaningObject" o{--}o "Checklist" : "checklists"
     "CleaningObject" o|--|| "User" : "creator"
     "CleaningObject" o|--|o "User" : "manager"
     "CleaningObject" o{--}o "ClientBinding" : "clientBindings"
     "CleaningObject" o{--}o "DeputyAdminAssignment" : "deputyAdminAssignments"
+    "CleaningObject" o{--}o "ExcludedObject" : "excludedObjects"
     "CleaningObject" o{--}o "InventoryExpense" : "inventoryExpenses"
     "CleaningObject" o{--}o "InventoryLimit" : "inventoryLimits"
+    "CleaningObject" o{--}o "ObjectStructure" : "objectStructures"
     "CleaningObject" o{--}o "PhotoReport" : "photoReports"
+    "CleaningObject" o{--}o "ReportingTask" : "reportingTasks"
     "CleaningObject" o{--}o "Request" : "requests"
     "CleaningObject" o{--}o "Room" : "rooms"
-    "CleaningObject" o{--}o "TechCard" : "techCards"
     "CleaningObject" o{--}o "Site" : "sites"
-    "CleaningObject" o{--}o "ObjectStructure" : "objectStructures"
     "CleaningObject" o{--}o "TaskExecution" : "taskExecutions"
-    "CleaningObject" o{--}o "ReportingTask" : "reportingTasks"
-    "CleaningObject" o{--}o "ExcludedObject" : "excludedObjects"
+    "CleaningObject" o{--}o "TechCard" : "techCards"
     "Room" o{--}o "Checklist" : "checklists"
+    "Room" o{--}o "CleaningObjectItem" : "cleaningObjects"
     "Room" o|--|| "CleaningObject" : "object"
     "Room" o|--|o "RoomGroup" : "roomGroup"
     "Room" o{--}o "Task" : "tasks"
     "Room" o{--}o "TechCard" : "techCards"
-    "Room" o{--}o "CleaningObjectItem" : "cleaningObjects"
-    "Site" o|--|| "CleaningObject" : "object"
     "Site" o|--|o "User" : "manager"
+    "Site" o|--|| "CleaningObject" : "object"
     "Site" o{--}o "Zone" : "zones"
-    "Zone" o|--|| "Site" : "site"
     "Zone" o{--}o "RoomGroup" : "roomGroups"
-    "RoomGroup" o|--|| "Zone" : "zone"
+    "Zone" o|--|| "Site" : "site"
     "RoomGroup" o{--}o "Room" : "rooms"
+    "RoomGroup" o|--|| "Zone" : "zone"
     "CleaningObjectItem" o|--|| "Room" : "room"
     "CleaningObjectItem" o{--}o "TechCard" : "techCards"
+    "TechCard" o{--}o "TaskExecution" : "executions"
+    "TechCard" o|--|o "CleaningObjectItem" : "cleaningObjectItem"
     "TechCard" o|--|| "CleaningObject" : "object"
     "TechCard" o|--|o "Room" : "room"
-    "TechCard" o|--|o "CleaningObjectItem" : "cleaningObjectItem"
-    "TechCard" o{--}o "TaskExecution" : "executions"
     "Checklist" o|--|o "User" : "completedBy"
     "Checklist" o|--|| "User" : "creator"
     "Checklist" o|--|| "CleaningObject" : "object"
@@ -430,8 +442,8 @@ QUALITY_CHECK QUALITY_CHECK
     "Task" o|--|o "User" : "completedBy"
     "Task" o|--|o "Request" : "request"
     "Task" o|--|o "Room" : "room"
-    "Task" o{--}o "task_admin_comments" : "adminComments"
     "Task" o{--}o "notifications" : "notifications"
+    "Task" o{--}o "task_admin_comments" : "adminComments"
     "Request" o|--|| "RequestStatus" : "enum:status"
     "Request" o{--}o "PhotoReport" : "photoReports"
     "Request" o|--|| "User" : "creator"
@@ -458,20 +470,23 @@ QUALITY_CHECK QUALITY_CHECK
     "ObjectStructure" o|--|| "CleaningObject" : "object"
     "ReportingTask" o|--|| "ReportingTaskStatus" : "enum:status"
     "ReportingTask" o|--|| "ReportingTaskPriority" : "enum:priority"
-    "ReportingTask" o|--|| "CleaningObject" : "object"
-    "ReportingTask" o|--|| "User" : "createdBy"
     "ReportingTask" o|--|| "User" : "assignedTo"
-    "ExcludedObject" o|--|| "CleaningObject" : "object"
+    "ReportingTask" o|--|| "User" : "createdBy"
+    "ReportingTask" o|--|| "CleaningObject" : "object"
+    "ReportingTask" o{--}o "ReportingTaskAttachment" : "attachments"
+    "ReportingTaskAttachment" o|--|| "ReportingTask" : "task"
+    "ReportingTaskAttachment" o|--|| "User" : "uploadedBy"
     "ExcludedObject" o|--|| "User" : "excludedBy"
-    "TaskExecution" o|--|| "TechCard" : "techCard"
-    "TaskExecution" o|--|| "CleaningObject" : "object"
-    "TaskExecution" o|--|| "User" : "manager"
+    "ExcludedObject" o|--|| "CleaningObject" : "object"
     "TaskExecution" o|--|| "TaskExecutionStatus" : "enum:status"
+    "TaskExecution" o|--|| "User" : "manager"
+    "TaskExecution" o|--|| "CleaningObject" : "object"
+    "TaskExecution" o|--|| "TechCard" : "techCard"
     "task_admin_comments" o|--|| "TaskAdminCommentType" : "enum:type"
-    "task_admin_comments" o|--|| "Task" : "task"
     "task_admin_comments" o|--|| "User" : "admin"
     "task_admin_comments" o|--|o "task_admin_comments" : "parentComment"
     "task_admin_comments" o{--}o "task_admin_comments" : "replies"
-    "notifications" o|--|| "User" : "user"
+    "task_admin_comments" o|--|| "Task" : "task"
     "notifications" o|--|o "Task" : "relatedTask"
+    "notifications" o|--|| "User" : "user"
 ```

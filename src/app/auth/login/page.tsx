@@ -100,22 +100,6 @@ export default function LoginPage() {
               >
                 👑 Администратор
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full text-xs"
-                onClick={() => quickLogin('accountant@cleaning.com', 'accountant123')}
-              >
-                💰 Бухгалтер
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full text-xs"
-                onClick={() => quickLogin('deputy@cleaning.com', 'deputy123')}
-              >
-                👥 Заместитель
-              </Button>
             </div>
           </div>
         </CardContent>

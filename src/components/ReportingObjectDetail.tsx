@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import ReportingTaskModal from './ReportingTaskModal';
 import { 
   Building2, 
   Plus, 
@@ -72,6 +73,10 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [creating, setCreating] = useState(false);
+  
+  // Состояние для модального окна задач
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [showTaskModal, setShowTaskModal] = useState(false);
 
   useEffect(() => {
     loadTasks();
@@ -80,16 +85,23 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
   const loadTasks = async () => {
     try {
       setLoading(true);
+      console.log('🔄 Загружаем задачи для объекта:', object.id);
       const response = await fetch(`/api/reporting/objects/${object.id}/tasks`, {
         credentials: 'include'
       });
       
+      console.log('📊 Статус ответа:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ Данные получены:', data);
         setTasks(data.tasks || []);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Ошибка ответа:', response.status, errorData);
       }
     } catch (error) {
-      console.error('Ошибка загрузки задач:', error);
+      console.error('❌ Ошибка загрузки задач:', error);
     } finally {
       setLoading(false);
     }
@@ -128,6 +140,20 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
     } finally {
       setCreating(false);
     }
+  };
+
+  const handleTaskClick = (taskId: string) => {
+    setSelectedTaskId(taskId);
+    setShowTaskModal(true);
+  };
+
+  const handleTaskModalClose = () => {
+    setShowTaskModal(false);
+    setSelectedTaskId(null);
+  };
+
+  const handleTaskUpdated = () => {
+    loadTasks();
   };
 
   const handleReturnToGeneral = async () => {
@@ -353,7 +379,11 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
       ) : (
         <div className="space-y-4">
           {filteredTasks.map((task) => (
-            <Card key={task.id} className="hover:shadow-md transition-shadow">
+            <Card 
+              key={task.id} 
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => handleTaskClick(task.id)}
+            >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
@@ -386,13 +416,6 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
                       <FileText className="h-3 w-3" />
                       <span>0</span>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => window.location.href = `/reporting/tasks/${task.id}`}
-                    >
-                      Открыть
-                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -400,6 +423,19 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
           ))}
         </div>
       )}
+
+      {/* Модальное окно задачи */}
+      <ReportingTaskModal
+        taskId={selectedTaskId}
+        isOpen={showTaskModal}
+        onClose={handleTaskModalClose}
+        onTaskUpdated={handleTaskUpdated}
+        currentUser={{
+          id: userId,
+          name: 'Current User', // Это нужно будет получать из контекста
+          role: userRole
+        }}
+      />
     </div>
   );
 }

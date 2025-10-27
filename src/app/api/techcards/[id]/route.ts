@@ -23,8 +23,9 @@ async function getUserFromToken(req: NextRequest) {
 // GET /api/techcards/[id] - Получить техкарту по ID
 export async function GET(req: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     const techCard = await prisma.techCard.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         room: { select: { name: true } },
         object: { select: { name: true } }
@@ -50,16 +51,23 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
+    const { id } = await params;
     const body = await req.json();
-    const { name, workType, frequency, description } = body;
+    const { name, workType, frequency, description, siteId, zoneId, roomGroupId, roomId } = body;
+
+    console.log('🔄 Обновление техкарты:', { id, name, workType, frequency });
 
     const updatedTechCard = await prisma.techCard.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name,
         workType,
         frequency,
         description,
+        ...(siteId !== undefined && { siteId: siteId || null }),
+        ...(zoneId !== undefined && { zoneId: zoneId || null }),
+        ...(roomGroupId !== undefined && { roomGroupId: roomGroupId || null }),
+        ...(roomId !== undefined && { roomId: roomId || null }),
       },
       include: {
         room: { select: { name: true } },
@@ -87,11 +95,13 @@ export async function DELETE(req: NextRequest, { params }: Params) {
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
+    const { id } = await params;
+
     await prisma.techCard.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
-    console.log('✅ Удалена техкарта:', params.id);
+    console.log('✅ Удалена техкарта:', id);
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

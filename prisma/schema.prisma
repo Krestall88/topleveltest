@@ -19,9 +19,9 @@ model User {
   updatedAt                DateTime                @updatedAt
   email                    String                  @unique
   name                     String?
-  phone                    String?
   password                 String
   role                     Role                    @default(MANAGER)
+  phone                    String?
   assignedAdditionalTasks  AdditionalTask[]        @relation("AssignedAdditionalTasks")
   completedAdditionalTasks AdditionalTask[]        @relation("CompletedAdditionalTasks")
   auditLogs                AuditLog[]
@@ -31,20 +31,19 @@ model User {
   managedObjects           CleaningObject[]        @relation("ManagedBy")
   assignedDeputyAdmins     DeputyAdminAssignment[] @relation("AssignedDeputyAdmins")
   deputyAdminAssignments   DeputyAdminAssignment[] @relation("DeputyAdminAssignments")
+  excludedObjects          ExcludedObject[]        @relation("ExcludedObjects")
   inventoryExpenses        InventoryExpense[]      @relation("InventoryExpenses")
   setInventoryLimits       InventoryLimit[]        @relation("SetInventoryLimits")
   photoReports             PhotoReport[]
-  createdRequests          Request[]
-  completedTasks           Task[]
-  managedSites             Site[]                  @relation("SiteManager")
-  taskExecutions           TaskExecution[]         @relation("TaskExecutions")
-  createdReportingTasks    ReportingTask[]         @relation("CreatedReportingTasks")
   assignedReportingTasks   ReportingTask[]         @relation("AssignedReportingTasks")
-  excludedObjects          ExcludedObject[]        @relation("ExcludedObjects")
-  
-  // Новые связи для комментариев и уведомлений
-  adminComments            TaskAdminComment[]      @relation("AdminComments")
+  createdReportingTasks    ReportingTask[]         @relation("CreatedReportingTasks")
+  createdRequests          Request[]
+  managedSites             Site[]                  @relation("SiteManager")
+  completedTasks           Task[]
+  taskExecutions           TaskExecution[]         @relation("TaskExecutions")
   notifications            Notification[]
+  adminComments            TaskAdminComment[]      @relation("AdminComments")
+  reportingTaskAttachments ReportingTaskAttachment[] @relation("ReportingTaskAttachments")
 }
 
 model CleaningObject {
@@ -59,34 +58,31 @@ model CleaningObject {
   workingDays                 String[]
   autoChecklistEnabled        Boolean                 @default(true)
   lastChecklistDate           DateTime?
-  requirePhotoForCompletion   Boolean                 @default(false)
-  requireCommentForCompletion Boolean                 @default(false)
-  completionRequirements      Json?
   creatorId                   String
   managerId                   String?
-  
-  // Новые поля для многоуровневой структуры
-  totalArea                   Float?                  // Общая площадь объекта
-  description                 String?                 // Описание объекта
-  notes                       String?                 // Примечания к объекту
-  
+  requirePhotoForCompletion   Boolean                 @default(false)
+  completionRequirements      Json?
+  requireCommentForCompletion Boolean                 @default(false)
+  description                 String?
+  notes                       String?
+  totalArea                   Float?
   additionalTasks             AdditionalTask[]
   checklists                  Checklist[]
   creator                     User                    @relation("CreatedBy", fields: [creatorId], references: [id])
   manager                     User?                   @relation("ManagedBy", fields: [managerId], references: [id])
   clientBindings              ClientBinding[]
   deputyAdminAssignments      DeputyAdminAssignment[] @relation("DeputyAdminObjects")
+  excludedObjects             ExcludedObject?         @relation("ExcludedObjects")
   inventoryExpenses           InventoryExpense[]
   inventoryLimits             InventoryLimit[]
+  objectStructures            ObjectStructure[]
   photoReports                PhotoReport[]
+  reportingTasks              ReportingTask[]         @relation("ReportingTasks")
   requests                    Request[]
   rooms                       Room[]
+  sites                       Site[]
+  taskExecutions              TaskExecution[]
   techCards                   TechCard[]
-  sites                       Site[]                  // Участки объекта
-  objectStructures            ObjectStructure[]       // Плоская структура
-  taskExecutions              TaskExecution[]         // Выполнения задач
-  reportingTasks              ReportingTask[]         @relation("ReportingTasks") // Задачи отчетности для объекта
-  excludedObjects             ExcludedObject[]        @relation("ExcludedObjects") // Исключения из отчетности
 }
 
 model Room {
@@ -96,113 +92,99 @@ model Room {
   description     String?
   area            Float?
   objectId        String
-  roomGroupId     String?              // Связь с группой помещений
-  
+  roomGroupId     String?
   checklists      Checklist[]
+  cleaningObjects CleaningObjectItem[]
   object          CleaningObject       @relation(fields: [objectId], references: [id], onDelete: Cascade)
   roomGroup       RoomGroup?           @relation(fields: [roomGroupId], references: [id])
   tasks           Task[]
   techCards       TechCard[]
-  cleaningObjects CleaningObjectItem[] // Объекты уборки в помещении
 }
 
-// Новая модель Site (Участок)
 model Site {
   id          String         @id @default(cuid())
   createdAt   DateTime       @default(now())
-  name        String         // Название участка
-  description String?        // Описание участка
-  area        Float?         // Площадь участка
-  comment     String?        // Комментарий к участку (переименовано из areaInfo)
+  name        String
+  description String?
+  area        Float?
   objectId    String
-  managerId   String?        // Менеджер участка
-  
-  object      CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  managerId   String?
+  comment     String?
   manager     User?          @relation("SiteManager", fields: [managerId], references: [id])
-  zones       Zone[]         // Зоны участка
+  object      CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  zones       Zone[]
 }
 
-// Новая модель Zone (Зона)
 model Zone {
   id          String      @id @default(cuid())
   createdAt   DateTime    @default(now())
-  name        String      // Название зоны
-  description String?     // Описание зоны
-  area        Float?      // Площадь зоны
+  name        String
+  description String?
+  area        Float?
   siteId      String
-  
+  roomGroups  RoomGroup[]
   site        Site        @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  roomGroups  RoomGroup[] // Группы помещений
 }
 
-// Новая модель RoomGroup (Группа помещений)
 model RoomGroup {
   id          String   @id @default(cuid())
   createdAt   DateTime @default(now())
-  name        String   // Название группы помещений
-  description String?  // Описание группы
-  area        Float?   // Площадь группы
+  name        String
+  description String?
+  area        Float?
   zoneId      String
-  
+  rooms       Room[]
   zone        Zone     @relation(fields: [zoneId], references: [id], onDelete: Cascade)
-  rooms       Room[]   // Помещения в группе
 }
 
-// Новая модель CleaningObjectItem (Объект уборки)
 model CleaningObjectItem {
   id          String     @id @default(cuid())
   createdAt   DateTime   @default(now())
-  name        String     // Название объекта уборки (пол, стены, окна и т.д.)
-  description String?    // Описание объекта уборки
+  name        String
+  description String?
   roomId      String
-  
   room        Room       @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  techCards   TechCard[] // Техкарты для этого объекта уборки
+  techCards   TechCard[]
 }
 
 model TechCard {
-  id                   String                @id @default(cuid())
-  createdAt            DateTime              @default(now())
+  id                   String              @id @default(cuid())
+  createdAt            DateTime            @default(now())
   name                 String
   workType             String
   frequency            String
   description          String?
   objectId             String
   roomId               String?
-  cleaningObjectItemId String?               // Связь с объектом уборки
-  
-  // Новые поля для детализации
-  period               String?               // Период (летний/зимний)
-  seasonality          String?               // Сезонность (Общий, Зимний период, Летний период)
-  notes                String?               // Примечания
-  workDetails          String?               // Детальное описание работ
-  
-  // Новые поля для календаря задач
-  frequencyDays        Int?                  // Периодичность в днях (1=ежедневно, 7=еженедельно, 30=ежемесячно)
-  preferredTime        String?               // Предпочтительное время выполнения "09:00"
-  maxDelayHours        Int?                  // Максимальная задержка в часах
-  timeSlots            String[]              // Временные промежутки в течение дня ["09:00-12:00", "14:00-17:00"]
-  isActive             Boolean               @default(true) // Активна ли техкарта для генерации задач
-  autoGenerate         Boolean               @default(true) // Автоматически генерировать задачи
-  
-  object               CleaningObject        @relation(fields: [objectId], references: [id], onDelete: Cascade)
-  room                 Room?                 @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  cleaningObjectItem   CleaningObjectItem?   @relation(fields: [cleaningObjectItemId], references: [id])
-  executions           TaskExecution[]       // Связь с выполнениями
+  cleaningObjectItemId String?
+  notes                String?
+  period               String?
+  workDetails          String?
+  seasonality          String?
+  frequencyDays        Int?
+  maxDelayHours        Int?
+  preferredTime        String?
+  autoGenerate         Boolean             @default(true)
+  isActive             Boolean             @default(true)
+  timeSlots            String[]
+  executions           TaskExecution[]
+  cleaningObjectItem   CleaningObjectItem? @relation(fields: [cleaningObjectItemId], references: [id])
+  object               CleaningObject      @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  room                 Room?               @relation(fields: [roomId], references: [id], onDelete: Cascade)
 }
 
 model Checklist {
   id                String         @id @default(cuid())
   createdAt         DateTime       @default(now())
   date              DateTime       @db.Date
-  name              String?
   objectId          String
   roomId            String?
   creatorId         String
-  completionComment String?
-  completionPhotos  String[]
   completedAt       DateTime?
   completedById     String?
+  completionComment String?
+  completionPhotos  String[]
+  name              String?
   completedBy       User?          @relation("CompletedChecklists", fields: [completedById], references: [id])
   creator           User           @relation(fields: [creatorId], references: [id])
   object            CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
@@ -212,32 +194,30 @@ model Checklist {
 }
 
 model Task {
-  id                String        @id @default(cuid())
-  createdAt         DateTime      @default(now())
+  id                String             @id @default(cuid())
+  createdAt         DateTime           @default(now())
   description       String
-  status            TaskStatus    @default(NEW)
+  status            TaskStatus         @default(NEW)
   photoUrl          String?
   objectName        String?
   roomName          String?
   scheduledStart    DateTime?
   scheduledEnd      DateTime?
   failureReason     String?
-  completionComment String?
-  completionPhotos  String[]
   checklistId       String?
   roomId            String?
   requestId         String?
   completedById     String?
   completedAt       DateTime?
+  completionComment String?
+  completionPhotos  String[]
   photoReports      PhotoReport[]
-  checklist         Checklist?    @relation(fields: [checklistId], references: [id], onDelete: Cascade)
-  completedBy       User?         @relation(fields: [completedById], references: [id])
-  request           Request?      @relation(fields: [requestId], references: [id])
-  room              Room?         @relation(fields: [roomId], references: [id])
-  
-  // Новые связи
-  adminComments     TaskAdminComment[]
+  checklist         Checklist?         @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  completedBy       User?              @relation(fields: [completedById], references: [id])
+  request           Request?           @relation(fields: [requestId], references: [id])
+  room              Room?              @relation(fields: [roomId], references: [id])
   notifications     Notification[]
+  adminComments     TaskAdminComment[]
 }
 
 model Request {
@@ -290,7 +270,6 @@ model InventoryExpense {
   @@index([objectId])
   @@index([month, year])
 }
-
 
 model PhotoReport {
   id          String          @id @default(cuid())
@@ -365,13 +344,153 @@ model DeputyAdminAssignment {
   @@unique([deputyAdminId, objectId])
 }
 
+model ObjectStructure {
+  id                 String         @id @default(cuid())
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  objectName         String
+  objectAddress      String?
+  siteName           String?
+  zoneName           String?
+  roomGroupName      String?
+  roomName           String?
+  cleaningObjectName String?
+  techCardName       String
+  frequency          String
+  notes              String?
+  period             String?
+  objectId           String
+  siteId             String?
+  zoneId             String?
+  roomGroupId        String?
+  roomId             String?
+  cleaningObjectId   String?
+  techCardId         String
+  workType           String?
+  description        String?
+  object             CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+
+  @@index([objectId])
+  @@index([objectName])
+}
+
+model ReportingTask {
+  id                String                @id @default(cuid())
+  title             String
+  description       String?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  dueDate           DateTime?
+  completedAt       DateTime?
+  objectId          String
+  createdById       String
+  assignedToId      String
+  completionComment String?
+  status            ReportingTaskStatus   @default(NEW)
+  priority          ReportingTaskPriority @default(MEDIUM)
+  assignedTo        User                  @relation("AssignedReportingTasks", fields: [assignedToId], references: [id])
+  createdBy         User                  @relation("CreatedReportingTasks", fields: [createdById], references: [id])
+  object            CleaningObject        @relation("ReportingTasks", fields: [objectId], references: [id], onDelete: Cascade)
+  attachments       ReportingTaskAttachment[]
+
+  @@index([objectId])
+  @@index([assignedToId])
+  @@index([status])
+}
+
+// Вложения к задачам отчетности (фотоотчеты и документы)
+model ReportingTaskAttachment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  
+  fileName     String
+  originalName String
+  fileSize     Int
+  mimeType     String
+  filePath     String
+  
+  // Связи
+  taskId       String
+  task         ReportingTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploadedById String
+  uploadedBy   User @relation("ReportingTaskAttachments", fields: [uploadedById], references: [id])
+  
+  @@index([taskId])
+  @@index([uploadedById])
+}
+
+model ExcludedObject {
+  id           String         @id @default(cuid())
+  objectId     String         @unique
+  excludedAt   DateTime       @default(now())
+  excludedById String
+  excludedBy   User           @relation("ExcludedObjects", fields: [excludedById], references: [id])
+  object       CleaningObject @relation("ExcludedObjects", fields: [objectId], references: [id], onDelete: Cascade)
+}
+
+model TaskExecution {
+  id           String              @id @default(cuid())
+  techCardId   String
+  objectId     String
+  managerId    String
+  scheduledFor DateTime
+  dueDate      DateTime
+  executedAt   DateTime?
+  status       TaskExecutionStatus @default(PENDING)
+  comment      String?
+  photos       String[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  manager      User                @relation("TaskExecutions", fields: [managerId], references: [id])
+  object       CleaningObject      @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  techCard     TechCard            @relation(fields: [techCardId], references: [id], onDelete: Cascade)
+
+  @@index([managerId, scheduledFor])
+  @@index([objectId, scheduledFor])
+  @@index([status, scheduledFor])
+  @@index([techCardId, scheduledFor])
+}
+
+model TaskAdminComment {
+  id              String               @id @default(cuid())
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  content         String
+  type            TaskAdminCommentType
+  taskId          String
+  adminId         String
+  parentCommentId String?
+  admin           User                 @relation("AdminComments", fields: [adminId], references: [id], onDelete: Cascade)
+  parentComment   TaskAdminComment?    @relation("CommentReplies", fields: [parentCommentId], references: [id])
+  replies         TaskAdminComment[]   @relation("CommentReplies")
+  task            Task                 @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_admin_comments")
+}
+
+model Notification {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  userId        String
+  type          String
+  title         String
+  message       String
+  isRead        Boolean  @default(false)
+  relatedTaskId String?
+  relatedTask   Task?    @relation(fields: [relatedTaskId], references: [id])
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
 enum Role {
   ADMIN
-  DEPUTY_ADMIN
   DEPUTY
   MANAGER
-  ACCOUNTANT
   CLIENT
+  DEPUTY_ADMIN
+  ACCOUNTANT
 }
 
 enum TaskStatus {
@@ -397,86 +516,6 @@ enum AdditionalTaskStatus {
   COMPLETED
 }
 
-// Плоская таблица для динамического дерева структуры
-model ObjectStructure {
-  id                String   @id @default(cuid())
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
-  // Основные поля
-  objectName        String   // Наименование объекта
-  objectAddress     String?  // Адрес
-  siteName          String?  // Участок
-  zoneName          String?  // Зона
-  roomGroupName     String?  // Группа помещений
-  roomName          String?  // Помещение
-  cleaningObjectName String? // Объект уборки
-  techCardName      String   // Тех задание
-  frequency         String   // Периодичность
-  notes             String?  // Примечания
-  period            String?  // Период (летний/зимний)
-  
-  // Дополнительные поля для связей
-  objectId          String
-  siteId            String?
-  zoneId            String?
-  roomGroupId       String?
-  roomId            String?
-  cleaningObjectId  String?
-  techCardId        String
-  
-  // Поля для UI
-  workType          String?  // Тип работы
-  description       String?  // Описание
-  
-  // Связи
-  object            CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
-  
-  @@index([objectId])
-  @@index([objectName])
-}
-
-// Задачи отчетности (создаются вручную администраторами)
-model ReportingTask {
-  id          String   @id @default(cuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Основная информация
-  title       String
-  description String?
-  status      ReportingTaskStatus @default(NEW)
-  priority    ReportingTaskPriority @default(MEDIUM)
-  dueDate     DateTime?
-  completedAt DateTime?
-  
-  // Связи
-  objectId      String
-  object        CleaningObject @relation("ReportingTasks", fields: [objectId], references: [id], onDelete: Cascade)
-  createdById   String
-  createdBy     User @relation("CreatedReportingTasks", fields: [createdById], references: [id])
-  assignedToId  String
-  assignedTo    User @relation("AssignedReportingTasks", fields: [assignedToId], references: [id])
-  
-  // Выполнение
-  completionComment String?
-  
-  @@index([objectId])
-  @@index([assignedToId])
-  @@index([status])
-}
-
-// Таблица для исключенных объектов (восстанавливаем)
-model ExcludedObject {
-  id          String   @id @default(cuid())
-  objectId    String   @unique
-  excludedAt  DateTime @default(now())
-  excludedById String
-  
-  object      CleaningObject @relation("ExcludedObjects", fields: [objectId], references: [id], onDelete: Cascade)
-  excludedBy  User @relation("ExcludedObjects", fields: [excludedById], references: [id])
-}
-
 enum ReportingTaskStatus {
   NEW
   IN_PROGRESS
@@ -491,99 +530,16 @@ enum ReportingTaskPriority {
   URGENT
 }
 
-// Новая модель для календаря задач
-model TaskExecution {
-  id          String   @id @default(cuid())
-  
-  // Связи
-  techCardId  String
-  techCard    TechCard @relation(fields: [techCardId], references: [id], onDelete: Cascade)
-  objectId    String
-  object      CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
-  managerId   String
-  manager     User @relation("TaskExecutions", fields: [managerId], references: [id])
-  
-  // Планирование
-  scheduledFor DateTime  // Когда должно было быть выполнено
-  dueDate      DateTime  // Крайний срок выполнения
-  
-  // Выполнение
-  executedAt   DateTime? // Когда фактически выполнено
-  status       TaskExecutionStatus @default(PENDING)
-  
-  // Отчетность
-  comment      String?   // Комментарий менеджера
-  photos       String[]  // Массив URL фотографий
-  
-  // Метаданные
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
-  @@index([managerId, scheduledFor])
-  @@index([objectId, scheduledFor])
-  @@index([status, scheduledFor])
-  @@index([techCardId, scheduledFor])
-}
-
 enum TaskExecutionStatus {
-  PENDING     // Ожидает выполнения
-  COMPLETED   // Выполнено
-  OVERDUE     // Просрочено
-  SKIPPED     // Пропущено (с комментарием)
+  PENDING
+  COMPLETED
+  OVERDUE
+  SKIPPED
 }
 
-// Комментарии администраторов к задачам
-model TaskAdminComment {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Содержимое комментария
-  content String @db.Text
-  type    TaskAdminCommentType
-
-  // Связи
-  taskId  String
-  task    Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  
-  adminId String
-  admin   User   @relation("AdminComments", fields: [adminId], references: [id], onDelete: Cascade)
-
-  // Для ответов на комментарии (threading)
-  parentCommentId String?
-  parentComment   TaskAdminComment? @relation("CommentReplies", fields: [parentCommentId], references: [id])
-  replies         TaskAdminComment[] @relation("CommentReplies")
-
-  @@map("task_admin_comments")
-}
-
-// Типы комментариев администраторов
 enum TaskAdminCommentType {
-  ADMIN_NOTE          // Заметка администратора
-  COMPLETION_FEEDBACK // Отзыв о выполнении
-  INSTRUCTION         // Указание/инструкция
-  QUALITY_CHECK       // Проверка качества
-}
-
-// Уведомления для менеджеров
-model Notification {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Получатель уведомления
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Содержимое уведомления
-  type    String
-  title   String
-  message String @db.Text
-  isRead  Boolean @default(false)
-
-  // Связанные объекты (опционально)
-  relatedTaskId String?
-  relatedTask   Task?   @relation(fields: [relatedTaskId], references: [id], onDelete: SetNull)
-
-  @@map("notifications")
+  ADMIN_NOTE
+  COMPLETION_FEEDBACK
+  INSTRUCTION
+  QUALITY_CHECK
 }

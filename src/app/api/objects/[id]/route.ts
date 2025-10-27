@@ -29,6 +29,15 @@ export async function GET(req: NextRequest, { params }: Params) {
           include: {
             manager: {
               select: { id: true, name: true, email: true }
+            },
+            zones: {
+              include: {
+                roomGroups: {
+                  include: {
+                    rooms: true
+                  }
+                }
+              }
             }
           },
           orderBy: { name: 'asc' }
@@ -88,8 +97,20 @@ export async function PUT(req: NextRequest, { params }: Params) {
           include: {
             manager: {
               select: { id: true, name: true, email: true }
+            },
+            zones: {
+              include: {
+                roomGroups: {
+                  include: {
+                    rooms: true
+                  }
+                }
+              }
             }
           },
+          orderBy: { name: 'asc' }
+        },
+        techCards: {
           orderBy: { name: 'asc' }
         },
         _count: {

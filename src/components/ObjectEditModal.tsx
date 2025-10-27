@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Trash2, Plus, Edit, Save, X } from 'lucide-react';
-import TechCardEditModal from '@/components/TechCardEditModal';
+import StructureItemModal, { StructureType } from '@/components/StructureItemModal';
+import TechTaskModal from '@/components/TechTaskModal';
 
 interface Manager {
   id: string;
@@ -22,6 +23,7 @@ interface Site {
   name: string;
   description?: string;
   area?: number;
+  comment?: string;
   zones?: Zone[];
 }
 
@@ -84,13 +86,22 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
-  const [editingItem, setEditingItem] = useState<{ type: string; id: string } | null>(null);
-  const [editingTechCard, setEditingTechCard] = useState<TechCard | null>(null);
-  const [showTechCardEditModal, setShowTechCardEditModal] = useState(false);
+  const [editingTechTask, setEditingTechTask] = useState<TechCard | null>(null);
+  const [showTechTaskModal, setShowTechTaskModal] = useState(false);
+
+  // Состояние для управления структурой
+  const [structureModal, setStructureModal] = useState<{
+    isOpen: boolean;
+    type: StructureType | null;
+    item: any;
+    parentId: string;
+  }>({ isOpen: false, type: null, item: null, parentId: '' });
 
   // Загрузка данных объекта
   useEffect(() => {
+    console.log('🔄 ObjectEditModal useEffect:', { isOpen, objectId });
     if (isOpen && objectId) {
+      console.log('🔄 ObjectEditModal: Загружаем данные...');
       loadObjectData();
       loadManagers();
     }
@@ -102,6 +113,10 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
       const response = await fetch(`/api/objects/${objectId}`);
       if (response.ok) {
         const data = await response.json();
+        console.log('🔄 ObjectEditModal: Загружены данные объекта:', data);
+        console.log('🏭 Участков:', data.sites?.length || 0);
+        console.log('🏭 Участки:', data.sites);
+        console.log('🏠 Помещений:', data.rooms?.length || 0);
         setObject(data);
       }
     } catch (error) {
@@ -175,36 +190,42 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
     }
   };
 
-  // Создание нового участка
-  const createSite = async () => {
-    const name = prompt('Название участка:');
-    if (!name) return;
-
-    try {
-      const response = await fetch('/api/sites', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          objectId: objectId,
-          managerId: object?.manager?.id
-        })
-      });
-
-      if (response.ok) {
-        loadObjectData();
-      }
-    } catch (error) {
-      console.error('Ошибка создания участка:', error);
-    }
+  // Управление структурой
+  const openStructureModal = (type: StructureType, parentId: string, item: any = null) => {
+    setStructureModal({ isOpen: true, type, item, parentId });
   };
 
-  // Удаление участка
-  const deleteSite = async (siteId: string) => {
-    if (!confirm('Удалить участок?')) return;
+  const closeStructureModal = () => {
+    setStructureModal({ isOpen: false, type: null, item: null, parentId: '' });
+  };
+
+  const handleStructureSaved = async () => {
+    await loadObjectData();
+    closeStructureModal();
+  };
+
+  // Удаление элементов структуры
+  const deleteStructureItem = async (type: StructureType, id: string, name: string) => {
+    const typeNames = {
+      site: 'участок',
+      zone: 'зону',
+      roomGroup: 'группу помещений',
+      room: 'помещение',
+      cleaningObjectItem: 'объект уборки',
+    };
+
+    if (!confirm(`Удалить ${typeNames[type]} "${name}"?`)) return;
+
+    const apiPaths = {
+      site: '/api/sites',
+      zone: '/api/zones',
+      roomGroup: '/api/room-groups',
+      room: '/api/rooms',
+      cleaningObjectItem: '/api/cleaning-object-items',
+    };
 
     try {
-      const response = await fetch(`/api/sites/${siteId}`, {
+      const response = await fetch(`${apiPaths[type]}/${id}`, {
         method: 'DELETE'
       });
 
@@ -212,50 +233,31 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
         loadObjectData();
       }
     } catch (error) {
-      console.error('Ошибка удаления участка:', error);
+      console.error(`Ошибка удаления ${typeNames[type]}:`, error);
     }
   };
 
-  // Создание техкарты
-  const createTechCard = async () => {
-    const name = prompt('Название техкарты:');
-    if (!name) return;
-
-    try {
-      const response = await fetch('/api/tech-cards', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          workType: 'Общие работы',
-          frequency: 'По необходимости',
-          objectId: objectId
-        })
-      });
-
-      if (response.ok) {
-        loadObjectData();
-      }
-    } catch (error) {
-      console.error('Ошибка создания техкарты:', error);
-    }
+  // Создание техзадания
+  const createTechTask = () => {
+    setEditingTechTask(null);
+    setShowTechTaskModal(true);
   };
 
-  // Редактирование техкарты
-  const editTechCard = (techCard: TechCard) => {
-    setEditingTechCard(techCard);
-    setShowTechCardEditModal(true);
+  // Редактирование техзадания
+  const editTechTask = (techTask: TechCard) => {
+    setEditingTechTask(techTask);
+    setShowTechTaskModal(true);
   };
 
-  const handleTechCardSaved = () => {
+  const handleTechTaskSaved = () => {
     loadObjectData();
-    setShowTechCardEditModal(false);
-    setEditingTechCard(null);
+    setShowTechTaskModal(false);
+    setEditingTechTask(null);
   };
 
-  // Удаление техкарты
-  const deleteTechCard = async (techCardId: string) => {
-    if (!confirm('Удалить техкарту? Это также удалит все связанные задачи.')) return;
+  // Удаление техзадания
+  const deleteTechTask = async (techCardId: string) => {
+    if (!confirm('Удалить техзадание? Это также удалит все связанные задачи.')) return;
 
     try {
       const response = await fetch(`/api/techcards/${techCardId}`, {
@@ -266,7 +268,7 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
         loadObjectData();
       }
     } catch (error) {
-      console.error('Ошибка удаления техкарты:', error);
+      console.error('Ошибка удаления техзадания:', error);
     }
   };
 
@@ -325,7 +327,7 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="basic">Основная информация</TabsTrigger>
             <TabsTrigger value="structure">Структура</TabsTrigger>
-            <TabsTrigger value="techcards">Техкарты</TabsTrigger>
+            <TabsTrigger value="techcards">Техзадания</TabsTrigger>
             <TabsTrigger value="stats">Статистика</TabsTrigger>
           </TabsList>
 
@@ -406,27 +408,46 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
           <TabsContent value="structure" className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Структура объекта</h3>
-              <Button onClick={createSite} size="sm">
+              <Button onClick={() => openStructureModal('site', objectId)} size="sm">
                 <Plus className="h-4 w-4 mr-1" />
                 Добавить участок
               </Button>
             </div>
 
-            <div className="space-y-4">
-              {object.sites.map((site) => (
-                <div key={site.id} className="border rounded-lg p-4">
+            <div className="space-y-4 max-h-[500px] overflow-y-auto">
+              {/* Участки */}
+              {!object.sites || object.sites.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p>Структура объекта пуста</p>
+                  <p className="text-sm mt-2">Нажмите "Добавить участок" для начала</p>
+                </div>
+              ) : (
+                object.sites.map((site) => (
+                <div key={site.id} className="border rounded-lg p-4 bg-white">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium">{site.name}</h4>
-                    <div className="flex gap-2">
-                      <Badge variant="outline">
-                        {site.zones?.length || 0} зон
-                      </Badge>
+                    <h4 className="font-medium text-blue-700">🏭 {site.name}</h4>
+                    <div className="flex gap-1">
                       <Button
-                        onClick={() => deleteSite(site.id)}
+                        onClick={() => openStructureModal('site', objectId, site)}
                         size="sm"
-                        variant="destructive"
+                        variant="ghost"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        onClick={() => openStructureModal('zone', site.id)}
+                        size="sm"
+                        variant="ghost"
+                        title="Добавить зону"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        onClick={() => deleteStructureItem('site', site.id, site.name)}
+                        size="sm"
+                        variant="ghost"
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </div>
                   </div>
@@ -435,35 +456,146 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
                     <p className="text-sm text-gray-600 mb-2">{site.description}</p>
                   )}
                   
-                  {site.area && (
-                    <p className="text-sm text-gray-500">Площадь: {site.area} м²</p>
-                  )}
+                  <div className="flex gap-4 text-sm text-gray-500 mb-3">
+                    {site.area && <span>📏 {site.area} м²</span>}
+                    {site.comment && <span>📝 {site.comment}</span>}
+                  </div>
 
+                  {/* Зоны */}
                   {site.zones && site.zones.length > 0 && (
-                    <div className="mt-3 pl-4 border-l-2 border-gray-200">
-                      <h5 className="font-medium text-sm mb-2">Зоны:</h5>
+                    <div className="mt-3 pl-4 border-l-2 border-blue-200 space-y-3">
                       {site.zones.map((zone) => (
-                        <div key={zone.id} className="mb-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">{zone.name}</span>
-                            <Badge variant="secondary" className="text-xs">
-                              {zone.roomGroups?.reduce((sum, rg) => sum + (rg.rooms?.length || 0), 0) || 0} помещений
-                            </Badge>
+                        <div key={zone.id} className="bg-blue-50 rounded p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium text-sm text-blue-800">🗺️ {zone.name}</span>
+                            <div className="flex gap-1">
+                              <Button
+                                onClick={() => openStructureModal('zone', site.id, zone)}
+                                size="sm"
+                                variant="ghost"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                onClick={() => openStructureModal('roomGroup', zone.id)}
+                                size="sm"
+                                variant="ghost"
+                                title="Добавить группу"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                onClick={() => deleteStructureItem('zone', zone.id, zone.name)}
+                                size="sm"
+                                variant="ghost"
+                              >
+                                <Trash2 className="h-3 w-3 text-red-500" />
+                              </Button>
+                            </div>
                           </div>
+                          {zone.area && <span className="text-xs text-gray-600">📏 {zone.area} м²</span>}
+
+                          {/* Группы помещений */}
+                          {zone.roomGroups && zone.roomGroups.length > 0 && (
+                            <div className="mt-2 pl-3 border-l-2 border-green-200 space-y-2">
+                              {zone.roomGroups.map((roomGroup) => (
+                                <div key={roomGroup.id} className="bg-green-50 rounded p-2">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="font-medium text-xs text-green-800">📁 {roomGroup.name}</span>
+                                    <div className="flex gap-1">
+                                      <Button
+                                        onClick={() => openStructureModal('roomGroup', zone.id, roomGroup)}
+                                        size="sm"
+                                        variant="ghost"
+                                      >
+                                        <Edit className="h-3 w-3" />
+                                      </Button>
+                                      <Button
+                                        onClick={() => openStructureModal('room', roomGroup.id)}
+                                        size="sm"
+                                        variant="ghost"
+                                        title="Добавить помещение"
+                                      >
+                                        <Plus className="h-3 w-3" />
+                                      </Button>
+                                      <Button
+                                        onClick={() => deleteStructureItem('roomGroup', roomGroup.id, roomGroup.name)}
+                                        size="sm"
+                                        variant="ghost"
+                                      >
+                                        <Trash2 className="h-3 w-3 text-red-500" />
+                                      </Button>
+                                    </div>
+                                  </div>
+
+                                  {/* Помещения */}
+                                  {roomGroup.rooms && roomGroup.rooms.length > 0 && (
+                                    <div className="mt-1 pl-2 space-y-1">
+                                      {roomGroup.rooms.map((room) => (
+                                        <div key={room.id} className="flex items-center justify-between bg-white rounded px-2 py-1">
+                                          <span className="text-xs">🚪 {room.name}</span>
+                                          <div className="flex gap-1">
+                                            <Button
+                                              onClick={() => openStructureModal('room', roomGroup.id, room)}
+                                              size="sm"
+                                              variant="ghost"
+                                            >
+                                              <Edit className="h-3 w-3" />
+                                            </Button>
+                                            <Button
+                                              onClick={() => deleteStructureItem('room', room.id, room.name)}
+                                              size="sm"
+                                              variant="ghost"
+                                            >
+                                              <Trash2 className="h-3 w-3 text-red-500" />
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
-              ))}
+              ))
+              )}
 
+              {/* Помещения без структуры */}
               {object.rooms.length > 0 && (
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Помещения объекта ({object.rooms.length})</h4>
+                <div className="border rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium">Помещения без структуры ({object.rooms.length})</h4>
+                    <Button onClick={() => openStructureModal('room', objectId)} size="sm">
+                      <Plus className="h-4 w-4 mr-1" />
+                      Добавить
+                    </Button>
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
                     {object.rooms.slice(0, 10).map((room) => (
-                      <div key={room.id} className="text-sm p-2 bg-gray-50 rounded">
-                        {room.name}
+                      <div key={room.id} className="flex items-center justify-between text-sm p-2 bg-white rounded">
+                        <span>🚪 {room.name}</span>
+                        <div className="flex gap-1">
+                          <Button
+                            onClick={() => openStructureModal('room', objectId, room)}
+                            size="sm"
+                            variant="ghost"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            onClick={() => deleteStructureItem('room', room.id, room.name)}
+                            size="sm"
+                            variant="ghost"
+                          >
+                            <Trash2 className="h-3 w-3 text-red-500" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -479,10 +611,10 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
 
           <TabsContent value="techcards" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Техкарты ({object.techCards.length})</h3>
-              <Button onClick={createTechCard} size="sm">
+              <h3 className="text-lg font-semibold">Техзадания ({object.techCards.length})</h3>
+              <Button onClick={createTechTask} size="sm">
                 <Plus className="h-4 w-4 mr-1" />
-                Добавить техкарту
+                Добавить техзадание
               </Button>
             </div>
 
@@ -510,14 +642,14 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
                       <Button 
                         size="sm" 
                         variant="ghost"
-                        onClick={() => editTechCard(techCard)}
+                        onClick={() => editTechTask(techCard)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button 
                         size="sm" 
                         variant="ghost"
-                        onClick={() => deleteTechCard(techCard.id)}
+                        onClick={() => deleteTechTask(techCard.id)}
                       >
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
@@ -551,7 +683,7 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
               
               <div className="bg-orange-50 p-4 rounded-lg">
                 <div className="text-2xl font-bold text-orange-600">{object.techCards.length}</div>
-                <div className="text-sm text-orange-800">Техкарт</div>
+                <div className="text-sm text-orange-800">Техзаданий</div>
               </div>
             </div>
 
@@ -568,16 +700,31 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
         </Tabs>
       </DialogContent>
 
-      {/* Модальное окно редактирования техкарты */}
-      <TechCardEditModal
-        isOpen={showTechCardEditModal}
+      {/* Модальное окно создания/редактирования техзадания */}
+      <TechTaskModal
+        isOpen={showTechTaskModal}
         onClose={() => {
-          setShowTechCardEditModal(false);
-          setEditingTechCard(null);
+          setShowTechTaskModal(false);
+          setEditingTechTask(null);
         }}
-        techCard={editingTechCard}
-        onSave={handleTechCardSaved}
+        techTask={editingTechTask}
+        objectId={objectId}
+        onSave={handleTechTaskSaved}
       />
+
+      {/* Универсальное модальное окно для структуры */}
+      {structureModal.type && (
+        <StructureItemModal
+          isOpen={structureModal.isOpen}
+          onClose={closeStructureModal}
+          type={structureModal.type}
+          item={structureModal.item}
+          parentId={structureModal.parentId}
+          objectId={objectId}
+          managers={managers}
+          onSave={handleStructureSaved}
+        />
+      )}
     </Dialog>
   );
 }

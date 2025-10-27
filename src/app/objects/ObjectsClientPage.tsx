@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 import RoomManager from '@/components/RoomManager';
 import CreateObjectForm from '@/components/CreateObjectForm';
 import ObjectEditModal from '@/components/ObjectEditModal';
@@ -38,6 +40,7 @@ export default function ObjectsClientPage() {
   const [managers, setManagers] = useState<{id: string, name: string}[]>([]);
   const [rooms, setRooms] = useState<{name: string, description: string, area: number}[]>([]);
   const [showRoomForm, setShowRoomForm] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchObjects = async () => {
     try {
@@ -230,6 +233,18 @@ export default function ObjectsClientPage() {
         </div>
       </div>
 
+      {/* Поиск */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <Input
+          type="text"
+          placeholder="Поиск по названию или адресу..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
       {/* Список объектов */}
       {objects.length === 0 ? (
         <Card>
@@ -239,7 +254,15 @@ export default function ObjectsClientPage() {
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
-          {objects.map((obj) => (
+          {objects
+            .filter((obj) => {
+              const query = searchQuery.toLowerCase();
+              return (
+                obj.name.toLowerCase().includes(query) ||
+                obj.address.toLowerCase().includes(query)
+              );
+            })
+            .map((obj) => (
             <Card key={obj.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="flex justify-between items-start">

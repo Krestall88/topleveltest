@@ -5,7 +5,9 @@ import { z } from 'zod';
 const createRoomSchema = z.object({
   name: z.string().min(1, 'Название обязательно'),
   description: z.string().optional(),
+  area: z.number().optional(),
   objectId: z.string().min(1, 'ID объекта обязателен'),
+  roomGroupId: z.string().optional(),
 });
 
 export async function GET(request: NextRequest) {

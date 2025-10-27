@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 const resetPasswordSchema = z.object({
   newPassword: z.string().min(6, 'Пароль должен содержать минимум 6 символов'),
+  newEmail: z.string().email('Некорректный email').optional(),
 });
 
 // POST /api/managers/[id]/reset-password - сброс пароля менеджера
@@ -25,7 +26,7 @@ export async function POST(
 
     const managerId = params.id;
     const body = await req.json();
-    const { newPassword } = resetPasswordSchema.parse(body);
+    const { newPassword, newEmail } = resetPasswordSchema.parse(body);
 
     // Проверяем, что пользователь существует и является менеджером
     const manager = await prisma.user.findUnique({
@@ -51,10 +52,29 @@ export async function POST(
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-    // Обновляем пароль
-    await prisma.user.update({
+    // Подготавливаем данные для обновления
+    const updateData: any = { password: hashedPassword };
+    if (newEmail && newEmail !== manager.email) {
+      // Проверяем, что новый email не занят
+      const existingUser = await prisma.user.findUnique({
+        where: { email: newEmail }
+      });
+      
+      if (existingUser && existingUser.id !== managerId) {
+        return NextResponse.json(
+          { message: 'Пользователь с таким email уже существует' },
+          { status: 400 }
+        );
+      }
+      
+      updateData.email = newEmail;
+    }
+
+    // Обновляем пароль и email (если указан)
+    const updatedManager = await prisma.user.update({
       where: { id: managerId },
-      data: { password: hashedPassword }
+      data: updateData,
+      select: { id: true, name: true, email: true }
     });
 
     // Логируем действие
@@ -71,11 +91,13 @@ export async function POST(
     );
 
     return NextResponse.json({
-      message: 'Пароль успешно изменен',
+      message: newEmail && newEmail !== manager.email 
+        ? 'Пароль и email успешно изменены' 
+        : 'Пароль успешно изменен',
       manager: {
-        id: manager.id,
-        name: manager.name,
-        email: manager.email
+        id: updatedManager.id,
+        name: updatedManager.name,
+        email: updatedManager.email
       }
     });
 

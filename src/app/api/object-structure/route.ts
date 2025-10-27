@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,97 +10,172 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'objectId is required' }, { status: 400 });
     }
 
-    // Получаем все записи для объекта
-    const records = await prisma.objectStructure.findMany({
-      where: { objectId },
-      orderBy: [
-        { siteName: 'asc' },
-        { zoneName: 'asc' },
-        { roomGroupName: 'asc' },
-        { roomName: 'asc' },
-        { cleaningObjectName: 'asc' },
-        { techCardName: 'asc' }
-      ]
+    // Получаем объект с полной иерархической структурой
+    const objectData = await prisma.cleaningObject.findUnique({
+      where: { id: objectId },
+      include: {
+        sites: {
+          include: {
+            zones: {
+              include: {
+                roomGroups: {
+                  include: {
+                    rooms: {
+                      include: {
+                        techCards: true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          orderBy: { name: 'asc' }
+        },
+        rooms: {
+          where: { roomGroupId: null }, // Помещения без группы
+          include: {
+            techCards: true
+          },
+          orderBy: { name: 'asc' }
+        },
+        techCards: {
+          where: { 
+            roomId: null
+          }
+        }
+      }
     });
 
-    // Строим динамическое дерево
-    const tree = buildDynamicTree(records);
+    if (!objectData) {
+      return NextResponse.json({ error: 'Object not found' }, { status: 404 });
+    }
+
+    // Строим дерево из новой структуры
+    const tree = buildHierarchicalTree(objectData);
 
     return NextResponse.json({
       success: true,
       data: tree,
-      totalRecords: records.length
+      totalRecords: tree.length
     });
 
   } catch (error) {
-    console.error('Error building dynamic tree:', error);
+    console.error('Error building hierarchical tree:', error);
     return NextResponse.json(
-      { error: 'Failed to build dynamic tree' },
+      { error: 'Failed to build hierarchical tree' },
       { status: 500 }
     );
   }
 }
 
-function buildDynamicTree(records: any[]) {
-  const tree: any = {};
+function buildHierarchicalTree(objectData: any) {
+  const tree: any[] = [];
 
-  records.forEach(record => {
-    // Определяем путь в дереве на основе заполненных полей
-    const path = [];
-    
-    if (record.siteName) path.push({ type: 'site', name: record.siteName, id: record.siteId });
-    if (record.zoneName) path.push({ type: 'zone', name: record.zoneName, id: record.zoneId });
-    if (record.roomGroupName) path.push({ type: 'roomGroup', name: record.roomGroupName, id: record.roomGroupId });
-    if (record.roomName) path.push({ type: 'room', name: record.roomName, id: record.roomId });
-    if (record.cleaningObjectName) path.push({ type: 'cleaningObject', name: record.cleaningObjectName, id: record.cleaningObjectId });
-    
-    // Техкарта всегда есть
-    path.push({ 
-      type: 'techCard', 
-      name: record.techCardName, 
-      id: record.techCardId,
-      frequency: record.frequency,
-      workType: record.workType,
-      description: record.description,
-      notes: record.notes,
-      period: record.period
+  // Добавляем участки
+  objectData.sites?.forEach((site: any) => {
+    const siteNode: any = {
+      type: 'site',
+      name: site.name,
+      id: site.id,
+      children: []
+    };
+
+    // Добавляем зоны участка
+    site.zones?.forEach((zone: any) => {
+      const zoneNode: any = {
+        type: 'zone',
+        name: zone.name,
+        id: zone.id,
+        children: []
+      };
+
+      // Добавляем группы помещений зоны
+      zone.roomGroups?.forEach((roomGroup: any) => {
+        const roomGroupNode: any = {
+          type: 'roomGroup',
+          name: roomGroup.name,
+          id: roomGroup.id,
+          children: []
+        };
+
+        // Добавляем помещения группы
+        roomGroup.rooms?.forEach((room: any) => {
+          const roomNode: any = {
+            type: 'room',
+            name: room.name,
+            id: room.id,
+            children: []
+          };
+
+          // Добавляем техкарты помещения
+          room.techCards?.forEach((techCard: any) => {
+            roomNode.children.push({
+              type: 'techCard',
+              name: techCard.name,
+              id: techCard.id,
+              frequency: techCard.frequency,
+              workType: techCard.workType,
+              description: techCard.description,
+              notes: techCard.notes,
+              period: techCard.period,
+              children: []
+            });
+          });
+
+          roomGroupNode.children.push(roomNode);
+        });
+
+        zoneNode.children.push(roomGroupNode);
+      });
+
+      siteNode.children.push(zoneNode);
     });
 
-    // Строим дерево по пути
-    let current = tree;
-    
-    path.forEach((node, index) => {
-      const key = `${node.type}:${node.name}`;
-      
-      if (!current[key]) {
-        current[key] = {
-          type: node.type,
-          name: node.name,
-          id: node.id,
-          children: {},
-          // Дополнительные поля для техкарт
-          ...(node.type === 'techCard' && {
-            frequency: node.frequency,
-            workType: node.workType,
-            description: node.description,
-            notes: node.notes,
-            period: node.period
-          })
-        };
-      }
-      
-      current = current[key].children;
+    tree.push(siteNode);
+  });
+
+  // Добавляем помещения без группы (старая структура)
+  objectData.rooms?.forEach((room: any) => {
+    const roomNode: any = {
+      type: 'room',
+      name: room.name,
+      id: room.id,
+      children: []
+    };
+
+    // Добавляем техкарты помещения
+    room.techCards?.forEach((techCard: any) => {
+      roomNode.children.push({
+        type: 'techCard',
+        name: techCard.name,
+        id: techCard.id,
+        frequency: techCard.frequency,
+        workType: techCard.workType,
+        description: techCard.description,
+        notes: techCard.notes,
+        period: techCard.period,
+        children: []
+      });
+    });
+
+    tree.push(roomNode);
+  });
+
+  // Добавляем техкарты без привязки к структуре
+  objectData.techCards?.forEach((techCard: any) => {
+    tree.push({
+      type: 'techCard',
+      name: techCard.name,
+      id: techCard.id,
+      frequency: techCard.frequency,
+      workType: techCard.workType,
+      description: techCard.description,
+      notes: techCard.notes,
+      period: techCard.period,
+      children: []
     });
   });
 
-  return convertTreeToArray(tree);
-}
-
-function convertTreeToArray(tree: any): any[] {
-  return Object.values(tree).map((node: any) => ({
-    ...node,
-    children: node.children && Object.keys(node.children).length > 0 
-      ? convertTreeToArray(node.children) 
-      : []
-  }));
+  return tree;
 }

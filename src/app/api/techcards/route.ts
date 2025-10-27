@@ -118,11 +118,12 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, workType, frequency, description, roomId, objectId } = body;
+    console.log('📥 Получены данные для создания техкарты:', body);
+    const { name, workType, frequency, description, roomId, objectId, siteId, zoneId, roomGroupId } = body;
 
-    if (!name || !workType || !frequency || !description || !roomId || !objectId) {
+    if (!name || !workType || !frequency || !objectId) {
       return NextResponse.json(
-        { message: 'Все поля обязательны для заполнения' },
+        { message: 'Название, тип работ, частота и объект обязательны' },
         { status: 400 }
       );
     }
@@ -132,9 +133,12 @@ export async function POST(req: NextRequest) {
         name,
         workType,
         frequency,
-        description,
-        roomId,
+        ...(description && { description }),
         objectId,
+        ...(siteId && { siteId }),
+        ...(zoneId && { zoneId }),
+        ...(roomGroupId && { roomGroupId }),
+        ...(roomId && { roomId }),
       },
       include: {
         room: { 
@@ -178,10 +182,16 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(techCard, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Ошибка создания техкарты:', error);
+    console.error('❌ Детали ошибки:', error.message);
+    console.error('❌ Stack trace:', error.stack);
     return NextResponse.json(
-      { message: 'Не удалось создать техкарту' },
+      { 
+        message: 'Не удалось создать техкарту',
+        error: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

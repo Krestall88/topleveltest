@@ -4,13 +4,17 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
+    console.log('🔍 GET /api/reporting/objects/[id]/tasks - начало');
+    
     const user = await getUserFromToken(req);
+    console.log('👤 Пользователь:', user ? `${user.name} (${user.role})` : 'не авторизован');
     
     if (!user) {
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
     const objectId = params.id;
+    console.log('🏢 ID объекта:', objectId);
 
     // Проверяем существование объекта и права доступа
     const object = await prisma.cleaningObject.findUnique({
@@ -43,6 +47,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     }
 
     // Получаем реальные задачи отчетности
+    console.log('🔍 Загружаем задачи отчетности...');
     const tasks = await prisma.reportingTask.findMany({
       where: {
         objectId: objectId
@@ -65,17 +70,14 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
           select: {
             name: true
           }
-        },
-        _count: {
-          select: {
-            // Пока что возвращаем 0, так как комментарии и вложения не реализованы
-          }
         }
       },
       orderBy: {
         createdAt: 'desc'
       }
     });
+    
+    console.log('📋 Найдено задач:', tasks.length);
 
     return NextResponse.json({
       tasks

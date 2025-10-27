@@ -80,20 +80,25 @@ export default function TechCardEditModal({ isOpen, onClose, techCard, onSave }:
 
     try {
       const response = await fetch(`/api/techcards/${techCard.id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
-        throw new Error('Ошибка при сохранении');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Ошибка ответа сервера:', response.status, errorData);
+        throw new Error(errorData.message || `Ошибка ${response.status}`);
       }
+
+      const result = await response.json();
+      console.log('✅ Техкарта успешно обновлена:', result);
 
       onSave();
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Ошибка сохранения техкарты:', err);
-      setError('Не удалось сохранить техкарту');
+      setError(err.message || 'Не удалось сохранить техкарту');
     } finally {
       setSaving(false);
     }

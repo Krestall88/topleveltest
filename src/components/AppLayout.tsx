@@ -146,13 +146,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 Инвентарь
               </Link>
               <Link
-                href="/analytics"
-                className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/analytics')}`}
-              >
-                <span className="mr-3">📊</span>
-                Аналитика
-              </Link>
-              <Link
                 href="/notifications"
                 className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/notifications')}`}
               >
