@@ -46,8 +46,24 @@ export async function GET(req: NextRequest) {
         createdAt: 'desc',
       },
     });
+
+    // Получаем allowManagerEdit для всех объектов через raw SQL (пока Prisma не обновился)
+    const objectIds = objects.map(obj => obj.id);
+    const allowManagerEditData = objectIds.length > 0 ? await prisma.$queryRaw`
+      SELECT id, "allowManagerEdit" FROM "CleaningObject" 
+      WHERE id = ANY(${objectIds})
+    ` : [];
+
+    // Добавляем allowManagerEdit к каждому объекту
+    const objectsWithPermissions = objects.map(obj => {
+      const permissionData = (allowManagerEditData as any[]).find(p => p.id === obj.id);
+      return {
+        ...obj,
+        allowManagerEdit: permissionData?.allowManagerEdit || false
+      };
+    });
     
-    return NextResponse.json(objects);
+    return NextResponse.json(objectsWithPermissions);
   } catch (error) {
     console.error(error);
     return NextResponse.json(

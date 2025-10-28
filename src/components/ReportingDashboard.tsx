@@ -148,13 +148,15 @@ export default function ReportingDashboard({ userRole, userId }: ReportingDashbo
             Настроить объекты
           </Button>
           
-          <Button
-            onClick={() => window.location.href = '/objects/reporting-settings'}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Добавить объекты
-          </Button>
+          {userRole !== 'MANAGER' && (
+            <Button
+              onClick={() => window.location.href = '/objects/reporting-settings'}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Добавить объекты
+            </Button>
+          )}
         </div>
       </div>
 
