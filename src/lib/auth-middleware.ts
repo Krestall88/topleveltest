@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 
 export interface AuthUser {
   id: string;
-  role: 'ADMIN' | 'DEPUTY' | 'MANAGER' | 'CLIENT';
+  role: 'ADMIN' | 'DEPUTY_ADMIN' | 'MANAGER' | 'CLIENT' | 'ACCOUNTANT';
   name: string;
   email: string;
 }
@@ -73,11 +73,11 @@ export function checkPermission(
   if (userRole === 'ADMIN') return true;
   
   // Заместитель имеет доступ почти ко всему (кроме системных настроек)
-  if (userRole === 'DEPUTY' && requiredRole !== 'ADMIN') return true;
+  if (userRole === 'DEPUTY_ADMIN' && requiredRole !== 'ADMIN') return true;
   
   // Менеджер имеет доступ только к своим ресурсам
   if (userRole === 'MANAGER') {
-    if (requiredRole === 'ADMIN' || requiredRole === 'DEPUTY') return false;
+    if (requiredRole === 'ADMIN' || requiredRole === 'DEPUTY_ADMIN') return false;
     return isOwner !== false; // Если isOwner не указан, считаем что доступ есть
   }
   
@@ -152,7 +152,7 @@ export function requireObjectAccess(getObjectId: (req: NextRequest) => string) {
     }
     
     // Админ и заместитель имеют доступ ко всем объектам
-    if (user.role === 'ADMIN' || user.role === 'DEPUTY') {
+    if (user.role === 'ADMIN' || user.role === 'DEPUTY_ADMIN') {
       return null;
     }
     
@@ -177,7 +177,7 @@ export function requireObjectAccess(getObjectId: (req: NextRequest) => string) {
  * Фильтрация объектов для менеджера
  */
 export function getManagerObjectsFilter(user: AuthUser) {
-  if (user.role === 'ADMIN' || user.role === 'DEPUTY') {
+  if (user.role === 'ADMIN' || user.role === 'DEPUTY_ADMIN') {
     return {}; // Без фильтра - видят все объекты
   }
   

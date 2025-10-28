@@ -21,11 +21,11 @@ export default function AdminPage() {
 
       if (response.ok) {
         const userData = await response.json();
-        if (userData.user.role !== 'ADMIN') {
+        if (userData.role !== 'ADMIN') {
           router.push('/');
           return;
         }
-        setUser(userData.user);
+        setUser(userData);
       } else {
         router.push('/auth/login');
       }
