@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Calendar, CheckSquare, FileText, MapPin, User, Clock, Plus, Settings, CheckCircle2, Edit } from 'lucide-react';
+import { ArrowLeft, Calendar, CheckSquare, FileText, MapPin, User, Clock, Plus, Settings, CheckCircle2, Edit, Shield } from 'lucide-react';
 import TaskManager from '@/components/TaskManager';
 import TestChecklistCreator from '@/components/TestChecklistCreator';
 import ChecklistCompletionModal from '@/components/ChecklistCompletionModal';
@@ -37,6 +37,7 @@ interface CleaningObject {
   name: string;
   address: string;
   createdAt: string;
+  allowManagerEdit?: boolean;
   manager?: { id: string; name: string; email: string };
   creator?: { id: string; name: string };
   rooms: Room[];
@@ -287,6 +288,31 @@ export default function ObjectDetailClientPage() {
     }
   };
 
+  const toggleManagerEditPermission = async () => {
+    if (!object) return;
+    
+    try {
+      const response = await fetch(`/api/objects/${object.id}/manager-edit`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          allowManagerEdit: !object.allowManagerEdit
+        }),
+      });
+
+      if (response.ok) {
+        const updatedObject = await response.json();
+        setObject(updatedObject);
+      } else {
+        console.error('Ошибка обновления разрешения редактирования');
+      }
+    } catch (error) {
+      console.error('Ошибка при обновлении разрешения:', error);
+    }
+  };
+
   useEffect(() => {
     fetchUserInfo();
     fetchObjectData();
@@ -380,8 +406,9 @@ export default function ObjectDetailClientPage() {
               </div>
             </div>
             <div className="flex flex-col space-y-2">
-              {userRole !== 'MANAGER' && (
-                <div className="flex space-x-2">
+              <div className="flex space-x-2 flex-wrap gap-2">
+                {/* Кнопка редактирования - для админов/заместителей или менеджеров с разрешением */}
+                {(userRole !== 'MANAGER' || (userRole === 'MANAGER' && object?.allowManagerEdit)) && (
                   <Button
                     onClick={() => setShowEditModal(true)}
                     size="sm"
@@ -391,26 +418,49 @@ export default function ObjectDetailClientPage() {
                     <Edit className="w-4 h-4 mr-1" />
                     Редактировать объект
                   </Button>
+                )}
+                
+                {/* Настройки завершения и расписание - только для админов/заместителей */}
+                {userRole !== 'MANAGER' && (
+                  <>
+                    <Button
+                      onClick={() => setShowRequirementsManager(true)}
+                      size="sm"
+                      variant="outline"
+                      className="flex items-center"
+                    >
+                      <CheckSquare className="w-4 h-4 mr-1" />
+                      Настройки завершения
+                    </Button>
+                    <Button
+                      onClick={() => setShowScheduleManager(true)}
+                      size="sm"
+                      variant="outline"
+                      className="flex items-center"
+                    >
+                      <Clock className="w-4 h-4 mr-1" />
+                      Расписание
+                    </Button>
+                  </>
+                )}
+                
+                {/* Кнопка разрешения редактирования - только для админов */}
+                {userRole === 'ADMIN' && object?.manager && (
                   <Button
-                    onClick={() => setShowRequirementsManager(true)}
+                    onClick={toggleManagerEditPermission}
                     size="sm"
-                    variant="outline"
-                    className="flex items-center"
+                    variant={object.allowManagerEdit ? "default" : "outline"}
+                    className={`flex items-center ${
+                      object.allowManagerEdit 
+                        ? "bg-green-600 hover:bg-green-700 text-white" 
+                        : "border-green-600 text-green-600 hover:bg-green-50"
+                    }`}
                   >
-                    <CheckSquare className="w-4 h-4 mr-1" />
-                    Настройки завершения
+                    <Shield className="w-4 h-4 mr-1" />
+                    {object.allowManagerEdit ? "Разрешено редактирование" : "Разрешить редактирование"}
                   </Button>
-                  <Button
-                    onClick={() => setShowScheduleManager(true)}
-                    size="sm"
-                    variant="outline"
-                    className="flex items-center"
-                  >
-                    <Clock className="w-4 h-4 mr-1" />
-                    Расписание
-                  </Button>
-                </div>
-              )}
+                )}
+              </div>
               <div className="text-sm text-gray-500 text-right">
                 Создан: {new Date(object.createdAt).toLocaleDateString('ru-RU')}
               </div>

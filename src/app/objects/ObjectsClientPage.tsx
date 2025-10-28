@@ -14,6 +14,7 @@ interface CleaningObject {
   id: string;
   name: string;
   address: string;
+  allowManagerEdit?: boolean;
   manager?: { id: string; name: string | null } | null;
 }
 
@@ -299,23 +300,23 @@ export default function ObjectsClientPage() {
                     >
                       Подробнее
                     </Button>
+                    {(userRole !== 'MANAGER' || (userRole === 'MANAGER' && obj.allowManagerEdit)) && (
+                      <Button
+                        onClick={() => handleEdit(obj)}
+                        size="sm"
+                        variant="outline"
+                      >
+                        Редактировать
+                      </Button>
+                    )}
                     {userRole !== 'MANAGER' && (
-                      <>
-                        <Button
-                          onClick={() => handleEdit(obj)}
-                          size="sm"
-                          variant="outline"
-                        >
-                          Редактировать
-                        </Button>
-                        <Button
-                          onClick={() => handleDelete(obj.id)}
-                          size="sm"
-                          variant="destructive"
-                        >
-                          Удалить
-                        </Button>
-                      </>
+                      <Button
+                        onClick={() => handleDelete(obj.id)}
+                        size="sm"
+                        variant="destructive"
+                      >
+                        Удалить
+                      </Button>
                     )}
                   </div>
                 </CardTitle>

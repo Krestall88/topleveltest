@@ -66,6 +66,7 @@ model CleaningObject {
   description                 String?
   notes                       String?
   totalArea                   Float?
+  allowManagerEdit            Boolean                 @default(false)
   additionalTasks             AdditionalTask[]
   checklists                  Checklist[]
   creator                     User                    @relation("CreatedBy", fields: [creatorId], references: [id])
