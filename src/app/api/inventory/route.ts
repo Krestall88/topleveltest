@@ -27,6 +27,13 @@ export async function GET(request: NextRequest) {
         select: { id: true }
       });
       whereClause.objectId = { in: managedObjects.map(obj => obj.id) };
+    } else if (user.role === 'DEPUTY_ADMIN') {
+      // Заместитель администратора видит только инвентарь назначенных ему объектов
+      const assignedObjects = await prisma.deputyAdminAssignment.findMany({
+        where: { deputyAdminId: user.id },
+        select: { objectId: true }
+      });
+      whereClause.objectId = { in: assignedObjects.map(assignment => assignment.objectId) };
     }
 
     if (objectId) {

@@ -40,8 +40,8 @@ export default async function ManagersPage() {
     redirect('/auth/login');
   }
 
-  // Проверяем права доступа - только ADMIN и DEPUTY могут видеть менеджеров
-  if (user.role !== 'ADMIN' && user.role !== 'DEPUTY') {
+  // Проверяем права доступа - только ADMIN и DEPUTY_ADMIN могут видеть менеджеров
+  if (user.role !== 'ADMIN' && user.role !== 'DEPUTY_ADMIN') {
     redirect('/');
   }
 
