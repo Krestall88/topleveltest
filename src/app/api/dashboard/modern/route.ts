@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromToken, getManagerObjectsFilter } from '@/lib/auth-middleware';
+import { createObjectAccessFilter } from '@/lib/user-objects-middleware';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
@@ -18,8 +19,8 @@ export async function GET(req: NextRequest) {
     const role = searchParams.get('role') || user.role;
     const userId = searchParams.get('userId') || user.id;
 
-    // Фильтр для менеджеров - только свои объекты
-    const objectsFilter = getManagerObjectsFilter(user);
+    // Фильтр объектов по правам доступа пользователя
+    const objectsFilter = await createObjectAccessFilter(user, 'id');
 
     // Получаем основные данные
     const [
@@ -135,7 +136,7 @@ export async function GET(req: NextRequest) {
       completionRate: number;
       objectsCount: number;
     }> = [];
-    if (user.role === 'ADMIN' || user.role === 'DEPUTY') {
+    if (user.role === 'ADMIN' || user.role === 'DEPUTY_ADMIN') {
       const managersData = await prisma.user.findMany({
         where: { role: 'MANAGER' },
         select: {

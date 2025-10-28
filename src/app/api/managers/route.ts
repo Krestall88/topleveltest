@@ -3,25 +3,9 @@ import { jwtVerify } from 'jose';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import { getUserFromToken } from '@/lib/auth-middleware';
+import { getUserAccessibleObjects } from '@/lib/user-objects-middleware';
 
-async function getUserFromToken(req: NextRequest) {
-  try {
-    const token = req.cookies.get('token')?.value;
-    if (!token) return null;
-
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
-    const { payload } = await jwtVerify(token, secret);
-    
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId as string },
-      select: { id: true, role: true }
-    });
-
-    return user;
-  } catch (error) {
-    return null;
-  }
-}
 
 const createManagerSchema = z.object({
   name: z.string().min(1, 'Имя обязательно'),
@@ -35,12 +19,27 @@ export async function GET(req: NextRequest) {
   try {
     const user = await getUserFromToken(req);
     
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'DEPUTY')) {
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'DEPUTY_ADMIN')) {
       return NextResponse.json({ message: 'Доступ запрещен' }, { status: 403 });
     }
 
+    // Получаем доступные объекты для пользователя
+    const accessibleObjectIds = await getUserAccessibleObjects(user);
+    
+    // Фильтруем менеджеров по доступным объектам
+    const managersFilter = user.role === 'ADMIN' 
+      ? { role: 'MANAGER' }
+      : { 
+          role: 'MANAGER',
+          managedObjects: {
+            some: {
+              id: { in: accessibleObjectIds }
+            }
+          }
+        };
+
     const managers = await prisma.user.findMany({
-      where: { role: 'MANAGER' },
+      where: managersFilter,
       select: {
         id: true,
         name: true,
@@ -118,7 +117,7 @@ export async function POST(req: NextRequest) {
   try {
     const user = await getUserFromToken(req);
     
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'DEPUTY')) {
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'DEPUTY_ADMIN')) {
       return NextResponse.json({ message: 'Доступ запрещен' }, { status: 403 });
     }
 

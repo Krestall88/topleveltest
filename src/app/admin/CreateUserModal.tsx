@@ -27,7 +27,7 @@ export default function CreateUserModal({ isOpen, onClose, onUserCreated }: Crea
     email: '',
     name: '',
     password: '',
-    role: '',
+    role: 'DEPUTY_ADMIN',
     phone: ''
   });
   const [selectedObjects, setSelectedObjects] = useState<string[]>([]);
@@ -41,11 +41,6 @@ export default function CreateUserModal({ isOpen, onClose, onUserCreated }: Crea
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    if (formData.role !== 'DEPUTY_ADMIN') {
-      setSelectedObjects([]);
-    }
-  }, [formData.role]);
 
   const loadObjects = async () => {
     try {
@@ -89,7 +84,7 @@ export default function CreateUserModal({ isOpen, onClose, onUserCreated }: Crea
         credentials: 'include',
         body: JSON.stringify({
           ...formData,
-          assignedObjectIds: formData.role === 'DEPUTY_ADMIN' ? selectedObjects : []
+          assignedObjectIds: selectedObjects
         }),
       });
 
@@ -115,10 +110,43 @@ export default function CreateUserModal({ isOpen, onClose, onUserCreated }: Crea
       email: '',
       name: '',
       password: '',
-      role: '',
+      role: 'DEPUTY_ADMIN',
       phone: ''
     });
     setSelectedObjects([]);
+  };
+
+  const generateLogin = () => {
+    if (formData.name) {
+      // Создаем логин из имени (транслитерация + случайные цифры)
+      const translitName = formData.name
+        .toLowerCase()
+        .replace(/[а-я]/g, (char) => {
+          const map: { [key: string]: string } = {
+            'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
+            'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+            'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+            'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
+            'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
+          };
+          return map[char] || char;
+        })
+        .replace(/[^a-z0-9]/g, '')
+        .substring(0, 10);
+      
+      const randomNum = Math.floor(Math.random() * 1000);
+      const login = `${translitName}${randomNum}@cleaning.com`;
+      setFormData({ ...formData, email: login });
+    }
+  };
+
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let password = '';
+    for (let i = 0; i < 8; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setFormData({ ...formData, password });
   };
 
   const handleClose = () => {
@@ -135,9 +163,7 @@ export default function CreateUserModal({ isOpen, onClose, onUserCreated }: Crea
   };
 
   const roleOptions = [
-    { value: 'DEPUTY_ADMIN', label: 'Заместитель администратора' },
-    { value: 'MANAGER', label: 'Менеджер' },
-    { value: 'ACCOUNTANT', label: 'Бухгалтер' }
+    { value: 'DEPUTY_ADMIN', label: 'Заместитель администратора' }
   ];
 
   return (
@@ -160,37 +186,58 @@ export default function CreateUserModal({ isOpen, onClose, onUserCreated }: Crea
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="name">Имя *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Введите имя"
-                    required
-                  />
+                  <div className="flex space-x-2">
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Введите имя"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={generateLogin}
+                      disabled={!formData.name}
+                      className="whitespace-nowrap"
+                    >
+                      Создать логин
+                    </Button>
+                  </div>
                 </div>
                 
                 <div>
-                  <Label htmlFor="email">Email *</Label>
+                  <Label htmlFor="email">Логин (Email) *</Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="user@example.com"
+                    placeholder="Будет сгенерирован автоматически"
                     required
                   />
                 </div>
                 
                 <div>
                   <Label htmlFor="password">Пароль *</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="Минимум 6 символов"
-                    required
-                  />
+                  <div className="flex space-x-2">
+                    <Input
+                      id="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      placeholder="Минимум 6 символов"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={generatePassword}
+                      className="whitespace-nowrap"
+                    >
+                      Сгенерировать
+                    </Button>
+                  </div>
                 </div>
                 
                 <div>
@@ -204,26 +251,18 @@ export default function CreateUserModal({ isOpen, onClose, onUserCreated }: Crea
                 </div>
               </div>
               
-              <div>
-                <Label htmlFor="role">Роль *</Label>
-                <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Выберите роль" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roleOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <div className="text-sm font-medium text-blue-800">
+                  Роль: Заместитель администратора
+                </div>
+                <div className="text-xs text-blue-600 mt-1">
+                  Будет иметь те же права что и главный администратор, но только по назначенным объектам
+                </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Назначение объектов для заместителя */}
-          {formData.role === 'DEPUTY_ADMIN' && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
@@ -266,7 +305,6 @@ export default function CreateUserModal({ isOpen, onClose, onUserCreated }: Crea
                 )}
               </CardContent>
             </Card>
-          )}
 
           {/* Кнопки действий */}
           <div className="flex justify-end space-x-2">

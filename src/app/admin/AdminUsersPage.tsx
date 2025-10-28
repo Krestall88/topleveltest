@@ -139,7 +139,7 @@ export default function AdminUsersPage() {
           <Users className="w-8 h-8 text-blue-600" />
           <div>
             <h1 className="text-2xl font-bold">Управление администраторами</h1>
-            <p className="text-gray-600">Назначение заместителей и управление правами доступа</p>
+            <p className="text-gray-600">Создание заместителей администратора с назначением объектов</p>
           </div>
         </div>
         <Button onClick={() => setIsCreateModalOpen(true)}>
@@ -149,7 +149,7 @@ export default function AdminUsersPage() {
       </div>
 
       <div className="grid gap-4">
-        {users.map((user) => (
+        {users.filter(user => user.role === 'ADMIN' || user.role === 'DEPUTY_ADMIN').map((user) => (
           <Card key={user.id}>
             <CardHeader>
               <div className="flex items-center justify-between">
