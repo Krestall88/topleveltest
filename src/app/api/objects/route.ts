@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createObjectSchema } from '@/lib/validators/object';
 import { prisma } from '@/lib/prisma';
 import { jwtVerify } from 'jose';
+import { getUserFromToken } from '@/lib/auth-middleware';
+import { createObjectAccessFilter } from '@/lib/user-objects-middleware';
 
 async function getUserIdFromToken(req: NextRequest): Promise<string | null> {
   const token = req.cookies.get('token')?.value;
@@ -19,14 +21,32 @@ async function getUserIdFromToken(req: NextRequest): Promise<string | null> {
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getUserFromToken(req);
+    if (!user) {
+      return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
+    }
+
+    // Создаем фильтр доступа к объектам
+    const accessFilter = await createObjectAccessFilter(user, 'id');
+
     const objects = await prisma.cleaningObject.findMany({
+      where: accessFilter,
       include: {
         manager: { select: { id: true, name: true } },
+        rooms: true,
+        techCards: true,
+        _count: {
+          select: {
+            rooms: true,
+            techCards: true
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc',
       },
     });
+    
     return NextResponse.json(objects);
   } catch (error) {
     console.error(error);

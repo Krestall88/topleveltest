@@ -46,10 +46,38 @@ export default function AppLayout({ children }: AppLayoutProps) {
   };
 
   // Проверяем, может ли пользователь видеть страницы управления пользователями и менеджерами
-  const canViewUsers = user && (user.role === 'ADMIN' || user.role === 'DEPUTY');
+  const canViewUsers = user && (user.role === 'ADMIN' || user.role === 'DEPUTY_ADMIN');
   
   // Для бухгалтера показываем только инвентарь
   const isAccountant = user && user.role === 'ACCOUNTANT';
+  
+  // Функция для проверки видимости пунктов меню по ролям
+  const canViewMenuItem = (menuItem: string) => {
+    if (!user) return false;
+    
+    const { role } = user;
+    
+    // Главный администратор видит все
+    if (role === 'ADMIN') return true;
+    
+    // Заместитель администратора видит все, кроме управления администраторами
+    if (role === 'DEPUTY_ADMIN') {
+      return menuItem !== 'admin';
+    }
+    
+    // Менеджер видит ограниченный набор
+    if (role === 'MANAGER') {
+      const managerMenus = ['objects', 'manager-calendar', 'additional-tasks', 'photos', 'inventory', 'notifications', 'reporting'];
+      return managerMenus.includes(menuItem);
+    }
+    
+    // Бухгалтер видит только инвентарь
+    if (role === 'ACCOUNTANT') {
+      return menuItem === 'inventory';
+    }
+    
+    return false;
+  };
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -74,23 +102,39 @@ export default function AppLayout({ children }: AppLayoutProps) {
               Инвентарь
             </Link>
           ) : (
-            // Для всех остальных ролей показываем полное меню
+            // Для всех остальных ролей показываем меню согласно правам доступа
             <>
-              <Link
-                href="/"
-                className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/')}`}
-              >
-                <span className="mr-3">🏠</span>
-                Дашборд
-              </Link>
-              <Link
-                href="/objects"
-                className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/objects')}`}
-              >
-                <span className="mr-3">🏢</span>
-                Объекты
-              </Link>
-              {canViewUsers && (
+              {canViewMenuItem('dashboard') && (
+                <Link
+                  href="/"
+                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/')}`}
+                >
+                  <span className="mr-3">🏠</span>
+                  Дашборд
+                </Link>
+              )}
+              
+              {canViewMenuItem('objects') && (
+                <Link
+                  href="/objects"
+                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/objects')}`}
+                >
+                  <span className="mr-3">🏢</span>
+                  Объекты
+                </Link>
+              )}
+              
+              {canViewMenuItem('admin') && (
+                <Link
+                  href="/admin"
+                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/admin')}`}
+                >
+                  <span className="mr-3">👥</span>
+                  Администраторы
+                </Link>
+              )}
+              
+              {canViewMenuItem('managers') && (
                 <Link
                   href="/managers"
                   className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/managers')}`}
@@ -99,7 +143,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   Менеджеры
                 </Link>
               )}
-              {canViewUsers && (
+              
+              {canViewMenuItem('completion-settings') && (
                 <Link
                   href="/completion-settings"
                   className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/completion-settings')}`}
@@ -108,28 +153,38 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   Настройки завершения
                 </Link>
               )}
-              <Link
-                href="/manager-calendar"
-                className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/manager-calendar')}`}
-              >
-                <span className="mr-3">📅</span>
-                Календарь задач
-              </Link>
-              <Link
-                href="/additional-tasks"
-                className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/additional-tasks')}`}
-              >
-                <span className="mr-3">💬</span>
-                Доп. задания
-              </Link>
-              <Link
-                href="/photos"
-                className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/photos')}`}
-              >
-                <span className="mr-3">📷</span>
-                Фотоотчёты
-              </Link>
-              {(user?.role === 'ADMIN' || user?.role === 'DEPUTY') && (
+              
+              {canViewMenuItem('manager-calendar') && (
+                <Link
+                  href="/manager-calendar"
+                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/manager-calendar')}`}
+                >
+                  <span className="mr-3">📅</span>
+                  Календарь задач
+                </Link>
+              )}
+              
+              {canViewMenuItem('additional-tasks') && (
+                <Link
+                  href="/additional-tasks"
+                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/additional-tasks')}`}
+                >
+                  <span className="mr-3">💬</span>
+                  Доп. задания
+                </Link>
+              )}
+              
+              {canViewMenuItem('photos') && (
+                <Link
+                  href="/photos"
+                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/photos')}`}
+                >
+                  <span className="mr-3">📷</span>
+                  Фотоотчёты
+                </Link>
+              )}
+              
+              {canViewMenuItem('reporting') && (
                 <Link
                   href="/reporting"
                   className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/reporting')}`}
@@ -138,27 +193,36 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   Отчетность по чек-листам
                 </Link>
               )}
-              <Link
-                href="/inventory"
-                className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/inventory')}`}
-              >
-                <span className="mr-3">📦</span>
-                Инвентарь
-              </Link>
-              <Link
-                href="/notifications"
-                className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/notifications')}`}
-              >
-                <span className="mr-3">🔔</span>
-                Уведомления
-              </Link>
-              <Link
-                href="/audit"
-                className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/audit')}`}
-              >
-                <span className="mr-3">📋</span>
-                История действий
-              </Link>
+              
+              {canViewMenuItem('inventory') && (
+                <Link
+                  href="/inventory"
+                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/inventory')}`}
+                >
+                  <span className="mr-3">📦</span>
+                  Инвентарь
+                </Link>
+              )}
+              
+              {canViewMenuItem('notifications') && (
+                <Link
+                  href="/notifications"
+                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/notifications')}`}
+                >
+                  <span className="mr-3">🔔</span>
+                  Уведомления
+                </Link>
+              )}
+              
+              {canViewMenuItem('audit') && (
+                <Link
+                  href="/audit"
+                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/audit')}`}
+                >
+                  <span className="mr-3">📋</span>
+                  История действий
+                </Link>
+              )}
             </>
           )}
           
