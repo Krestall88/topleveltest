@@ -95,6 +95,7 @@ export default function ObjectDetailClientPage() {
   const [selectedTechTasks, setSelectedTechTasks] = useState<any[]>([]);
   const [selectedContext, setSelectedContext] = useState<string>('');
   const [showEditModal, setShowEditModal] = useState(false);
+  const [userRole, setUserRole] = useState<string>('');
 
   const fetchObjectData = async () => {
     if (!id) return;
@@ -274,7 +275,20 @@ export default function ObjectDetailClientPage() {
     setSelectedContext(context);
   };
 
+  const fetchUserInfo = async () => {
+    try {
+      const response = await fetch('/api/auth/me');
+      if (response.ok) {
+        const userData = await response.json();
+        setUserRole(userData.user.role);
+      }
+    } catch (error) {
+      console.error('Ошибка получения информации о пользователе:', error);
+    }
+  };
+
   useEffect(() => {
+    fetchUserInfo();
     fetchObjectData();
     fetchChecklists();
     fetchManagers();
@@ -366,35 +380,37 @@ export default function ObjectDetailClientPage() {
               </div>
             </div>
             <div className="flex flex-col space-y-2">
-              <div className="flex space-x-2">
-                <Button
-                  onClick={() => setShowEditModal(true)}
-                  size="sm"
-                  variant="default"
-                  className="flex items-center bg-blue-600 hover:bg-blue-700"
-                >
-                  <Edit className="w-4 h-4 mr-1" />
-                  Редактировать объект
-                </Button>
-                <Button
-                  onClick={() => setShowRequirementsManager(true)}
-                  size="sm"
-                  variant="outline"
-                  className="flex items-center"
-                >
-                  <CheckSquare className="w-4 h-4 mr-1" />
-                  Настройки завершения
-                </Button>
-                <Button
-                  onClick={() => setShowScheduleManager(true)}
-                  size="sm"
-                  variant="outline"
-                  className="flex items-center"
-                >
-                  <Clock className="w-4 h-4 mr-1" />
-                  Расписание
-                </Button>
-              </div>
+              {userRole !== 'MANAGER' && (
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => setShowEditModal(true)}
+                    size="sm"
+                    variant="default"
+                    className="flex items-center bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Edit className="w-4 h-4 mr-1" />
+                    Редактировать объект
+                  </Button>
+                  <Button
+                    onClick={() => setShowRequirementsManager(true)}
+                    size="sm"
+                    variant="outline"
+                    className="flex items-center"
+                  >
+                    <CheckSquare className="w-4 h-4 mr-1" />
+                    Настройки завершения
+                  </Button>
+                  <Button
+                    onClick={() => setShowScheduleManager(true)}
+                    size="sm"
+                    variant="outline"
+                    className="flex items-center"
+                  >
+                    <Clock className="w-4 h-4 mr-1" />
+                    Расписание
+                  </Button>
+                </div>
+              )}
               <div className="text-sm text-gray-500 text-right">
                 Создан: {new Date(object.createdAt).toLocaleDateString('ru-RU')}
               </div>
@@ -410,7 +426,7 @@ export default function ObjectDetailClientPage() {
                   <User className="w-4 h-4 mr-2 text-blue-600" />
                   Менеджеры
                 </h3>
-                {!isEditingManagers ? (
+                {!isEditingManagers && userRole !== 'MANAGER' ? (
                   <Button
                     onClick={startEditingManagers}
                     size="sm"
@@ -420,7 +436,7 @@ export default function ObjectDetailClientPage() {
                     <Edit className="w-3 h-3 mr-1" />
                     Изменить
                   </Button>
-                ) : (
+                ) : isEditingManagers ? (
                   <div className="flex space-x-1">
                     <Button
                       onClick={cancelEditingManagers}
@@ -438,7 +454,7 @@ export default function ObjectDetailClientPage() {
                       Сохранить
                     </Button>
                   </div>
-                )}
+                ) : null}
               </div>
 
               <div className="space-y-1">

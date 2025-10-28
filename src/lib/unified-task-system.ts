@@ -170,6 +170,21 @@ export async function generateVirtualTasks(
     whereClause.object = {
       managerId: userId
     };
+  } else if (userRole === 'DEPUTY_ADMIN') {
+    // Заместитель видит только задачи по назначенным ему объектам
+    const deputyAssignments = await prisma.deputyAdminAssignment.findMany({
+      where: { deputyAdminId: userId },
+      select: { objectId: true }
+    });
+    
+    const assignedObjectIds = deputyAssignments.map(a => a.objectId);
+    
+    if (assignedObjectIds.length > 0) {
+      whereClause.objectId = { in: assignedObjectIds };
+    } else {
+      // Если нет назначенных объектов, не показываем задачи
+      whereClause.objectId = 'no-objects';
+    }
   } else if (objectId) {
     whereClause.objectId = objectId;
   }
@@ -316,6 +331,28 @@ export async function getMaterializedTasks(
       whereClause.objectName = { in: objectNames };
     } else {
       whereClause.objectName = { in: [] }; // Пустой результат
+    }
+  } else if (userRole === 'DEPUTY_ADMIN') {
+    // Для заместителя - задачи только по назначенным объектам
+    const deputyAssignments = await prisma.deputyAdminAssignment.findMany({
+      where: { deputyAdminId: userId },
+      select: { objectId: true }
+    });
+    
+    if (deputyAssignments.length > 0) {
+      const assignedObjects = await prisma.cleaningObject.findMany({
+        where: { id: { in: deputyAssignments.map(a => a.objectId) } },
+        select: { name: true }
+      });
+      const objectNames = assignedObjects.map(obj => obj.name);
+      
+      if (objectNames.length > 0) {
+        whereClause.objectName = { in: objectNames };
+      } else {
+        whereClause.objectName = { in: [] }; // Пустой результат
+      }
+    } else {
+      whereClause.objectName = { in: [] }; // Нет назначенных объектов
     }
   } else if (objectId) {
     // Для админа с выбранным объектом

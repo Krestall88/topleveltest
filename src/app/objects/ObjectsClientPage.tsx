@@ -41,6 +41,19 @@ export default function ObjectsClientPage() {
   const [rooms, setRooms] = useState<{name: string, description: string, area: number}[]>([]);
   const [showRoomForm, setShowRoomForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [userRole, setUserRole] = useState<string>('');
+
+  const fetchUserInfo = async () => {
+    try {
+      const response = await fetch('/api/auth/me');
+      if (response.ok) {
+        const userData = await response.json();
+        setUserRole(userData.user.role);
+      }
+    } catch (error) {
+      console.error('Ошибка получения информации о пользователе:', error);
+    }
+  };
 
   const fetchObjects = async () => {
     try {
@@ -71,6 +84,7 @@ export default function ObjectsClientPage() {
   };
 
   useEffect(() => {
+    fetchUserInfo();
     fetchObjects();
     fetchManagers();
   }, []);
@@ -216,21 +230,25 @@ export default function ObjectsClientPage() {
 
       {/* Заголовок и кнопки */}
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Управление объектами</h2>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => setIsCreateModalOpen(true)}
-            variant="default"
-          >
-            + Создать объект с техкартами
-          </Button>
-          <Button
-            onClick={() => setIsAddModalOpen(true)}
-            variant="outline"
-          >
-            + Быстрое добавление
-          </Button>
-        </div>
+        <h2 className="text-xl font-semibold">
+          {userRole === 'MANAGER' ? 'Мои объекты' : 'Управление объектами'}
+        </h2>
+        {userRole !== 'MANAGER' && (
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setIsCreateModalOpen(true)}
+              variant="default"
+            >
+              + Создать объект с техкартами
+            </Button>
+            <Button
+              onClick={() => setIsAddModalOpen(true)}
+              variant="outline"
+            >
+              + Быстрое добавление
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Поиск */}
@@ -276,20 +294,24 @@ export default function ObjectsClientPage() {
                     >
                       Подробнее
                     </Button>
-                    <Button
-                      onClick={() => handleEdit(obj)}
-                      size="sm"
-                      variant="outline"
-                    >
-                      Редактировать
-                    </Button>
-                    <Button
-                      onClick={() => handleDelete(obj.id)}
-                      size="sm"
-                      variant="destructive"
-                    >
-                      Удалить
-                    </Button>
+                    {userRole !== 'MANAGER' && (
+                      <>
+                        <Button
+                          onClick={() => handleEdit(obj)}
+                          size="sm"
+                          variant="outline"
+                        >
+                          Редактировать
+                        </Button>
+                        <Button
+                          onClick={() => handleDelete(obj.id)}
+                          size="sm"
+                          variant="destructive"
+                        >
+                          Удалить
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </CardTitle>
               </CardHeader>
