@@ -49,10 +49,29 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       return NextResponse.json({ message: 'Объект не найден' }, { status: 404 });
     }
 
-    // Обновляем разрешение редактирования
-    const updatedObject = await prisma.cleaningObject.update({
+    // Обновляем разрешение редактирования через raw SQL (пока Prisma не обновился)
+    await prisma.$executeRaw`
+      UPDATE "CleaningObject" 
+      SET "allowManagerEdit" = ${Boolean(allowManagerEdit)}
+      WHERE id = ${objectId}
+    `;
+
+    // Получаем обновленный объект с allowManagerEdit через raw SQL
+    const updatedObjectRaw = await prisma.$queryRaw`
+      SELECT id, name, address, "createdAt", "allowManagerEdit"
+      FROM "CleaningObject" 
+      WHERE id = ${objectId}
+    `;
+
+    if (!updatedObjectRaw || (updatedObjectRaw as any[]).length === 0) {
+      return NextResponse.json({ message: 'Объект не найден после обновления' }, { status: 404 });
+    }
+
+    const objectData = (updatedObjectRaw as any[])[0];
+
+    // Получаем связанные данные отдельно
+    const updatedObject = await prisma.cleaningObject.findUnique({
       where: { id: objectId },
-      data: { allowManagerEdit: Boolean(allowManagerEdit) },
       include: {
         manager: {
           select: {
@@ -94,9 +113,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       }
     });
 
-    console.log(`🔧 Разрешение редактирования для объекта ${updatedObject.name} ${allowManagerEdit ? 'включено' : 'отключено'} пользователем ${user.name}`);
+    if (!updatedObject) {
+      return NextResponse.json({ message: 'Объект не найден' }, { status: 404 });
+    }
 
-    return NextResponse.json(updatedObject);
+    // Объединяем данные из raw SQL и Prisma
+    const result = {
+      ...updatedObject,
+      allowManagerEdit: objectData.allowManagerEdit
+    };
+
+    console.log(`🔧 Разрешение редактирования для объекта ${result.name} ${allowManagerEdit ? 'включено' : 'отключено'} пользователем ${user.name}`);
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Ошибка обновления разрешения редактирования:', error);
     return NextResponse.json(

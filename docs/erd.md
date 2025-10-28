@@ -105,6 +105,7 @@ QUALITY_CHECK QUALITY_CHECK
     String description "❓"
     String notes "❓"
     Float totalArea "❓"
+    Boolean allowManagerEdit 
     }
   
 

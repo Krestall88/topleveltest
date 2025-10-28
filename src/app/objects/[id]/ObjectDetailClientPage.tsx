@@ -444,21 +444,34 @@ export default function ObjectDetailClientPage() {
                   </>
                 )}
                 
-                {/* Кнопка разрешения редактирования - только для админов */}
+                {/* Ползунок разрешения редактирования для менеджера - только для админов */}
                 {userRole === 'ADMIN' && object?.manager && (
-                  <Button
-                    onClick={toggleManagerEditPermission}
-                    size="sm"
-                    variant={object.allowManagerEdit ? "default" : "outline"}
-                    className={`flex items-center ${
-                      object.allowManagerEdit 
-                        ? "bg-green-600 hover:bg-green-700 text-white" 
-                        : "border-green-600 text-green-600 hover:bg-green-50"
-                    }`}
-                  >
-                    <Shield className="w-4 h-4 mr-1" />
-                    {object.allowManagerEdit ? "Разрешено редактирование" : "Разрешить редактирование"}
-                  </Button>
+                  <div className="flex items-center space-x-3 bg-gray-50 px-3 py-2 rounded-lg border">
+                    <Shield className="w-4 h-4 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-700">
+                      Разрешить менеджеру редактировать объект:
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span className={`text-xs ${!object.allowManagerEdit ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                        Нет
+                      </span>
+                      <button
+                        onClick={toggleManagerEditPermission}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                          object.allowManagerEdit ? 'bg-green-600' : 'bg-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            object.allowManagerEdit ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                      <span className={`text-xs ${object.allowManagerEdit ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                        Да
+                      </span>
+                    </div>
+                  </div>
                 )}
               </div>
               <div className="text-sm text-gray-500 text-right">

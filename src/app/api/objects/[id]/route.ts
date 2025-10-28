@@ -60,7 +60,22 @@ export async function GET(req: NextRequest, { params }: Params) {
       return NextResponse.json({ message: 'Объект не найден' }, { status: 404 });
     }
 
-    return NextResponse.json(object);
+    // Получаем allowManagerEdit через raw SQL (пока Prisma не обновился)
+    const allowManagerEditRaw = await prisma.$queryRaw`
+      SELECT "allowManagerEdit" FROM "CleaningObject" WHERE id = ${id}
+    `;
+
+    const allowManagerEdit = allowManagerEditRaw && (allowManagerEditRaw as any[]).length > 0 
+      ? (allowManagerEditRaw as any[])[0].allowManagerEdit 
+      : false;
+
+    // Добавляем поле к результату
+    const result = {
+      ...object,
+      allowManagerEdit
+    };
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Ошибка получения объекта:', error);
     return NextResponse.json({ message: 'Ошибка сервера' }, { status: 500 });
