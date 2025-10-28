@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: 'Пользователь не найден' }, { status: 404 });
     }
 
-    return NextResponse.json(user);
+    return NextResponse.json({ user });
   } catch (error) {
     console.error('Error fetching user:', error);
     return NextResponse.json({ message: 'Ошибка авторизации' }, { status: 401 });

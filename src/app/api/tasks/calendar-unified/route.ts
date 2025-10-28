@@ -89,8 +89,8 @@ export async function GET(req: NextRequest) {
       userRole: user.role
     };
 
-    // Для админов добавляем группировки
-    if (user.role === 'ADMIN' || user.role === 'DEPUTY_ADMIN') {
+    // Для админов, заместителей и менеджеров добавляем группировки
+    if (user.role === 'ADMIN' || user.role === 'DEPUTY_ADMIN' || user.role === 'MANAGER') {
       console.log('🔍 UNIFIED API: Группируем задачи для админа...');
       response.byManager = groupTasksByManager(allTasks);
       response.byObject = groupTasksByObject(allTasks);

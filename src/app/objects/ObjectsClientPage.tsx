@@ -45,13 +45,17 @@ export default function ObjectsClientPage() {
 
   const fetchUserInfo = async () => {
     try {
+      console.log('🔍 Загружаем информацию о пользователе...');
       const response = await fetch('/api/auth/me');
       if (response.ok) {
         const userData = await response.json();
+        console.log('👤 Роль пользователя:', userData.user.role);
         setUserRole(userData.user.role);
+      } else {
+        console.error('❌ Ошибка API /api/auth/me:', response.status);
       }
     } catch (error) {
-      console.error('Ошибка получения информации о пользователе:', error);
+      console.error('❌ Ошибка получения информации о пользователе:', error);
     }
   };
 
@@ -233,6 +237,7 @@ export default function ObjectsClientPage() {
         <h2 className="text-xl font-semibold">
           {userRole === 'MANAGER' ? 'Мои объекты' : 'Управление объектами'}
         </h2>
+        {/* DEBUG: Роль пользователя: {userRole || 'не загружена'} */}
         {userRole !== 'MANAGER' && (
           <div className="flex gap-2">
             <Button
