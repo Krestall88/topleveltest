@@ -482,7 +482,7 @@ export default function UnifiedCalendarPage() {
       </div>
 
       {/* Задачи */}
-      {calendarData && (calendarData.userRole === 'ADMIN' || calendarData.userRole === 'DEPUTY') ? (
+      {calendarData && (calendarData.userRole === 'ADMIN' || calendarData.userRole === 'DEPUTY_ADMIN') ? (
         // Для администратора - группировка по менеджерам/объектам
         <div className="space-y-6">
           <Tabs defaultValue="by-manager" className="w-full">
