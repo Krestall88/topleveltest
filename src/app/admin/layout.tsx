@@ -24,13 +24,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       });
 
       if (response.ok) {
-        const userData = await response.json();
-        if (userData.role !== 'ADMIN') {
-          console.log(`Доступ запрещен для роли: ${userData.role}`);
+        const data = await response.json();
+        if (data.user.role !== 'ADMIN') {
+          console.log(`Доступ запрещен для роли: ${data.user.role}`);
           router.push('/');
           return;
         }
-        setUser(userData);
+        setUser(data.user);
       } else {
         router.push('/auth/login');
       }

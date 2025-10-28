@@ -46,8 +46,8 @@ export default function AdditionalTasksClientPage() {
     try {
       const response = await fetch('/api/auth/me');
       if (response.ok) {
-        const userData = await response.json();
-        setCurrentUser(userData);
+        const data = await response.json();
+        setCurrentUser(data.user);
       }
     } catch (error) {
       console.error('Ошибка получения пользователя:', error);
