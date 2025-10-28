@@ -12,11 +12,12 @@ import {
   Shield,
   Building,
   Mail,
-  Phone
+  Phone,
+  Trash2,
+  Edit
 } from 'lucide-react';
 import CreateUserModal from './CreateUserModal';
-import AssignObjectsModal from './AssignObjectsModal';
-import ResetPasswordModal from './ResetPasswordModal';
+import EditDeputyModal from './EditDeputyModal';
 
 interface User {
   id: string;
@@ -41,8 +42,7 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -74,25 +74,39 @@ export default function AdminUsersPage() {
     loadUsers();
   };
 
-  const handleAssignObjects = (user: User) => {
+  const handleEditUser = (user: User) => {
     setSelectedUser(user);
-    setIsAssignModalOpen(true);
+    setIsEditModalOpen(true);
   };
 
-  const handleResetPassword = (user: User) => {
-    setSelectedUser(user);
-    setIsResetPasswordModalOpen(true);
+  const handleDeleteUser = async (user: User) => {
+    if (!confirm(`Вы уверены, что хотите удалить заместителя "${user.name}"?\n\nЭто действие нельзя отменить.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/users/${user.id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(data.message);
+        loadUsers();
+      } else {
+        const errorData = await response.json();
+        alert(`Ошибка удаления: ${errorData.message}`);
+      }
+    } catch (error) {
+      console.error('Ошибка удаления пользователя:', error);
+      alert('Ошибка удаления пользователя');
+    }
   };
 
-  const handleAssignmentsUpdated = () => {
-    setIsAssignModalOpen(false);
-    setSelectedUser(null);
+  const handleUserUpdated = () => {
+    setIsEditModalOpen(false);
     loadUsers();
-  };
-
-  const handlePasswordReset = () => {
-    setIsResetPasswordModalOpen(false);
-    setSelectedUser(null);
   };
 
   const getRoleBadge = (role: string) => {
@@ -185,24 +199,24 @@ export default function AdminUsersPage() {
                 </div>
 
                 <div className="flex items-center space-x-2 pt-2 border-t">
-                  {user.role === 'DEPUTY_ADMIN' && (
+                  <div className="flex space-x-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleAssignObjects(user)}
+                      onClick={() => handleEditUser(user)}
                     >
                       <Settings className="w-4 h-4 mr-1" />
-                      Назначить объекты
+                      Редактировать
                     </Button>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleResetPassword(user)}
-                  >
-                    <Key className="w-4 h-4 mr-1" />
-                    Сбросить пароль
-                  </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteUser(user)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Удалить
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -226,23 +240,12 @@ export default function AdminUsersPage() {
         onUserCreated={handleUserCreated}
       />
 
-      {selectedUser && (
-        <>
-          <AssignObjectsModal
-            isOpen={isAssignModalOpen}
-            onClose={() => setIsAssignModalOpen(false)}
-            user={selectedUser}
-            onAssignmentsUpdated={handleAssignmentsUpdated}
-          />
-
-          <ResetPasswordModal
-            isOpen={isResetPasswordModalOpen}
-            onClose={() => setIsResetPasswordModalOpen(false)}
-            user={selectedUser}
-            onPasswordReset={handlePasswordReset}
-          />
-        </>
-      )}
+      <EditDeputyModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        user={selectedUser}
+        onUserUpdated={handleUserUpdated}
+      />
     </div>
   );
 }

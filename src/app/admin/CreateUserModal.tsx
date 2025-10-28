@@ -186,12 +186,24 @@ export default function CreateUserModal({ isOpen, onClose, onUserCreated }: Crea
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="name">Имя *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Введите имя"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="email">Email (логин) *</Label>
                   <div className="flex space-x-2">
                     <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Введите имя"
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="user@cleaning.com"
                       required
                     />
                     <Button
@@ -201,21 +213,9 @@ export default function CreateUserModal({ isOpen, onClose, onUserCreated }: Crea
                       disabled={!formData.name}
                       className="whitespace-nowrap"
                     >
-                      Создать логин
+                      Сгенерировать
                     </Button>
                   </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="email">Логин (Email) *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="Будет сгенерирован автоматически"
-                    required
-                  />
                 </div>
                 
                 <div>
