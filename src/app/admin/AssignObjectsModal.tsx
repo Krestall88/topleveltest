@@ -136,6 +136,9 @@ export default function AssignObjectsModal({
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Загрузка данных</DialogTitle>
+          </DialogHeader>
           <div className="text-center py-8">
             <div className="text-lg">Загрузка данных...</div>
           </div>

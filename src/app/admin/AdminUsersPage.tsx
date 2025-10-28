@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import CreateUserModal from './CreateUserModal';
 import EditDeputyModal from './EditDeputyModal';
+import ChangePasswordModal from './ChangePasswordModal';
 
 interface User {
   id: string;
@@ -43,6 +44,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -106,6 +108,16 @@ export default function AdminUsersPage() {
 
   const handleUserUpdated = () => {
     setIsEditModalOpen(false);
+    loadUsers();
+  };
+
+  const handleChangePassword = (user: User) => {
+    setSelectedUser(user);
+    setIsPasswordModalOpen(true);
+  };
+
+  const handlePasswordChanged = () => {
+    setIsPasswordModalOpen(false);
     loadUsers();
   };
 
@@ -200,22 +212,37 @@ export default function AdminUsersPage() {
 
                 <div className="flex items-center space-x-2 pt-2 border-t">
                   <div className="flex space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditUser(user)}
-                    >
-                      <Settings className="w-4 h-4 mr-1" />
-                      Редактировать
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteUser(user)}
-                    >
-                      <Trash2 className="w-4 h-4 mr-1" />
-                      Удалить
-                    </Button>
+                    {user.role === 'ADMIN' ? (
+                      // Для главного администратора только смена пароля
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleChangePassword(user)}
+                      >
+                        <Key className="w-4 h-4 mr-1" />
+                        Сменить пароль
+                      </Button>
+                    ) : (
+                      // Для заместителей полный функционал
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditUser(user)}
+                        >
+                          <Settings className="w-4 h-4 mr-1" />
+                          Редактировать
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteUser(user)}
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Удалить
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -245,6 +272,13 @@ export default function AdminUsersPage() {
         onClose={() => setIsEditModalOpen(false)}
         user={selectedUser}
         onUserUpdated={handleUserUpdated}
+      />
+
+      <ChangePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        user={selectedUser}
+        onPasswordChanged={handlePasswordChanged}
       />
     </div>
   );
