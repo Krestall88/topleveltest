@@ -29,8 +29,14 @@ export default function LoginPage() {
       if (response.ok) {
         const data = await response.json();
         // Токен теперь автоматически сохраняется в cookie на сервере
-        console.log('✅ Успешный вход:', data.user.name);
-        router.push('/');
+        console.log('✅ Успешный вход:', data.user.name, 'Роль:', data.user.role);
+        
+        // Редирект в зависимости от роли
+        if (data.user.role === 'MANAGER') {
+          router.push('/objects'); // Менеджеры сразу на объекты
+        } else {
+          router.push('/'); // Остальные на дашборд
+        }
         router.refresh(); // Обновляем страницу для применения аутентификации
       } else {
         const errorData = await response.json();

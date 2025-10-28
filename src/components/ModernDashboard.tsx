@@ -341,7 +341,7 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-4">
-              <Link href="/checklists" className="group">
+              <Link href="/additional-tasks" className="group">
                 <div className="flex items-center space-x-3 p-3 rounded-lg bg-white hover:bg-blue-50 transition-colors">
                   <div className="p-2 bg-blue-100 rounded-lg">
                     <Clock className="h-5 w-5 text-blue-600" />
@@ -354,7 +354,7 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
                 </div>
               </Link>
 
-              <Link href="/checklists?filter=overdue" className="group">
+              <Link href="/additional-tasks" className="group">
                 <div className="flex items-center space-x-3 p-3 rounded-lg bg-white hover:bg-red-50 transition-colors">
                   <div className="p-2 bg-red-100 rounded-lg">
                     <AlertCircle className="h-5 w-5 text-red-600" />
@@ -528,15 +528,6 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
                 </Button>
               </Link>
 
-              <Link href="/analytics">
-                <Button className="w-full h-16 text-left justify-start" variant="outline">
-                  <BarChart3 className="h-6 w-6 mr-3" />
-                  <div>
-                    <div className="font-medium">Аналитика</div>
-                    <div className="text-sm text-gray-500">Детальные отчеты</div>
-                  </div>
-                </Button>
-              </Link>
 
               <Link href="/inventory">
                 <Button className="w-full h-16 text-left justify-start" variant="outline">
