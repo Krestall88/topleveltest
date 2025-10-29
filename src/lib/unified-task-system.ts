@@ -618,13 +618,15 @@ export async function getUnifiedTasks(
 ): Promise<UnifiedTask[]> {
   console.log('🔍 UNIFIED: Получение объединенных задач:', { baseDate, userRole, userId, objectId });
 
-  // Получаем виртуальные, материализованные и просроченные задачи параллельно
-  console.log('🔍 UNIFIED: Начинаем получение всех типов задач...');
-  const [virtualTasks, materializedTasks, overdueTasks] = await Promise.all([
+  // ВРЕМЕННО ОТКЛЮЧЕНО: getOverdueDailyTasks вызывает бесконечный цикл
+  console.log('🔍 UNIFIED: Начинаем получение виртуальных и материализованных задач...');
+  const [virtualTasks, materializedTasks] = await Promise.all([
     generateVirtualTasks(baseDate, userRole, userId, objectId),
-    getMaterializedTasks(baseDate, userRole, userId, objectId),
-    getOverdueDailyTasks(baseDate, userRole, userId, objectId)
+    getMaterializedTasks(baseDate, userRole, userId, objectId)
   ]);
+  
+  // Пустой массив просроченных задач пока что
+  const overdueTasks: UnifiedTask[] = [];
 
   console.log('🔍 UNIFIED: Получено задач:', {
     virtual: virtualTasks.length,
@@ -663,13 +665,8 @@ export function groupTasksByStatus(tasks: UnifiedTask[], baseDate: Date) {
   });
 
   const result = {
-    // Просроченные: только ежедневные задачи с предыдущих дней
-    overdue: tasks.filter(task => {
-      if (task.status !== 'OVERDUE') return false;
-      const taskDate = startOfDay(task.scheduledDate);
-      const isDailyTask = task.frequency?.toLowerCase().includes('ежедневно') || task.frequency === 'daily';
-      return taskDate < today && isDailyTask;
-    }),
+    // УПРОЩЕННАЯ ЛОГИКА: просроченные = все задачи со статусом OVERDUE
+    overdue: tasks.filter(task => task.status === 'OVERDUE'),
     
     // Сегодняшние: задачи точно на эту дату
     today: tasks.filter(task => {
