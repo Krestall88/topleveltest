@@ -40,7 +40,7 @@ export default function SimpleExcelUpload({ onImportComplete }: SimpleExcelUploa
     fileInputRef.current?.click();
   };
 
-  // Загрузка файла
+  // Загрузка файла с предварительной очисткой
   const handleUpload = async () => {
     if (!selectedFile) {
       setError('Сначала выберите файл');
@@ -52,6 +52,49 @@ export default function SimpleExcelUpload({ onImportComplete }: SimpleExcelUploa
     setResult(null);
 
     try {
+      // Сначала читаем файл для получения названий объектов
+      const arrayBuffer = await selectedFile.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      
+      // Простой парсинг для получения названий объектов
+      const XLSX = await import('xlsx');
+      const workbook = XLSX.read(buffer, { type: 'buffer' });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      
+      if (rawData.length > 1) {
+        const headers = rawData[0] as string[];
+        const dataRows = rawData.slice(1);
+        
+        // Находим колонку с названиями
+        const nameColumnIndex = headers.findIndex(header => 
+          header && ['название', 'наименование', 'name', 'объект'].some(key => 
+            header.toLowerCase().includes(key)
+          )
+        );
+        
+        if (nameColumnIndex >= 0) {
+          // Очищаем существующие объекты
+          for (const row of dataRows) {
+            if (Array.isArray(row) && row[nameColumnIndex]) {
+              const objectName = row[nameColumnIndex];
+              console.log(`🧹 Очистка объекта: ${objectName}`);
+              
+              try {
+                await fetch('/api/objects/cleanup', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ objectName })
+                });
+              } catch (cleanupError) {
+                console.warn(`⚠️ Ошибка очистки объекта ${objectName}:`, cleanupError);
+              }
+            }
+          }
+        }
+      }
+
+      // Теперь выполняем импорт
       const formData = new FormData();
       formData.append('file', selectedFile);
 
@@ -168,10 +211,13 @@ export default function SimpleExcelUpload({ onImportComplete }: SimpleExcelUploa
             <div className="font-medium mb-1">Как использовать:</div>
             <ol className="space-y-1 text-gray-600">
               <li>1. Скачайте шаблон Excel</li>
-              <li>2. Заполните данные объектов</li>
+              <li>2. Заполните данные объектов (только "Название" обязательно)</li>
               <li>3. Выберите заполненный файл</li>
-              <li>4. Нажмите "Загрузить"</li>
+              <li>4. Нажмите "Загрузить" - создастся полная структура</li>
             </ol>
+            <div className="mt-2 p-2 bg-blue-50 rounded text-xs text-blue-700">
+              <strong>Автоматически:</strong> поиск менеджеров, создание участков/зон/помещений, привязка техкарт, очистка дубликатов
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -63,6 +63,17 @@ async function createObjectStructure(objectId: string, objectName: string) {
   console.log(`🏗️ Создание структуры для объекта: ${objectName}`);
   
   try {
+    // Сначала проверяем, что объект существует
+    const cleaningObject = await prisma.cleaningObject.findUnique({
+      where: { id: objectId }
+    });
+    
+    if (!cleaningObject) {
+      throw new Error(`Объект с ID ${objectId} не найден`);
+    }
+    
+    console.log(`🔍 Объект найден: ${cleaningObject.name}`);
+    
     // Создаем базовый участок
     const site = await prisma.site.create({
       data: {
@@ -72,7 +83,7 @@ async function createObjectStructure(objectId: string, objectName: string) {
       }
     });
     
-    console.log(`✅ Создан участок: ${site.name}`);
+    console.log(`✅ Создан участок: ${site.name} (ID: ${site.id})`);
     
     // Создаем базовую зону
     const zone = await prisma.zone.create({
@@ -82,7 +93,7 @@ async function createObjectStructure(objectId: string, objectName: string) {
       }
     });
     
-    console.log(`✅ Создана зона: ${zone.name}`);
+    console.log(`✅ Создана зона: ${zone.name} (ID: ${zone.id})`);
     
     // Создаем базовую группу помещений
     const roomGroup = await prisma.roomGroup.create({
@@ -92,7 +103,7 @@ async function createObjectStructure(objectId: string, objectName: string) {
       }
     });
     
-    console.log(`✅ Создана группа помещений: ${roomGroup.name}`);
+    console.log(`✅ Создана группа помещений: ${roomGroup.name} (ID: ${roomGroup.id})`);
     
     // Создаем базовое помещение
     const room = await prisma.room.create({
@@ -103,43 +114,79 @@ async function createObjectStructure(objectId: string, objectName: string) {
       }
     });
     
-    console.log(`✅ Создано помещение: ${room.name}`);
+    console.log(`✅ Создано помещение: ${room.name} (ID: ${room.id})`);
     
-    // Получаем базовые техкарты для создания задач
+    // Получаем техкарты для уборки (более точный поиск)
     const techCards = await prisma.techCard.findMany({
       where: {
         OR: [
-          { name: { contains: 'Уборка', mode: 'insensitive' } },
-          { name: { contains: 'Мытье', mode: 'insensitive' } },
-          { name: { contains: 'Протирка', mode: 'insensitive' } }
+          { name: { contains: 'уборка', mode: 'insensitive' } },
+          { name: { contains: 'мытье', mode: 'insensitive' } },
+          { name: { contains: 'протирка', mode: 'insensitive' } },
+          { name: { contains: 'очистка', mode: 'insensitive' } },
+          { name: { contains: 'cleaning', mode: 'insensitive' } }
         ]
       },
-      take: 3
+      take: 5,
+      orderBy: { name: 'asc' }
     });
     
     console.log(`📋 Найдено техкарт для привязки: ${techCards.length}`);
     
-    // Привязываем техкарты к помещению
-    for (const techCard of techCards) {
-      await prisma.room.update({
-        where: { id: room.id },
-        data: {
-          techCards: {
-            connect: { id: techCard.id }
-          }
-        }
+    if (techCards.length === 0) {
+      // Если специфичных техкарт нет, берем любые первые 3
+      const anyTechCards = await prisma.techCard.findMany({
+        take: 3,
+        orderBy: { name: 'asc' }
       });
       
-      console.log(`🔗 Привязана техкарта: ${techCard.name}`);
+      console.log(`📋 Взяты любые техкарты: ${anyTechCards.length}`);
+      
+      for (const techCard of anyTechCards) {
+        await prisma.room.update({
+          where: { id: room.id },
+          data: {
+            techCards: {
+              connect: { id: techCard.id }
+            }
+          }
+        });
+        
+        console.log(`🔗 Привязана техкарта: ${techCard.name}`);
+      }
+      
+      return {
+        site,
+        zone,
+        roomGroup,
+        room,
+        techCardsCount: anyTechCards.length,
+        techCards: anyTechCards.map(tc => tc.name)
+      };
+    } else {
+      // Привязываем найденные техкарты к помещению
+      for (const techCard of techCards) {
+        await prisma.room.update({
+          where: { id: room.id },
+          data: {
+            techCards: {
+              connect: { id: techCard.id }
+            }
+          }
+        });
+        
+        console.log(`🔗 Привязана техкарта: ${techCard.name}`);
+      }
+      
+      return {
+        site,
+        zone,
+        roomGroup,
+        room,
+        techCardsCount: techCards.length,
+        techCards: techCards.map(tc => tc.name)
+      };
     }
-    
-    return {
-      site,
-      zone,
-      roomGroup,
-      room,
-      techCardsCount: techCards.length
-    };
     
   } catch (error) {
     console.error('❌ Ошибка при создании структуры объекта:', error);
