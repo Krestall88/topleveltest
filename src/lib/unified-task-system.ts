@@ -149,7 +149,9 @@ export function calculateTaskStatus(scheduledDate: Date): 'PENDING' | 'AVAILABLE
   if (taskDate.getTime() === today.getTime()) {
     return 'AVAILABLE'; // Сегодняшняя задача
   } else if (taskDate < today) {
-    return 'OVERDUE'; // Просроченная задача
+    // ИСПРАВЛЕНО: Не помечаем старые задачи как просроченные автоматически
+    // Просроченными будут только те, что не выполнены И это ежедневные задачи
+    return 'PENDING'; // Временно помечаем как будущие, логика просрочки в другом месте
   } else {
     return 'PENDING'; // Будущая задача
   }
@@ -655,18 +657,138 @@ export async function getUnifiedTasks(
   return Array.from(taskMap.values());
 }
 
+// Получение просроченных задач с учетом статуса в БД
+export async function getActualOverdueTasks(
+  baseDate: Date,
+  userRole: string,
+  userId?: string,
+  objectId?: string
+): Promise<UnifiedTask[]> {
+  const today = startOfDay(baseDate);
+  
+  console.log('🔍 OVERDUE: Поиск реальных просроченных задач до:', {
+    baseDate: baseDate.toISOString().split('T')[0]
+  });
+
+  // Ищем невыполненные ежедневные задачи с предыдущих дней в БД
+  const whereClause: any = {
+    scheduledStart: {
+      lt: today // Дата меньше сегодняшней
+    },
+    status: {
+      notIn: ['COMPLETED', 'CLOSED_WITH_PHOTO', 'FAILED'] // Не выполненные и не сброшенные
+    }
+  };
+
+  // Добавляем фильтр по правам доступа
+  if (userRole === 'MANAGER') {
+    const managerObjects = await prisma.cleaningObject.findMany({
+      where: { managerId: userId },
+      select: { name: true }
+    });
+    const objectNames = managerObjects.map(obj => obj.name);
+    
+    if (objectNames.length > 0) {
+      whereClause.objectName = { in: objectNames };
+    } else {
+      whereClause.objectName = { in: [] };
+    }
+  } else if (userRole === 'DEPUTY_ADMIN') {
+    const deputyAssignments = await prisma.deputyAdminAssignment.findMany({
+      where: { deputyAdminId: userId },
+      select: { objectId: true }
+    });
+    
+    if (deputyAssignments.length > 0) {
+      const assignedObjects = await prisma.cleaningObject.findMany({
+        where: { id: { in: deputyAssignments.map(a => a.objectId) }},
+        select: { name: true }
+      });
+      whereClause.objectName = { in: assignedObjects.map(obj => obj.name) };
+    } else {
+      whereClause.objectName = { in: [] };
+    }
+  }
+
+  if (objectId) {
+    const targetObject = await prisma.cleaningObject.findUnique({
+      where: { id: objectId },
+      select: { name: true }
+    });
+    if (targetObject) {
+      whereClause.objectName = targetObject.name;
+    }
+  }
+
+  const overdueTasks = await prisma.task.findMany({
+    where: whereClause,
+    include: {
+      room: {
+        include: {
+          object: {
+            include: {
+              manager: true
+            }
+          }
+        }
+      }
+    }
+  });
+
+  console.log('🔍 OVERDUE: Найдено реальных просроченных задач:', overdueTasks.length);
+
+  // Преобразуем в UnifiedTask формат
+  return overdueTasks.map(task => ({
+    id: task.id,
+    type: 'MATERIALIZED' as const,
+    description: task.description,
+    status: 'OVERDUE' as const,
+    scheduledDate: task.scheduledStart || new Date(),
+    objectId: task.room?.object?.id || 'unknown',
+    objectName: task.objectName || 'Неизвестный объект',
+    roomId: task.roomId || undefined,
+    roomName: task.roomName || undefined,
+    techCardId: 'unknown',
+    techCard: {
+      id: 'unknown',
+      name: task.description,
+      description: task.description,
+      frequency: 'daily'
+    },
+    object: task.room?.object ? {
+      id: task.room.object.id,
+      name: task.room.object.name,
+      manager: task.room.object.manager ? {
+        id: task.room.object.manager.id,
+        name: task.room.object.manager.name || 'Неизвестен',
+        phone: task.room.object.manager.phone || undefined
+      } : undefined
+    } : undefined,
+    completedAt: task.completedAt,
+    completedBy: task.completedById ? {
+      id: task.completedById,
+      name: 'Неизвестен'
+    } : undefined,
+    completionComment: task.completionComment || undefined,
+    completionPhotos: task.completionPhotos || [],
+    frequency: 'daily',
+    frequencyDays: 1
+  }));
+}
+
 // Группировка задач по статусам с учетом конкретного дня
-export function groupTasksByStatus(tasks: UnifiedTask[], baseDate: Date) {
+export function groupTasksByStatus(tasks: UnifiedTask[], baseDate: Date, overdueTasks: UnifiedTask[] = []) {
   const today = startOfDay(baseDate);
   
   console.log('🔍 STATUS: Группировка задач по статусам для даты:', {
     baseDate: baseDate.toISOString().split('T')[0],
-    totalTasks: tasks.length
+    totalTasks: tasks.length,
+    overdueTasksCount: overdueTasks.length
   });
 
   const result = {
-    // УПРОЩЕННАЯ ЛОГИКА: просроченные = все задачи со статусом OVERDUE
-    overdue: tasks.filter(task => task.status === 'OVERDUE'),
+    // Просроченные: используем переданный список реальных просроченных задач
+    overdue: overdueTasks,
     
     // Сегодняшние: задачи точно на эту дату
     today: tasks.filter(task => {

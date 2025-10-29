@@ -7,6 +7,7 @@ import {
   groupTasksByStatus,
   groupTasksByManager,
   groupTasksByObject,
+  getActualOverdueTasks,
   CalendarResponse
 } from '@/lib/unified-task-system';
 
@@ -68,14 +69,23 @@ export async function GET(req: NextRequest) {
       objectId || undefined
     );
 
+    // Получаем реальные просроченные задачи из БД
+    const actualOverdueTasks = await getActualOverdueTasks(
+      baseDate,
+      user.role,
+      user.id,
+      objectId || undefined
+    );
+
     console.log('🔍 UNIFIED API: Получено задач:', {
       total: allTasks.length,
       virtual: allTasks.filter(t => t.type === 'VIRTUAL').length,
-      materialized: allTasks.filter(t => t.type === 'MATERIALIZED').length
+      materialized: allTasks.filter(t => t.type === 'MATERIALIZED').length,
+      overdue: actualOverdueTasks.length
     });
 
-    // Группируем задачи по статусам с учетом конкретного дня
-    const statusGroups = groupTasksByStatus(allTasks, baseDate);
+    // Группируем задачи по статусам с учетом конкретного дня и реальных просроченных
+    const statusGroups = groupTasksByStatus(allTasks, baseDate, actualOverdueTasks);
 
     // Подготавливаем ответ
     const response: CalendarResponse = {
