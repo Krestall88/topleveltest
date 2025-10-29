@@ -13,7 +13,7 @@ export async function GET(
       return NextResponse.json({ message: 'Недостаточно прав' }, { status: 403 });
     }
 
-    const userId = params.id;
+    const { id: userId } = await params;
 
     const assignments = await prisma.deputyAdminAssignment.findMany({
       where: { deputyAdminId: userId },
@@ -54,7 +54,7 @@ export async function PUT(
       return NextResponse.json({ message: 'Недостаточно прав' }, { status: 403 });
     }
 
-    const userId = params.id;
+    const { id: userId } = await params;
     const body = await req.json();
     const { objectIds } = body;
 
