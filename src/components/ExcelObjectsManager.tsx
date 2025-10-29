@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +12,8 @@ import {
   Eye, 
   CheckCircle, 
   AlertCircle,
-  RefreshCw 
+  RefreshCw,
+  File
 } from 'lucide-react';
 
 interface ExcelObjectsManagerProps {
@@ -24,15 +25,46 @@ export default function ExcelObjectsManager({ onImportComplete }: ExcelObjectsMa
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [importResult, setImportResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Анализ файла Excel
+  // Выбор файла
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setAnalysisResult(null);
+      setImportResult(null);
+      setError(null);
+    }
+  };
+
+  // Открытие диалога выбора файла
+  const handleSelectFile = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Анализ выбранного файла
   const handleAnalyzeFile = async () => {
+    if (!selectedFile) {
+      setError('Сначала выберите файл');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setAnalysisResult(null);
 
     try {
-      const response = await fetch('/api/objects/import-excel');
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('action', 'analyze');
+
+      const response = await fetch('/api/objects/upload-excel', {
+        method: 'POST',
+        body: formData
+      });
+
       const data = await response.json();
 
       if (response.ok) {
@@ -49,14 +81,23 @@ export default function ExcelObjectsManager({ onImportComplete }: ExcelObjectsMa
 
   // Предварительный просмотр импорта
   const handlePreviewImport = async () => {
+    if (!selectedFile) {
+      setError('Сначала выберите файл');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/objects/import-excel', {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('action', 'import');
+      formData.append('dryRun', 'true');
+
+      const response = await fetch('/api/objects/upload-excel', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dryRun: true })
+        body: formData
       });
 
       const data = await response.json();
@@ -75,14 +116,23 @@ export default function ExcelObjectsManager({ onImportComplete }: ExcelObjectsMa
 
   // Выполнение импорта
   const handleExecuteImport = async () => {
+    if (!selectedFile) {
+      setError('Сначала выберите файл');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/objects/import-excel', {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('action', 'import');
+      formData.append('dryRun', 'false');
+
+      const response = await fetch('/api/objects/upload-excel', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dryRun: false })
+        body: formData
       });
 
       const data = await response.json();
@@ -123,6 +173,40 @@ export default function ExcelObjectsManager({ onImportComplete }: ExcelObjectsMa
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Скрытый input для выбора файла */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+
+          {/* Выбор файла */}
+          <div className="mb-4">
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={handleSelectFile}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <File className="w-4 h-4" />
+                Выбрать файл Excel
+              </Button>
+              
+              {selectedFile && (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <FileSpreadsheet className="w-4 h-4" />
+                  <span>{selectedFile.name}</span>
+                  <span className="text-gray-400">
+                    ({(selectedFile.size / 1024).toFixed(1)} KB)
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Кнопки управления */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Button
               onClick={handleDownloadTemplate}
@@ -135,7 +219,7 @@ export default function ExcelObjectsManager({ onImportComplete }: ExcelObjectsMa
 
             <Button
               onClick={handleAnalyzeFile}
-              disabled={loading}
+              disabled={loading || !selectedFile}
               className="flex items-center gap-2"
             >
               {loading ? (
@@ -158,7 +242,7 @@ export default function ExcelObjectsManager({ onImportComplete }: ExcelObjectsMa
             {analysisResult && (
               <Button
                 onClick={handlePreviewImport}
-                disabled={loading}
+                disabled={loading || !selectedFile}
                 variant="secondary"
                 className="flex items-center gap-2"
               >
@@ -173,7 +257,7 @@ export default function ExcelObjectsManager({ onImportComplete }: ExcelObjectsMa
             <ol className="text-sm text-blue-700 space-y-1">
               <li>1. Скачайте шаблон Excel файла</li>
               <li>2. Заполните данные объектов</li>
-              <li>3. Сохраните файл как <code>objects.xlsx</code> в папку <code>data/</code></li>
+              <li>3. Нажмите "Выбрать файл Excel" и выберите заполненный файл</li>
               <li>4. Нажмите "Анализ файла" для проверки</li>
               <li>5. Выполните предпросмотр, затем импорт</li>
             </ol>
@@ -192,6 +276,15 @@ export default function ExcelObjectsManager({ onImportComplete }: ExcelObjectsMa
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              <div className="mb-4 p-3 bg-gray-50 rounded border">
+                <div className="font-medium mb-1">Информация о файле:</div>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <div><strong>Файл:</strong> {analysisResult.data?.fileName}</div>
+                  <div><strong>Размер:</strong> {analysisResult.data?.fileSize ? `${(analysisResult.data.fileSize / 1024).toFixed(1)} KB` : 'Неизвестно'}</div>
+                  <div><strong>Лист:</strong> {analysisResult.data?.sheetName}</div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
