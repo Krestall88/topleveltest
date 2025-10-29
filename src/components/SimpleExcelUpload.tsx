@@ -54,10 +54,8 @@ export default function SimpleExcelUpload({ onImportComplete }: SimpleExcelUploa
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
-      formData.append('action', 'import');
-      formData.append('dryRun', 'false');
 
-      const response = await fetch('/api/objects/upload-excel', {
+      const response = await fetch('/api/objects/advanced-upload', {
         method: 'POST',
         body: formData
       });
@@ -189,12 +187,24 @@ export default function SimpleExcelUpload({ onImportComplete }: SimpleExcelUploa
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">
                     {result.data?.success || 0}
                   </div>
                   <div className="text-sm text-gray-600">Объектов создано</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {result.data?.structuresCreated || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Структур создано</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {result.data?.managersFound || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Менеджеров найдено</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-red-600">
@@ -219,13 +229,28 @@ export default function SimpleExcelUpload({ onImportComplete }: SimpleExcelUploa
               {result.data?.created && result.data.created.length > 0 && (
                 <div>
                   <div className="font-medium mb-2 text-green-700">Созданные объекты:</div>
-                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
                     {result.data.created.slice(0, 10).map((obj: any, index: number) => (
-                      <div key={index} className="p-2 bg-white rounded text-sm border">
-                        <div className="font-medium">{obj.name}</div>
-                        <div className="text-gray-600 text-xs">
-                          Строка {obj.row} • Менеджер: {obj.manager}
+                      <div key={index} className="p-3 bg-white rounded border">
+                        <div className="font-medium text-green-800">{obj.name}</div>
+                        <div className="text-gray-600 text-xs mb-1">
+                          Строка {obj.row} • Менеджер: {obj.managerFound ? '✅' : '❌'} {obj.manager}
                         </div>
+                        {obj.structure && (
+                          <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded mt-1">
+                            <div className="font-medium">Создана структура:</div>
+                            <div>📍 {obj.structure.site}</div>
+                            <div>🏢 {obj.structure.zone}</div>
+                            <div>🏠 {obj.structure.roomGroup}</div>
+                            <div>🚪 {obj.structure.room}</div>
+                            <div>📋 Техкарт: {obj.structure.techCards}</div>
+                          </div>
+                        )}
+                        {obj.structureError && (
+                          <div className="text-xs text-red-600 bg-red-50 p-2 rounded mt-1">
+                            ⚠️ {obj.structureError}
+                          </div>
+                        )}
                       </div>
                     ))}
                     {result.data.created.length > 10 && (
