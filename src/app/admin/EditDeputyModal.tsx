@@ -95,7 +95,8 @@ export default function EditDeputyModal({
     } finally {
       setLoadingData(false);
     }
-  }, [user?.id]); // Зависимость только от user.id
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Убираем зависимость от user?.id чтобы избежать циклов
 
   // Синхронизируем локальное состояние с внешним isOpen
   useEffect(() => {
@@ -121,7 +122,8 @@ export default function EditDeputyModal({
       setLoadingData(false);
       setLoading(false);
     }
-  }, [isOpen, user?.id, loadData]); // Добавляем loadData в зависимости
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, user?.id]); // НЕ добавляем loadData - это вызывает цикл
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
