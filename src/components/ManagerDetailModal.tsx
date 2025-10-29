@@ -216,6 +216,22 @@ export default function ManagerDetailModal({ managerId, isOpen, onClose }: Props
                               <p className="text-sm text-gray-500 mt-1">{object.description}</p>
                             )}
                           </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              // Удаляем объект у менеджера через API
+                              fetch(`/api/objects/${object.id}/remove-manager`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' }
+                              }).then(() => {
+                                fetchManagerDetails(); // Обновляем данные
+                              }).catch(console.error);
+                            }}
+                            className="text-red-600 hover:text-red-700 border-red-300 hover:border-red-400"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
                         </div>
                         
                         {/* Участки в этом объекте */}
@@ -247,7 +263,15 @@ export default function ManagerDetailModal({ managerId, isOpen, onClose }: Props
                 ) : (
                   <CardContent className="p-8 text-center text-gray-500">
                     <Building className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>У этого менеджера пока нет назначенных объектов</p>
+                    <p className="mb-4">У этого менеджера пока нет назначенных объектов</p>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsObjectsEditorOpen(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Добавить объекты
+                    </Button>
                   </CardContent>
                 )}
               </Card>
