@@ -297,14 +297,15 @@ export async function getMaterializedTasks(
   userId?: string,
   objectId?: string
 ): Promise<UnifiedTask[]> {
-  // Расширяем диапазон поиска завершенных задач (последние 7 дней)
-  const startDate = new Date(baseDate);
-  startDate.setDate(startDate.getDate() - 7);
-  startDate.setHours(0, 0, 0, 0);
+  // ИСПРАВЛЕНО: Ищем задачи только для конкретного дня
+  const startDate = startOfDay(baseDate);
+  const endDate = endOfDay(baseDate);
   
-  const endDate = new Date(baseDate);
-  endDate.setDate(endDate.getDate() + 1);
-  endDate.setHours(23, 59, 59, 999);
+  console.log('🔍 MATERIALIZED: Поиск выполненных задач для конкретного дня:', {
+    baseDate: baseDate.toISOString().split('T')[0],
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString()
+  });
   
   // Строим условия для поиска завершенных задач
   const whereClause: any = {
@@ -541,6 +542,58 @@ export async function getMaterializedTasks(
   });
 }
 
+// Получение просроченных ежедневных задач с предыдущих дней
+export async function getOverdueDailyTasks(
+  baseDate: Date,
+  userRole: string,
+  userId?: string,
+  objectId?: string
+): Promise<UnifiedTask[]> {
+  const today = startOfDay(baseDate);
+  const overdueDate = subDays(today, 1); // Вчера
+  
+  console.log('🔍 OVERDUE: Поиск просроченных ежедневных задач до:', {
+    baseDate: baseDate.toISOString().split('T')[0],
+    overdueDate: overdueDate.toISOString().split('T')[0]
+  });
+
+  // Получаем виртуальные задачи с предыдущих дней
+  const overdueTasks: UnifiedTask[] = [];
+  
+  // Проверяем последние 7 дней на предмет невыполненных ежедневных задач
+  for (let i = 1; i <= 7; i++) {
+    const checkDate = subDays(today, i);
+    const dayTasks = await generateVirtualTasks(checkDate, userRole, userId, objectId);
+    
+    // Фильтруем только ежедневные задачи
+    const dailyTasks = dayTasks.filter(task => {
+      const isDailyTask = task.frequency?.toLowerCase().includes('ежедневно') || task.frequency === 'daily';
+      return isDailyTask;
+    });
+
+    // Проверяем, были ли эти задачи выполнены
+    for (const task of dailyTasks) {
+      const completedTask = await prisma.task.findFirst({
+        where: {
+          id: task.id,
+          status: { in: ['COMPLETED', 'CLOSED_WITH_PHOTO'] }
+        }
+      });
+
+      if (!completedTask) {
+        // Задача не выполнена - добавляем как просроченную
+        overdueTasks.push({
+          ...task,
+          status: 'OVERDUE'
+        });
+      }
+    }
+  }
+
+  console.log('🔍 OVERDUE: Найдено просроченных ежедневных задач:', overdueTasks.length);
+  return overdueTasks;
+}
+
 // Объединение виртуальных и материализованных задач
 export async function getUnifiedTasks(
   baseDate: Date,
@@ -550,16 +603,18 @@ export async function getUnifiedTasks(
 ): Promise<UnifiedTask[]> {
   console.log('🔍 UNIFIED: Получение объединенных задач:', { baseDate, userRole, userId, objectId });
 
-  // Получаем виртуальные и материализованные задачи параллельно
-  console.log('🔍 UNIFIED: Начинаем получение виртуальных и материализованных задач...');
-  const [virtualTasks, materializedTasks] = await Promise.all([
+  // Получаем виртуальные, материализованные и просроченные задачи параллельно
+  console.log('🔍 UNIFIED: Начинаем получение всех типов задач...');
+  const [virtualTasks, materializedTasks, overdueTasks] = await Promise.all([
     generateVirtualTasks(baseDate, userRole, userId, objectId),
-    getMaterializedTasks(baseDate, userRole, userId, objectId)
+    getMaterializedTasks(baseDate, userRole, userId, objectId),
+    getOverdueDailyTasks(baseDate, userRole, userId, objectId)
   ]);
 
   console.log('🔍 UNIFIED: Получено задач:', {
     virtual: virtualTasks.length,
-    materialized: materializedTasks.length
+    materialized: materializedTasks.length,
+    overdue: overdueTasks.length
   });
 
   // Объединяем задачи, убирая дубликаты
@@ -567,6 +622,11 @@ export async function getUnifiedTasks(
   
   // Сначала добавляем виртуальные задачи
   virtualTasks.forEach(task => {
+    taskMap.set(task.id, task);
+  });
+  
+  // Добавляем просроченные задачи (они не должны пересекаться с текущими)
+  overdueTasks.forEach(task => {
     taskMap.set(task.id, task);
   });
   
@@ -578,14 +638,55 @@ export async function getUnifiedTasks(
   return Array.from(taskMap.values());
 }
 
-// Группировка задач по статусам
-export function groupTasksByStatus(tasks: UnifiedTask[]) {
-  return {
-    overdue: tasks.filter(task => task.status === 'OVERDUE'),
-    today: tasks.filter(task => task.status === 'AVAILABLE'),
-    upcoming: tasks.filter(task => task.status === 'PENDING'),
-    completed: tasks.filter(task => task.status === 'COMPLETED')
+// Группировка задач по статусам с учетом конкретного дня
+export function groupTasksByStatus(tasks: UnifiedTask[], baseDate: Date) {
+  const today = startOfDay(baseDate);
+  
+  console.log('🔍 STATUS: Группировка задач по статусам для даты:', {
+    baseDate: baseDate.toISOString().split('T')[0],
+    totalTasks: tasks.length
+  });
+
+  const result = {
+    // Просроченные: только ежедневные задачи с предыдущих дней
+    overdue: tasks.filter(task => {
+      if (task.status !== 'OVERDUE') return false;
+      const taskDate = startOfDay(task.scheduledDate);
+      const isDailyTask = task.frequency?.toLowerCase().includes('ежедневно') || task.frequency === 'daily';
+      return taskDate < today && isDailyTask;
+    }),
+    
+    // Сегодняшние: задачи точно на эту дату
+    today: tasks.filter(task => {
+      if (task.status !== 'AVAILABLE') return false;
+      const taskDate = startOfDay(task.scheduledDate);
+      return taskDate.getTime() === today.getTime();
+    }),
+    
+    // Будущие: задачи на даты после сегодня
+    upcoming: tasks.filter(task => {
+      if (task.status !== 'PENDING') return false;
+      const taskDate = startOfDay(task.scheduledDate);
+      return taskDate > today;
+    }),
+    
+    // Выполненные: только те, что выполнены именно в этот день
+    completed: tasks.filter(task => {
+      if (task.status !== 'COMPLETED') return false;
+      if (!task.completedAt) return false;
+      const completedDate = startOfDay(task.completedAt);
+      return completedDate.getTime() === today.getTime();
+    })
   };
+
+  console.log('🔍 STATUS: Результат группировки:', {
+    overdue: result.overdue.length,
+    today: result.today.length,
+    upcoming: result.upcoming.length,
+    completed: result.completed.length
+  });
+
+  return result;
 }
 
 // Группировка задач по менеджерам

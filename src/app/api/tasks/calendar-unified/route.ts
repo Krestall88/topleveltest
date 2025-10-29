@@ -74,8 +74,8 @@ export async function GET(req: NextRequest) {
       materialized: allTasks.filter(t => t.type === 'MATERIALIZED').length
     });
 
-    // Группируем задачи по статусам
-    const statusGroups = groupTasksByStatus(allTasks);
+    // Группируем задачи по статусам с учетом конкретного дня
+    const statusGroups = groupTasksByStatus(allTasks, baseDate);
 
     // Подготавливаем ответ
     const response: CalendarResponse = {
