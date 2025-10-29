@@ -105,6 +105,15 @@ export default function EditDeputyModal({
         phone: user.phone || '',
         newPassword: ''
       });
+    } else if (!isOpen) {
+      // Очищаем состояние при закрытии модального окна
+      setFormData({ name: '', email: '', phone: '', newPassword: '' });
+      setSelectedObjects([]);
+      setObjects([]);
+      setCurrentAssignments([]);
+      setShowPasswordReset(false);
+      setLoadingData(false);
+      setLoading(false);
     }
   }, [isOpen, user?.id, loadData]); // Добавляем loadData в зависимости
 

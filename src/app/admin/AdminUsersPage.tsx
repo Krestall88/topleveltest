@@ -108,6 +108,7 @@ export default function AdminUsersPage() {
 
   const handleUserUpdated = () => {
     setIsEditModalOpen(false);
+    setSelectedUser(null); // Очищаем selectedUser чтобы избежать циклов
     loadUsers();
   };
 
@@ -269,7 +270,10 @@ export default function AdminUsersPage() {
 
       <EditDeputyModal
         isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedUser(null); // Очищаем selectedUser при закрытии
+        }}
         user={selectedUser}
         onUserUpdated={handleUserUpdated}
       />
