@@ -54,6 +54,7 @@ export default function EditDeputyModal({
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [localOpen, setLocalOpen] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -95,6 +96,11 @@ export default function EditDeputyModal({
       setLoadingData(false);
     }
   }, [user?.id]); // Зависимость только от user.id
+
+  // Синхронизируем локальное состояние с внешним isOpen
+  useEffect(() => {
+    setLocalOpen(isOpen);
+  }, [isOpen]); // Зависимость только от isOpen, не от localOpen
 
   useEffect(() => {
     if (isOpen && user) {
@@ -208,6 +214,13 @@ export default function EditDeputyModal({
     handleClose();
   };
 
+  const handleOpenChange = (open: boolean) => {
+    setLocalOpen(open);
+    if (!open) {
+      onClose(); // Закрытие только при false
+    }
+  };
+
   const handleObjectToggle = useCallback((objectId: string) => {
     setSelectedObjects(prev => 
       prev.includes(objectId)
@@ -237,7 +250,7 @@ export default function EditDeputyModal({
 
   if (loadingData) {
     return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={localOpen} onOpenChange={handleOpenChange}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Загрузка данных</DialogTitle>
@@ -251,7 +264,7 @@ export default function EditDeputyModal({
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={localOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
