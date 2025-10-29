@@ -550,19 +550,18 @@ export async function getOverdueDailyTasks(
   objectId?: string
 ): Promise<UnifiedTask[]> {
   const today = startOfDay(baseDate);
-  const overdueDate = subDays(today, 1); // Вчера
   
   console.log('🔍 OVERDUE: Поиск просроченных ежедневных задач до:', {
-    baseDate: baseDate.toISOString().split('T')[0],
-    overdueDate: overdueDate.toISOString().split('T')[0]
+    baseDate: baseDate.toISOString().split('T')[0]
   });
 
-  // Получаем виртуальные задачи с предыдущих дней
   const overdueTasks: UnifiedTask[] = [];
   
   // Проверяем последние 7 дней на предмет невыполненных ежедневных задач
   for (let i = 1; i <= 7; i++) {
     const checkDate = subDays(today, i);
+    
+    // Получаем виртуальные задачи для этого дня
     const dayTasks = await generateVirtualTasks(checkDate, userRole, userId, objectId);
     
     // Фильтруем только ежедневные задачи
@@ -571,12 +570,27 @@ export async function getOverdueDailyTasks(
       return isDailyTask;
     });
 
-    // Проверяем, были ли эти задачи выполнены
+    // Проверяем каждую ежедневную задачу
     for (const task of dailyTasks) {
+      // Ищем материализованную (выполненную) версию этой задачи
       const completedTask = await prisma.task.findFirst({
         where: {
-          id: task.id,
-          status: { in: ['COMPLETED', 'CLOSED_WITH_PHOTO'] }
+          // Ищем по уникальному ID задачи для конкретного дня
+          OR: [
+            { id: task.id },
+            {
+              // Или по комбинации description + objectName + дата
+              AND: [
+                { description: task.description },
+                { objectName: task.objectName },
+                { scheduledStart: {
+                  gte: startOfDay(checkDate),
+                  lte: endOfDay(checkDate)
+                }},
+                { status: { in: ['COMPLETED', 'CLOSED_WITH_PHOTO'] }}
+              ]
+            }
+          ]
         }
       });
 
@@ -584,7 +598,8 @@ export async function getOverdueDailyTasks(
         // Задача не выполнена - добавляем как просроченную
         overdueTasks.push({
           ...task,
-          status: 'OVERDUE'
+          status: 'OVERDUE',
+          scheduledDate: checkDate // Сохраняем оригинальную дату
         });
       }
     }
