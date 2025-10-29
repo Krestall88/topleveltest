@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,19 +55,7 @@ export default function EditDeputyModal({
   const [loadingData, setLoadingData] = useState(false);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && user) {
-      loadData();
-      setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        newPassword: ''
-      });
-    }
-  }, [isOpen, user]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -106,7 +94,19 @@ export default function EditDeputyModal({
     } finally {
       setLoadingData(false);
     }
-  };
+  }, [user?.id]); // Зависимость только от user.id
+
+  useEffect(() => {
+    if (isOpen && user) {
+      loadData();
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        newPassword: ''
+      });
+    }
+  }, [isOpen, user?.id, loadData]); // Добавляем loadData в зависимости
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,13 +199,13 @@ export default function EditDeputyModal({
     handleClose();
   };
 
-  const handleObjectToggle = (objectId: string) => {
+  const handleObjectToggle = useCallback((objectId: string) => {
     setSelectedObjects(prev => 
       prev.includes(objectId)
         ? prev.filter(id => id !== objectId)
         : [...prev, objectId]
     );
-  };
+  }, []);
 
   const selectAll = () => {
     setSelectedObjects(objects.map(obj => obj.id));
