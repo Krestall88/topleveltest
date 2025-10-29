@@ -51,11 +51,12 @@ async function findManagerByName(name: string) {
 }
 
 // Создание или поиск техкарты
-async function findOrCreateTechCard(name: string, description?: string, frequency?: string) {
-  // Сначала ищем существующую
+async function findOrCreateTechCard(name: string, objectId: string, description?: string, frequency?: string, workType?: string) {
+  // Сначала ищем существующую для этого объекта
   let techCard = await prisma.techCard.findFirst({
     where: {
-      name: { equals: name, mode: 'insensitive' }
+      name: { equals: name, mode: 'insensitive' },
+      objectId: objectId
     }
   });
   
@@ -64,13 +65,14 @@ async function findOrCreateTechCard(name: string, description?: string, frequenc
     techCard = await prisma.techCard.create({
       data: {
         name: name,
-        description: description || name,
+        workType: workType || 'CLEANING',
         frequency: frequency || 'DAILY',
-        estimatedTime: 30, // По умолчанию 30 минут
+        description: description || name,
+        objectId: objectId,
         isActive: true
       }
     });
-    console.log(`📋 Создана новая техкарта: ${techCard.name}`);
+    console.log(`📋 Создана новая техкарта: ${techCard.name} для объекта ${objectId}`);
   }
   
   return techCard;
@@ -92,14 +94,14 @@ async function createComprehensiveStructure(objectId: string, objectName: string
   
   try {
     for (const row of excelData) {
-      const siteName = row['участок'] || 'Основной участок';
-      const zoneName = row['зона'] || 'Основная зона';
-      const roomGroupName = row['группа помещений'] || 'Основная группа';
-      const roomName = row['помещение'] || 'Основное помещение';
-      const cleaningObject = row['Объект уборки'] || '';
-      const techTask = row['тех задание'] || '';
-      const frequency = row['периодичность'] || 'Ежедневно';
-      const notes = row['примечания'] || '';
+      const siteName = (row as any)['участок'] || 'Основной участок';
+      const zoneName = (row as any)['зона'] || 'Основная зона';
+      const roomGroupName = (row as any)['группа помещений'] || 'Основная группа';
+      const roomName = (row as any)['помещение'] || 'Основное помещение';
+      const cleaningObject = (row as any)['Объект уборки'] || '';
+      const techTask = (row as any)['тех задание'] || '';
+      const frequency = (row as any)['периодичность'] || 'Ежедневно';
+      const notes = (row as any)['примечания'] || '';
       
       // 1. Создаем/находим участок
       const siteKey = `${siteName}`;
@@ -182,8 +184,10 @@ async function createComprehensiveStructure(objectId: string, objectName: string
           
           const techCard = await findOrCreateTechCard(
             techCardName,
+            objectId,
             `${cleaningObject}: ${techTask}. ${notes}`.trim(),
-            techFrequency
+            techFrequency,
+            'CLEANING'
           );
           
           createdStructure.techCards.set(techCardKey, techCard);
@@ -293,12 +297,13 @@ export async function POST(req: NextRequest) {
 
     // Преобразуем в объекты с правильными ключами
     const objects = dataRows
-      .filter((row: any) => Array.isArray(row) && row.length > 0 && row[0])
-      .map((row: any[], index) => {
+      .filter((row: unknown) => Array.isArray(row) && row.length > 0 && row[0])
+      .map((row: unknown, index: number) => {
+        const rowArray = row as any[];
         const obj: any = {};
         headers.forEach((header, i) => {
-          if (header && row[i] !== undefined && row[i] !== null && row[i] !== '') {
-            obj[header] = row[i];
+          if (header && rowArray[i] !== undefined && rowArray[i] !== null && rowArray[i] !== '') {
+            obj[header] = rowArray[i];
           }
         });
         obj._rowIndex = index + 2;
@@ -311,18 +316,19 @@ export async function POST(req: NextRequest) {
     const objectsMap = new Map<string, any[]>();
     
     for (const row of objects) {
-      const objectName = row['наименование объекта'] || 
-                        row['Наименование объекта'] ||
-                        row['название'] || 
-                        row['Название'] ||
-                        row['name'] || 
-                        row['Name'];
+      const rowData = row as any;
+      const objectName = rowData['наименование объекта'] || 
+                        rowData['Наименование объекта'] ||
+                        rowData['название'] || 
+                        rowData['Название'] ||
+                        rowData['name'] || 
+                        rowData['Name'];
       
       if (objectName) {
         if (!objectsMap.has(objectName)) {
           objectsMap.set(objectName, []);
         }
-        objectsMap.get(objectName)!.push(row);
+        objectsMap.get(objectName)!.push(rowData);
       }
     }
 
@@ -350,7 +356,7 @@ export async function POST(req: NextRequest) {
         console.log(`\n🏢 Обработка объекта: ${objectName} (${objectRows.length} строк)`);
         
         // Получаем данные объекта из первой строки
-        const firstRow = objectRows[0];
+        const firstRow = objectRows[0] as any;
         const address = firstRow['адрес'] || firstRow['Адрес'] || 'Не указан';
         const managerName = firstRow['ФИО менеджера'] || firstRow['менеджер'];
         
