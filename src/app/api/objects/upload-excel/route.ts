@@ -215,9 +215,11 @@ export async function POST(req: NextRequest) {
           const newObject = await prisma.cleaningObject.create({
             data: {
               name: name.toString(),
+              address: objectData['Адрес'] || objectData['адрес'] || objectData['Address'] || 'Не указан',
               description: objectData['Описание'] || objectData['описание'] || objectData['Description'] || null,
-              area: objectData['Площадь'] || objectData['площадь'] || objectData['Area'] || null,
-              managerId: manager.id
+              totalArea: objectData['Площадь'] || objectData['площадь'] || objectData['Area'] || null,
+              managerId: manager.id,
+              creatorId: manager.id
             }
           });
 

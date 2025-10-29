@@ -22,8 +22,7 @@ interface ExcelObjectsManagerProps {
 
 export default function ExcelObjectsManager({ onImportComplete }: ExcelObjectsManagerProps) {
   const [loading, setLoading] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
-  const [importResult, setImportResult] = useState<any>(null);
+  const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
