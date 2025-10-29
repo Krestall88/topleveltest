@@ -98,7 +98,7 @@ export default function SimpleExcelUpload({ onImportComplete }: SimpleExcelUploa
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const response = await fetch('/api/objects/advanced-upload', {
+      const response = await fetch('/api/objects/comprehensive-upload', {
         method: 'POST',
         body: formData
       });
@@ -242,21 +242,49 @@ export default function SimpleExcelUpload({ onImportComplete }: SimpleExcelUploa
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
-                    {result.data?.structuresCreated || 0}
+                    {result.data?.summary?.totalStructures?.rooms || 0}
                   </div>
-                  <div className="text-sm text-gray-600">Структур создано</div>
+                  <div className="text-sm text-gray-600">Помещений создано</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-purple-600">
-                    {result.data?.managersFound || 0}
+                    {result.data?.summary?.totalStructures?.techCards || 0}
                   </div>
-                  <div className="text-sm text-gray-600">Менеджеров найдено</div>
+                  <div className="text-sm text-gray-600">Техкарт создано</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">
+                  <div className="text-2xl font-bold text-orange-600">
+                    {result.data?.summary?.totalStructures?.roomTechCards || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Привязок задач</div>
+                </div>
+              </div>
+
+              {/* Дополнительная статистика */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3 pt-3 border-t">
+                <div className="text-center">
+                  <div className="text-lg font-bold text-indigo-600">
+                    {result.data?.summary?.totalStructures?.sites || 0}
+                  </div>
+                  <div className="text-xs text-gray-500">Участков</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-cyan-600">
+                    {result.data?.summary?.totalStructures?.zones || 0}
+                  </div>
+                  <div className="text-xs text-gray-500">Зон</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-teal-600">
+                    {result.data?.summary?.totalStructures?.roomGroups || 0}
+                  </div>
+                  <div className="text-xs text-gray-500">Групп помещений</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-red-600">
                     {result.data?.errors?.length || 0}
                   </div>
-                  <div className="text-sm text-gray-600">Ошибок</div>
+                  <div className="text-xs text-gray-500">Ошибок</div>
                 </div>
               </div>
 
@@ -280,16 +308,42 @@ export default function SimpleExcelUpload({ onImportComplete }: SimpleExcelUploa
                       <div key={index} className="p-3 bg-white rounded border">
                         <div className="font-medium text-green-800">{obj.name}</div>
                         <div className="text-gray-600 text-xs mb-1">
-                          Строка {obj.row} • Менеджер: {obj.managerFound ? '✅' : '❌'} {obj.manager}
+                          Обработано строк: {obj.rowsProcessed} • Менеджер: {obj.managerFound ? '✅' : '❌'} {obj.manager}
                         </div>
                         {obj.structure && (
                           <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded mt-1">
-                            <div className="font-medium">Создана структура:</div>
-                            <div>📍 {obj.structure.site}</div>
-                            <div>🏢 {obj.structure.zone}</div>
-                            <div>🏠 {obj.structure.roomGroup}</div>
-                            <div>🚪 {obj.structure.room}</div>
-                            <div>📋 Техкарт: {obj.structure.techCards}</div>
+                            <div className="font-medium mb-1">Создана полная структура:</div>
+                            <div className="grid grid-cols-2 gap-1">
+                              <div>📍 Участков: {obj.structure.sites}</div>
+                              <div>🏢 Зон: {obj.structure.zones}</div>
+                              <div>🏠 Групп: {obj.structure.roomGroups}</div>
+                              <div>🚪 Помещений: {obj.structure.rooms}</div>
+                              <div>📋 Техкарт: {obj.structure.techCards}</div>
+                              <div>🔗 Привязок: {obj.structure.roomTechCards}</div>
+                            </div>
+                          </div>
+                        )}
+                        {obj.details && (
+                          <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded mt-1">
+                            <div className="font-medium mb-1">Детали структуры:</div>
+                            {obj.details.sites && obj.details.sites.length > 0 && (
+                              <div className="mb-1">
+                                <span className="font-medium">Участки:</span> {obj.details.sites.slice(0, 3).join(', ')}
+                                {obj.details.sites.length > 3 && ` и еще ${obj.details.sites.length - 3}`}
+                              </div>
+                            )}
+                            {obj.details.rooms && obj.details.rooms.length > 0 && (
+                              <div className="mb-1">
+                                <span className="font-medium">Помещения:</span> {obj.details.rooms.slice(0, 3).join(', ')}
+                                {obj.details.rooms.length > 3 && ` и еще ${obj.details.rooms.length - 3}`}
+                              </div>
+                            )}
+                            {obj.details.techCards && obj.details.techCards.length > 0 && (
+                              <div>
+                                <span className="font-medium">Техкарты:</span> {obj.details.techCards.slice(0, 2).join(', ')}
+                                {obj.details.techCards.length > 2 && ` и еще ${obj.details.techCards.length - 2}`}
+                              </div>
+                            )}
                           </div>
                         )}
                         {obj.structureError && (
