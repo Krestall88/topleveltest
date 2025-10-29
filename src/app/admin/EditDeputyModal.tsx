@@ -90,9 +90,16 @@ export default function EditDeputyModal({
         setObjects(objectsData);
         setCurrentAssignments(assignmentsData.assignments);
         
-        // Устанавливаем выбранные объекты
+        // Устанавливаем выбранные объекты только если они изменились
         const assignedObjectIds = assignmentsData.assignments.map((a: Assignment) => a.object.id);
-        setSelectedObjects(assignedObjectIds);
+        setSelectedObjects(prev => {
+          // Проверяем, изменились ли объекты
+          if (prev.length !== assignedObjectIds.length || 
+              !prev.every(id => assignedObjectIds.includes(id))) {
+            return assignedObjectIds;
+          }
+          return prev;
+        });
       }
     } catch (error) {
       console.error('Ошибка загрузки данных:', error);
@@ -167,7 +174,7 @@ export default function EditDeputyModal({
       }
 
       alert('Заместитель успешно обновлен');
-      handleClose();
+      handleCloseButton();
       onUserUpdated();
       
     } catch (error) {
@@ -178,11 +185,18 @@ export default function EditDeputyModal({
     }
   };
 
-  const handleClose = () => {
-    setFormData({ name: '', email: '', phone: '', newPassword: '' });
-    setSelectedObjects([]);
-    setShowPasswordReset(false);
-    onClose();
+  const handleClose = (open?: boolean) => {
+    // Закрываем только если open === false или не передан параметр
+    if (open === false || open === undefined) {
+      setFormData({ name: '', email: '', phone: '', newPassword: '' });
+      setSelectedObjects([]);
+      setShowPasswordReset(false);
+      onClose();
+    }
+  };
+
+  const handleCloseButton = () => {
+    handleClose();
   };
 
   const handleObjectToggle = (objectId: string) => {
@@ -405,7 +419,7 @@ export default function EditDeputyModal({
 
           {/* Кнопки действий */}
           <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={handleClose}>
+            <Button type="button" variant="outline" onClick={handleCloseButton}>
               Отмена
             </Button>
             <Button type="submit" disabled={loading}>
