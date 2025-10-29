@@ -56,8 +56,8 @@ export default function EditDeputyModal({
   const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [localOpen, setLocalOpen] = useState(false);
 
-  const loadData = useCallback(async () => {
-    if (!user) return;
+  const loadData = useCallback(async (userId: string) => {
+    if (!userId) return;
     
     try {
       setLoadingData(true);
@@ -68,7 +68,7 @@ export default function EditDeputyModal({
       });
       
       // Загружаем текущие назначения
-      const assignmentsResponse = await fetch(`/api/admin/users/${user.id}/assignments`, {
+      const assignmentsResponse = await fetch(`/api/admin/users/${userId}/assignments`, {
         credentials: 'include'
       });
 
@@ -95,8 +95,7 @@ export default function EditDeputyModal({
     } finally {
       setLoadingData(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Убираем зависимость от user?.id чтобы избежать циклов
+  }, []); // Функция стабильна, принимает userId как параметр
 
   // Синхронизируем локальное состояние с внешним isOpen
   useEffect(() => {
@@ -104,8 +103,8 @@ export default function EditDeputyModal({
   }, [isOpen]); // Зависимость только от isOpen, не от localOpen
 
   useEffect(() => {
-    if (isOpen && user) {
-      loadData();
+    if (isOpen && user?.id) {
+      loadData(user.id); // Передаем userId как параметр
       setFormData({
         name: user.name || '',
         email: user.email || '',
@@ -122,8 +121,7 @@ export default function EditDeputyModal({
       setLoadingData(false);
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, user?.id]); // НЕ добавляем loadData - это вызывает цикл
+  }, [isOpen, user?.id, loadData]); // loadData теперь стабилен, можно добавить
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
