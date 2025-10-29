@@ -33,7 +33,7 @@ export async function POST(
   try {
     const user = await getUserFromToken(req);
     
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'DEPUTY')) {
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'DEPUTY_ADMIN')) {
       return NextResponse.json({ message: 'Доступ запрещен' }, { status: 403 });
     }
 

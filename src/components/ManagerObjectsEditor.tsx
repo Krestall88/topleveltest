@@ -91,6 +91,8 @@ export default function ManagerObjectsEditor({
 
   const assignObjectToManager = async (objectId: string) => {
     try {
+      console.log('🔄 Назначаем объект:', objectId, 'менеджеру:', managerId);
+      
       const response = await fetch(`/api/objects/${objectId}/assign-manager`, {
         method: 'POST',
         headers: {
@@ -99,17 +101,23 @@ export default function ManagerObjectsEditor({
         body: JSON.stringify({ managerId }),
       });
 
+      console.log('📡 Ответ API:', response.status, response.statusText);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ Ошибка API:', errorData);
         throw new Error(errorData.message || 'Ошибка при назначении объекта');
       }
+
+      const result = await response.json();
+      console.log('✅ Объект успешно назначен:', result);
 
       // Обновляем данные
       await fetchData();
       onUpdate();
       
     } catch (error: any) {
-      console.error('Ошибка при назначении объекта:', error);
+      console.error('❌ Ошибка при назначении объекта:', error);
       setError(error.message || 'Не удалось назначить объект');
     }
   };

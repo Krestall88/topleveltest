@@ -521,40 +521,47 @@ export default function ObjectDetailClientPage() {
               </div>
 
               <div className="space-y-1">
-                {/* Основной менеджер */}
-                {object.manager && (
-                  <div className="flex items-center justify-between p-2 bg-blue-50 rounded border-l-2 border-blue-500">
-                    <div className="flex items-center">
-                      <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center mr-2">
-                        <span className="text-white text-xs font-bold">★</span>
-                      </div>
-                      <div className="flex-1">
-                        {isEditingManagers ? (
-                          <div className="space-y-1">
-                            <label className="text-xs font-medium text-blue-700">Основной менеджер:</label>
-                            <select
-                              value={selectedManagerId}
-                              onChange={(e) => setSelectedManagerId(e.target.value)}
-                              className="w-full p-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                              <option value="">-- Выберите менеджера --</option>
-                              {managers.map((manager) => (
-                                <option key={manager.id} value={manager.id}>
-                                  {manager.name}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        ) : (
-                          <div>
-                            <span className="text-sm font-medium text-blue-900">{object.manager.name}</span>
-                            <span className="text-xs text-blue-600 block">Основной менеджер</span>
-                          </div>
-                        )}
-                      </div>
+                {/* Основной менеджер - показываем всегда */}
+                <div className="flex items-center justify-between p-2 bg-blue-50 rounded border-l-2 border-blue-500">
+                  <div className="flex items-center">
+                    <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center mr-2">
+                      <span className="text-white text-xs font-bold">★</span>
+                    </div>
+                    <div className="flex-1">
+                      {isEditingManagers ? (
+                        <div className="space-y-1">
+                          <label className="text-xs font-medium text-blue-700">Основной менеджер:</label>
+                          <select
+                            value={selectedManagerId}
+                            onChange={(e) => setSelectedManagerId(e.target.value)}
+                            className="w-full p-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="">-- Выберите менеджера --</option>
+                            {managers.map((manager) => (
+                              <option key={manager.id} value={manager.id}>
+                                {manager.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : (
+                        <div>
+                          {object.manager ? (
+                            <>
+                              <span className="text-sm font-medium text-blue-900">{object.manager.name}</span>
+                              <span className="text-xs text-blue-600 block">Основной менеджер</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-sm font-medium text-gray-500">Менеджер не назначен</span>
+                              <span className="text-xs text-gray-400 block">Основной менеджер</span>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
-                )}
+                </div>
 
                 {/* Менеджеры участков - показываем только назначенных */}
                 {object.sites && object.sites.length > 0 && (
@@ -605,25 +612,6 @@ export default function ObjectDetailClientPage() {
                   </>
                 )}
 
-                {/* Если нет менеджеров вообще */}
-                {!object.manager && (!object.sites || object.sites.filter(s => s.manager).length === 0) && (
-                  <div className="flex items-center justify-between p-2 bg-yellow-50 rounded border-l-2 border-yellow-400">
-                    <div className="flex items-center">
-                      <div className="w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center mr-2">
-                        <span className="text-white text-xs">!</span>
-                      </div>
-                      <span className="text-sm text-yellow-800">Менеджеры не назначены</span>
-                    </div>
-                    <Button
-                      onClick={startEditingManagers}
-                      size="sm"
-                      variant="outline"
-                      className="h-6 px-2 text-xs"
-                    >
-                      Назначить
-                    </Button>
-                  </div>
-                )}
 
               </div>
             </div>
