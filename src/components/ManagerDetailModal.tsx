@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { X, User, Phone, Mail, Calendar, Building, MapPin, FileText } from 'lucide-react';
+import { X, User, Phone, Mail, Calendar, Building, MapPin, FileText, Settings } from 'lucide-react';
+import ManagerObjectsEditor from './ManagerObjectsEditor';
 
 interface ManagerDetails {
   id: string;
@@ -52,6 +53,7 @@ export default function ManagerDetailModal({ managerId, isOpen, onClose }: Props
   const [manager, setManager] = useState<ManagerDetails | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isObjectsEditorOpen, setIsObjectsEditorOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen && managerId) {
@@ -181,14 +183,25 @@ export default function ManagerDetailModal({ managerId, isOpen, onClose }: Props
 
 
               {/* Объекты под управлением */}
-              {manager.managedObjects && manager.managedObjects.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
                       <Building className="h-5 w-5" />
-                      Объекты под управлением ({manager.managedObjects.length})
-                    </CardTitle>
-                  </CardHeader>
+                      Объекты под управлением ({manager.managedObjects?.length || 0})
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsObjectsEditorOpen(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Управление объектами
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                {manager.managedObjects && manager.managedObjects.length > 0 ? (
                   <CardContent className="space-y-4">
                     {manager.managedObjects.map((object) => (
                       <div key={object.id} className="border rounded-lg p-4">
@@ -231,8 +244,13 @@ export default function ManagerDetailModal({ managerId, isOpen, onClose }: Props
                       </div>
                     ))}
                   </CardContent>
-                </Card>
-              )}
+                ) : (
+                  <CardContent className="p-8 text-center text-gray-500">
+                    <Building className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>У этого менеджера пока нет назначенных объектов</p>
+                  </CardContent>
+                )}
+              </Card>
 
               {/* Участки в других объектах */}
               {manager.managedSites.length > 0 && (
@@ -296,6 +314,17 @@ export default function ManagerDetailModal({ managerId, isOpen, onClose }: Props
           </Button>
         </div>
       </div>
+
+      {/* Редактор объектов менеджера */}
+      {manager && (
+        <ManagerObjectsEditor
+          managerId={manager.id}
+          managerName={manager.name}
+          isOpen={isObjectsEditorOpen}
+          onClose={() => setIsObjectsEditorOpen(false)}
+          onUpdate={fetchManagerDetails}
+        />
+      )}
     </div>
   );
 }
