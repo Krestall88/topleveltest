@@ -713,9 +713,9 @@ export function groupTasksByManager(tasks: UnifiedTask[]): ManagerTaskGroup[] {
       });
     }
 
-    const managerId = task.object.manager?.id || 'unassigned';
-    const managerName = task.object.manager?.name || 'Не назначен';
-    const managerPhone = task.object.manager?.phone || undefined;
+    const managerId = task.object?.manager?.id || 'unassigned';
+    const managerName = task.object?.manager?.name || 'Не назначен';
+    const managerPhone = task.object?.manager?.phone || undefined;
     
     if (!managerMap.has(managerId)) {
       managerMap.set(managerId, {
