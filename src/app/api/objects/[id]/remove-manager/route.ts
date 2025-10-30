@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { jwtVerify } from 'jose';
-import { z } from 'zod';
 
 async function getUserFromToken(req: NextRequest) {
   const token = req.cookies.get('token')?.value;
@@ -21,11 +20,7 @@ async function getUserFromToken(req: NextRequest) {
   }
 }
 
-const assignManagerSchema = z.object({
-  managerId: z.string().min(1, 'ID менеджера обязателен'),
-});
-
-// POST /api/objects/[id]/assign-manager - назначить менеджера на объект
+// POST /api/objects/[id]/remove-manager - удалить менеджера с объекта
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -38,8 +33,6 @@ export async function POST(
     }
 
     const objectId = params.id;
-    const body = await req.json();
-    const validatedData = assignManagerSchema.parse(body);
 
     // Проверяем, существует ли объект
     const object = await prisma.cleaningObject.findUnique({
@@ -53,25 +46,15 @@ export async function POST(
       return NextResponse.json({ message: 'Объект не найден' }, { status: 404 });
     }
 
-    // Проверяем, существует ли менеджер
-    const manager = await prisma.user.findUnique({
-      where: { 
-        id: validatedData.managerId,
-        role: 'MANAGER'
-      },
-      select: { id: true, name: true, email: true }
-    });
-
-    if (!manager) {
-      return NextResponse.json({ message: 'Менеджер не найден' }, { status: 404 });
+    if (!object.manager) {
+      return NextResponse.json({ message: 'У объекта нет назначенного менеджера' }, { status: 400 });
     }
 
-    // Обновляем объект
+    // Удаляем менеджера с объекта
     const updatedObject = await prisma.cleaningObject.update({
       where: { id: objectId },
-      data: { managerId: validatedData.managerId },
+      data: { managerId: null },
       include: {
-        manager: { select: { id: true, name: true, email: true } },
         creator: { select: { id: true, name: true } }
       }
     });
@@ -80,41 +63,29 @@ export async function POST(
     await prisma.auditLog.create({
       data: {
         userId: user.id,
-        action: 'ASSIGN_MANAGER',
-        entityType: 'OBJECT',
+        action: 'REMOVE_MANAGER',
+        entity: 'OBJECT',
         entityId: objectId,
         details: {
           objectName: object.name,
-          previousManager: object.manager ? {
+          removedManager: {
             id: object.manager.id,
             name: object.manager.name,
             email: object.manager.email
-          } : null,
-          newManager: {
-            id: manager.id,
-            name: manager.name,
-            email: manager.email
           }
         }
       }
     });
 
     return NextResponse.json({
-      message: 'Менеджер успешно назначен на объект',
+      message: 'Менеджер успешно удален с объекта',
       object: updatedObject
     });
 
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { message: 'Ошибка валидации', errors: error.errors },
-        { status: 400 }
-      );
-    }
-
-    console.error('Error assigning manager:', error);
+    console.error('Error removing manager:', error);
     return NextResponse.json(
-      { message: 'Ошибка при назначении менеджера' },
+      { message: 'Ошибка при удалении менеджера' },
       { status: 500 }
     );
   }

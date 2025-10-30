@@ -9,6 +9,7 @@ import { Search } from 'lucide-react';
 import RoomManager from '@/components/RoomManager';
 import CreateObjectForm from '@/components/CreateObjectForm';
 import ObjectEditModal from '@/components/ObjectEditModal';
+import SimpleExcelUpload from '@/components/SimpleExcelUpload';
 
 interface CleaningObject {
   id: string;
@@ -256,6 +257,13 @@ export default function ObjectsClientPage() {
           </div>
         )}
       </div>
+
+      {/* Excel управление - только для админов */}
+      {userRole !== 'MANAGER' && (
+        <div className="mb-6">
+          <SimpleExcelUpload onImportComplete={fetchObjects} />
+        </div>
+      )}
 
       {/* Поиск */}
       <div className="relative">

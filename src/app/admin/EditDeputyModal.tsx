@@ -366,10 +366,9 @@ export default function EditDeputyModal({
                 {objects.map((object) => (
                   <div 
                     key={object.id} 
-                    className={`flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer ${
+                    className={`flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 ${
                       selectedObjects.includes(object.id) ? 'border-blue-500 bg-blue-50' : ''
                     }`}
-                    onClick={() => handleObjectToggle(object.id)}
                   >
                     <Checkbox
                       checked={selectedObjects.includes(object.id)}

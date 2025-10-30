@@ -9,18 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import UnifiedTaskCompletionModal from '@/components/UnifiedTaskCompletionModal';
 import SimpleTaskListModal from '@/components/SimpleTaskListModal';
 import ManagerCard from '@/components/ManagerCard';
-import UrgentTasksPanel from '@/components/UrgentTasksPanel';
 import { Calendar, Clock, TrendingUp, AlertTriangle, CheckCircle, Eye } from 'lucide-react';
 import { UnifiedTask, CalendarResponse, ManagerTaskGroup, ObjectTaskGroup } from '@/lib/unified-task-system';
-import { 
-  calculateTaskPriority, 
-  getTaskStyleClasses, 
-  getStatusBadgeProps, 
-  sortTasksByPriority, 
-  getUrgentTasks, 
-  getTaskCounts,
-  TaskWithPriority 
-} from '@/lib/task-priority-utils';
 
 // Простые утилиты для работы с датами
 const addDays = (date: Date, days: number): Date => {
@@ -490,70 +480,6 @@ export default function UnifiedCalendarPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Панель срочных задач */}
-      {calendarData && (
-        <UrgentTasksPanel
-          overdueCount={calendarData.overdue?.length || 0}
-          todayCount={calendarData.today?.length || 0}
-          completedTodayCount={calendarData.completed?.length || 0}
-          urgentTasks={[
-            ...(calendarData.overdue || []).map(task => ({
-              id: task.id,
-              description: task.description,
-              objectName: task.objectName,
-              roomName: task.roomName,
-              managerName: task.object?.manager?.name,
-              status: 'OVERDUE' as const,
-              scheduledDate: task.scheduledDate,
-              frequency: task.frequency
-            })),
-            ...(calendarData.today || []).map(task => ({
-              id: task.id,
-              description: task.description,
-              objectName: task.objectName,
-              roomName: task.roomName,
-              managerName: task.object?.manager?.name,
-              status: 'AVAILABLE' as const,
-              scheduledDate: task.scheduledDate,
-              frequency: task.frequency
-            })),
-            ...(calendarData.completed || []).map(task => ({
-              id: task.id,
-              description: task.description,
-              objectName: task.objectName,
-              roomName: task.roomName,
-              managerName: task.object?.manager?.name,
-              status: 'COMPLETED' as const,
-              scheduledDate: task.scheduledDate,
-              frequency: task.frequency
-            }))
-          ]}
-          onTaskClick={(taskId: string) => {
-            if (calendarData) {
-              const task = [
-                ...(calendarData.overdue || []),
-                ...(calendarData.today || []),
-                ...(calendarData.completed || [])
-              ].find(t => t.id === taskId);
-              if (task) {
-                setTaskCompletionModal(task);
-              }
-            }
-          }}
-          onCompleteTask={(taskId: string) => {
-            if (calendarData) {
-              const task = [
-                ...(calendarData.overdue || []),
-                ...(calendarData.today || [])
-              ].find(t => t.id === taskId);
-              if (task) {
-                setTaskCompletionModal(task);
-              }
-            }
-          }}
-        />
-      )}
 
       {/* Задачи */}
       {calendarData && (calendarData.userRole === 'ADMIN' || calendarData.userRole === 'DEPUTY_ADMIN' || calendarData.userRole === 'MANAGER') ? (

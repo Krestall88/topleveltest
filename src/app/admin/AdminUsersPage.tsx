@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -76,10 +76,10 @@ export default function AdminUsersPage() {
     loadUsers();
   };
 
-  const handleEditUser = (user: User) => {
+  const handleEditUser = useCallback((user: User) => {
     setSelectedUser(user);
     setIsEditModalOpen(true);
-  };
+  }, []); // Мемоизируем функцию открытия модального окна
 
   const handleDeleteUser = async (user: User) => {
     if (!confirm(`Вы уверены, что хотите удалить заместителя "${user.name}"?\n\nЭто действие нельзя отменить.`)) {
@@ -108,6 +108,7 @@ export default function AdminUsersPage() {
 
   const handleUserUpdated = () => {
     setIsEditModalOpen(false);
+    setSelectedUser(null); // Очищаем selectedUser чтобы избежать циклов
     loadUsers();
   };
 
@@ -269,7 +270,10 @@ export default function AdminUsersPage() {
 
       <EditDeputyModal
         isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedUser(null); // Очищаем selectedUser при закрытии
+        }}
         user={selectedUser}
         onUserUpdated={handleUserUpdated}
       />

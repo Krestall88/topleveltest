@@ -146,6 +146,74 @@ export async function PUT(req: NextRequest, { params }: Params) {
   }
 }
 
+// PATCH /api/objects/[id] - Частично обновить объект (например, только менеджера)
+export async function PATCH(req: NextRequest, { params }: Params) {
+  try {
+    const { id } = await params;
+    const body = await req.json();
+    const { managerId, ...otherData } = body;
+
+    console.log('🔄 PATCH объект:', id, 'данные:', body);
+
+    const updatedObject = await prisma.cleaningObject.update({
+      where: { id },
+      data: {
+        managerId: managerId === '' ? null : managerId,
+        ...otherData,
+      },
+      include: {
+        manager: { 
+          select: { id: true, name: true, email: true } 
+        },
+        creator: { 
+          select: { id: true, name: true } 
+        },
+        rooms: {
+          include: {
+            techCards: true
+          },
+          orderBy: { name: 'asc' }
+        },
+        sites: {
+          include: {
+            manager: {
+              select: { id: true, name: true, email: true }
+            },
+            zones: {
+              include: {
+                roomGroups: {
+                  include: {
+                    rooms: true
+                  }
+                }
+              }
+            }
+          },
+          orderBy: { name: 'asc' }
+        },
+        techCards: {
+          orderBy: { name: 'asc' }
+        },
+        _count: {
+          select: {
+            rooms: true,
+            techCards: true,
+            checklists: true,
+            requests: true
+          }
+        }
+      },
+    });
+
+    console.log('✅ Объект обновлен:', updatedObject.name, 'менеджер:', updatedObject.manager?.name);
+
+    return NextResponse.json(updatedObject);
+  } catch (error) {
+    console.error('❌ Ошибка обновления объекта:', error);
+    return NextResponse.json({ message: 'Не удалось обновить объект' }, { status: 500 });
+  }
+}
+
 // DELETE /api/objects/[id] - Удалить объект
 export async function DELETE(req: NextRequest, { params }: Params) {
   try {
