@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,19 +54,21 @@ export default function EditDeputyModal({
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
-  const [localOpen, setLocalOpen] = useState(false);
-  
-  // Используем ref для хранения актуального userId без пересоздания функции
-  const userIdRef = useRef<string | null>(null);
-  
-  // Обновляем ref при изменении user
-  useEffect(() => {
-    userIdRef.current = user?.id || null;
-  }, [user?.id]);
 
-  const loadData = useCallback(async () => {
-    const userId = userIdRef.current;
-    if (!userId) return;
+  useEffect(() => {
+    if (isOpen && user) {
+      loadData();
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        newPassword: ''
+      });
+    }
+  }, [isOpen, user]);
+
+  const loadData = async () => {
+    if (!user) return;
     
     try {
       setLoadingData(true);
@@ -77,7 +79,7 @@ export default function EditDeputyModal({
       });
       
       // Загружаем текущие назначения
-      const assignmentsResponse = await fetch(`/api/admin/users/${userId}/assignments`, {
+      const assignmentsResponse = await fetch(`/api/admin/users/${user.id}/assignments`, {
         credentials: 'include'
       });
 
@@ -88,50 +90,16 @@ export default function EditDeputyModal({
         setObjects(objectsData);
         setCurrentAssignments(assignmentsData.assignments);
         
-        // Устанавливаем выбранные объекты только если они изменились
+        // Устанавливаем выбранные объекты
         const assignedObjectIds = assignmentsData.assignments.map((a: Assignment) => a.object.id);
-        setSelectedObjects(prev => {
-          // Проверяем, изменились ли объекты
-          if (prev.length !== assignedObjectIds.length || 
-              !prev.every(id => assignedObjectIds.includes(id))) {
-            return assignedObjectIds;
-          }
-          return prev;
-        });
+        setSelectedObjects(assignedObjectIds);
       }
     } catch (error) {
       console.error('Ошибка загрузки данных:', error);
     } finally {
       setLoadingData(false);
     }
-  }, []); // Функция стабильна, принимает userId как параметр
-
-  // Синхронизируем локальное состояние с внешним isOpen
-  useEffect(() => {
-    setLocalOpen(isOpen);
-  }, [isOpen]); // Зависимость только от isOpen, не от localOpen
-
-  useEffect(() => {
-    if (isOpen && user?.id) {
-      loadData(); // loadData использует ref, не нужен параметр
-      setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        newPassword: ''
-      });
-    } else if (!isOpen) {
-      // Очищаем состояние при закрытии модального окна
-      setFormData({ name: '', email: '', phone: '', newPassword: '' });
-      setSelectedObjects([]);
-      setObjects([]);
-      setCurrentAssignments([]);
-      setShowPasswordReset(false);
-      setLoadingData(false);
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, user?.id]); // НЕ добавляем loadData - он стабилен через ref
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,7 +167,7 @@ export default function EditDeputyModal({
       }
 
       alert('Заместитель успешно обновлен');
-      handleCloseButton();
+      handleClose();
       onUserUpdated();
       
     } catch (error) {
@@ -210,34 +178,20 @@ export default function EditDeputyModal({
     }
   };
 
-  const handleClose = (open?: boolean) => {
-    // Закрываем только если open === false или не передан параметр
-    if (open === false || open === undefined) {
-      setFormData({ name: '', email: '', phone: '', newPassword: '' });
-      setSelectedObjects([]);
-      setShowPasswordReset(false);
-      onClose();
-    }
+  const handleClose = () => {
+    setFormData({ name: '', email: '', phone: '', newPassword: '' });
+    setSelectedObjects([]);
+    setShowPasswordReset(false);
+    onClose();
   };
 
-  const handleCloseButton = () => {
-    handleClose();
-  };
-
-  const handleOpenChange = (open: boolean) => {
-    setLocalOpen(open);
-    if (!open) {
-      onClose(); // Закрытие только при false
-    }
-  };
-
-  const handleObjectToggle = useCallback((objectId: string) => {
+  const handleObjectToggle = (objectId: string) => {
     setSelectedObjects(prev => 
       prev.includes(objectId)
         ? prev.filter(id => id !== objectId)
         : [...prev, objectId]
     );
-  }, []);
+  };
 
   const selectAll = () => {
     setSelectedObjects(objects.map(obj => obj.id));
@@ -260,7 +214,7 @@ export default function EditDeputyModal({
 
   if (loadingData) {
     return (
-      <Dialog open={localOpen} onOpenChange={handleOpenChange}>
+      <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Загрузка данных</DialogTitle>
@@ -274,7 +228,7 @@ export default function EditDeputyModal({
   }
 
   return (
-    <Dialog open={localOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
@@ -451,7 +405,7 @@ export default function EditDeputyModal({
 
           {/* Кнопки действий */}
           <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={handleCloseButton}>
+            <Button type="button" variant="outline" onClick={handleClose}>
               Отмена
             </Button>
             <Button type="submit" disabled={loading}>
