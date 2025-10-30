@@ -137,13 +137,13 @@ async function sendOrganizationNameRequest(telegramId: string, userName: string)
   }
 
   try {
-    const message = `Привет, ${userName}! 👋
+    const message = `Здравствуйте, ${userName}! 👋
 
 Для отправки заданий по уборке, мне нужно знать, от какой организации вы пишете.
 
 📝 Пожалуйста, напишите название вашей организации (завода, управляющей компании, агентства и т.д.)
 
-Например: "Завод Металлург" или "УК Комфорт" или "Клининговое агентство Чистота"`;
+Например: "Завод Металлург" или "УК Комфорт"`;
 
     const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
@@ -203,7 +203,7 @@ async function handleOrganizationSearch(telegramId: string, userName: string, se
 • Использовать сокращенное название
 • Написать только ключевое слово
 
-📞 Если проблема сохраняется, обратитесь к администратору системы.`;
+📞 Если проблема сохраняется, обратитесь к ответственному менеджеру`;
 
       await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: 'POST',
@@ -336,7 +336,7 @@ async function handleCallbackQuery(callbackQuery: any) {
       }
 
       if (!object.managerId) {
-        await sendTelegramMessage(telegramId, '❌ У выбранного объекта не назначен менеджер. Обратитесь к администратору.');
+        await sendTelegramMessage(telegramId, '❌ У выбранного объекта не назначен менеджер. Обратитесь к курирующему менеджеру.');
         return;
       }
 
