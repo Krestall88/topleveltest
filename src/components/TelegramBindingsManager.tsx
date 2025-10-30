@@ -220,6 +220,18 @@ export default function TelegramBindingsManager({ isOpen, onClose }: TelegramBin
           {showCreateForm && (
             <div className="p-4 border rounded-lg bg-blue-50 space-y-3">
               <h3 className="font-medium">Новая привязка</h3>
+              
+              {/* Инструкция по получению Telegram ID */}
+              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm space-y-2">
+                <p className="font-medium text-yellow-800">📱 Как получить Telegram ID:</p>
+                <ol className="list-decimal list-inside space-y-1 text-yellow-700">
+                  <li>Попросите пользователя открыть бота <strong>@userinfobot</strong> в Telegram</li>
+                  <li>Пользователь нажимает команду <code className="bg-yellow-100 px-1 rounded">/start</code></li>
+                  <li>Бот пришлет сообщение с ID (например: <code className="bg-yellow-100 px-1 rounded">Id: 123456789</code>)</li>
+                  <li>Попросите пользователя прислать вам только цифры</li>
+                </ol>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label>Telegram ID *</Label>
@@ -228,6 +240,7 @@ export default function TelegramBindingsManager({ isOpen, onClose }: TelegramBin
                     onChange={(e) => setCreateForm({ ...createForm, telegramId: e.target.value })}
                     placeholder="123456789"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Только цифры, без пробелов</p>
                 </div>
                 <div>
                   <Label>Имя</Label>

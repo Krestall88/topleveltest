@@ -40,6 +40,9 @@ export default function AdditionalTasksClientPage() {
   
   // Модальное окно управления Telegram
   const [isTelegramManagerOpen, setIsTelegramManagerOpen] = useState(false);
+  
+  // Режим отображения: список или группировка
+  const [viewMode, setViewMode] = useState<'list' | 'grouped'>('grouped');
 
   useEffect(() => {
     fetchCurrentUser();
@@ -133,6 +136,61 @@ export default function AdditionalTasksClientPage() {
     await fetchTasks(); // Перезагружаем список
   };
 
+
+  // Группировка по менеджерам и объектам
+  const groupTasksByManager = () => {
+    const managerMap = new Map();
+    
+    filteredTasks.forEach(task => {
+      const managerId = task.assignedTo?.id || 'unassigned';
+      const managerName = task.assignedTo?.name || 'Не назначен';
+      
+      if (!managerMap.has(managerId)) {
+        managerMap.set(managerId, {
+          manager: { id: managerId, name: managerName },
+          objects: new Map(),
+          stats: { total: 0, new: 0, inProgress: 0, completed: 0 }
+        });
+      }
+      
+      const managerGroup = managerMap.get(managerId);
+      const objectId = task.object?.id || 'unknown';
+      const objectName = task.object?.name || 'Неизвестный объект';
+      
+      if (!managerGroup.objects.has(objectId)) {
+        managerGroup.objects.set(objectId, {
+          id: objectId,
+          name: objectName,
+          tasks: [],
+          stats: { total: 0, new: 0, inProgress: 0, completed: 0 }
+        });
+      }
+      
+      const objectGroup = managerGroup.objects.get(objectId);
+      objectGroup.tasks.push(task);
+      objectGroup.stats.total++;
+      managerGroup.stats.total++;
+      
+      // Обновляем статистику
+      if (task.status === 'NEW') {
+        objectGroup.stats.new++;
+        managerGroup.stats.new++;
+      } else if (task.status === 'IN_PROGRESS') {
+        objectGroup.stats.inProgress++;
+        managerGroup.stats.inProgress++;
+      } else if (task.status === 'COMPLETED') {
+        objectGroup.stats.completed++;
+        managerGroup.stats.completed++;
+      }
+    });
+    
+    return Array.from(managerMap.values()).map(group => ({
+      ...group,
+      objects: Array.from(group.objects.values())
+    }));
+  };
+  
+  const groupedByManager = viewMode === 'grouped' ? groupTasksByManager() : [];
 
   // Фильтрация заданий
   const filteredTasks = tasks.filter(task => {
@@ -269,6 +327,32 @@ export default function AdditionalTasksClientPage() {
         </CardContent>
       </Card>
 
+      {/* Переключатель режима отображения */}
+      <div className="flex justify-end mb-4">
+        <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1">
+          <button
+            onClick={() => setViewMode('grouped')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              viewMode === 'grouped'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            По менеджерам
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              viewMode === 'list'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            Список
+          </button>
+        </div>
+      </div>
+
       {/* Список заданий */}
       {filteredTasks.length === 0 ? (
         <Card>
@@ -285,7 +369,7 @@ export default function AdditionalTasksClientPage() {
             </p>
           </CardContent>
         </Card>
-      ) : (
+      ) : viewMode === 'list' ? (
         <div className="space-y-4">
           {filteredTasks.map((task) => (
             <AdditionalTaskCard
@@ -294,9 +378,73 @@ export default function AdditionalTasksClientPage() {
               onStatusChange={handleStatusChange}
               onDelete={handleDeleteTask}
               showActions={true}
-              isCurrentUser={currentUser?.id === task.assignedTo.id}
+              isCurrentUser={currentUser?.id === task.assignedTo?.id}
               canDelete={currentUser && ['ADMIN', 'DEPUTY_ADMIN'].includes(currentUser.role)}
             />
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {groupedByManager.map((managerGroup) => (
+            <Card key={managerGroup.manager.id} className="shadow-sm hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                {/* Заголовок менеджера */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-200">
+                      <User className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">{managerGroup.manager.name}</h3>
+                      <p className="text-sm text-gray-600">Всего заданий: {managerGroup.stats.total}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-medium">
+                      Новые: {managerGroup.stats.new}
+                    </div>
+                    <div className="px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-sm font-medium">
+                      В работе: {managerGroup.stats.inProgress}
+                    </div>
+                    <div className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-medium">
+                      Выполнено: {managerGroup.stats.completed}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Объекты */}
+                <div className="space-y-4">
+                  {managerGroup.objects.map((objectGroup) => (
+                    <div key={objectGroup.id} className="border-l-4 border-blue-400 pl-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-medium text-gray-800 flex items-center gap-2">
+                          <MessageSquare className="w-4 h-4 text-blue-600" />
+                          {objectGroup.name}
+                        </h4>
+                        <div className="flex gap-2 text-xs">
+                          <span className="px-2 py-1 rounded bg-red-50 text-red-700">Новые: {objectGroup.stats.new}</span>
+                          <span className="px-2 py-1 rounded bg-yellow-50 text-yellow-700">В работе: {objectGroup.stats.inProgress}</span>
+                          <span className="px-2 py-1 rounded bg-green-50 text-green-700">Выполнено: {objectGroup.stats.completed}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        {objectGroup.tasks.map((task) => (
+                          <AdditionalTaskCard
+                            key={task.id}
+                            task={task}
+                            onStatusChange={handleStatusChange}
+                            onDelete={handleDeleteTask}
+                            showActions={true}
+                            isCurrentUser={currentUser?.id === task.assignedTo?.id}
+                            canDelete={currentUser && ['ADMIN', 'DEPUTY_ADMIN'].includes(currentUser.role)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

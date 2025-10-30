@@ -172,20 +172,38 @@ export default function AdditionalTaskCard({
         {task.attachments.length > 0 && (
           <div className="space-y-2">
             <p className="text-sm font-medium text-gray-700">Вложения:</p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-2">
               {task.attachments.map((attachment, index) => {
                 const AttachmentIcon = getAttachmentIcon(attachment);
+                const isAudio = attachment.includes('voice') || attachment.includes('audio');
+                
                 return (
-                  <a
-                    key={index}
-                    href={attachment}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm hover:bg-blue-100 transition-colors"
-                  >
-                    <AttachmentIcon className="h-3 w-3" />
-                    <span>Файл {index + 1}</span>
-                  </a>
+                  <div key={index}>
+                    {isAudio ? (
+                      <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
+                        <Mic className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                        <audio 
+                          controls 
+                          className="flex-1 h-8"
+                          style={{ maxWidth: '100%' }}
+                        >
+                          <source src={attachment} type="audio/ogg" />
+                          <source src={attachment} type="audio/mpeg" />
+                          Ваш браузер не поддерживает аудио элемент.
+                        </audio>
+                      </div>
+                    ) : (
+                      <a
+                        href={attachment}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm hover:bg-blue-100 transition-colors inline-flex"
+                      >
+                        <AttachmentIcon className="h-3 w-3" />
+                        <span>Файл {index + 1}</span>
+                      </a>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -228,7 +246,7 @@ export default function AdditionalTaskCard({
 
         {/* Действия для менеджера */}
         {showActions && isCurrentUser && task.status !== 'COMPLETED' && (
-          <div className="border-t pt-3">
+          <div className="border-t pt-3 space-y-3">
             {task.status === 'NEW' && (
               <Button 
                 onClick={handleTakeTask}
@@ -246,31 +264,40 @@ export default function AdditionalTaskCard({
                 className="w-full"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
-                Отметить выполненным
+                Закрыть задание
               </Button>
             )}
 
             {showCompleteForm && (
-              <div className="space-y-3">
+              <div className="space-y-3 p-4 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-center gap-2 text-green-800 font-medium">
+                  <CheckCircle className="h-5 w-5" />
+                  <span>Закрытие задания</span>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Комментарий (необязательно)
+                    Комментарий о выполнении
+                    <span className="text-red-500 ml-1">*</span>
                   </label>
                   <textarea
                     value={completionNote}
                     onChange={(e) => setCompletionNote(e.target.value)}
-                    placeholder="Опишите как было выполнено задание..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Опишите как было выполнено задание, что было сделано..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     rows={3}
                   />
+                  <p className="text-xs text-gray-600 mt-1">
+                    Комментарий обязателен для закрытия задания
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <Button 
                     onClick={handleCompleteTask}
-                    className="flex-1"
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    disabled={!completionNote.trim()}
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Выполнено
+                    Закрыть задание
                   </Button>
                   <Button 
                     onClick={() => {
