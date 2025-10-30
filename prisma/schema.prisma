@@ -301,11 +301,14 @@ model AuditLog {
 }
 
 model ClientBinding {
-  id         String         @id @default(cuid())
-  createdAt  DateTime       @default(now())
-  telegramId String
-  objectId   String
-  object     CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  id               String         @id @default(cuid())
+  createdAt        DateTime       @default(now())
+  telegramId       String
+  telegramUsername String?
+  firstName        String?
+  lastName         String?
+  objectId         String
+  object           CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
 
   @@unique([telegramId, objectId])
 }

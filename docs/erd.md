@@ -257,6 +257,9 @@ QUALITY_CHECK QUALITY_CHECK
     String id "🗝️"
     DateTime createdAt 
     String telegramId 
+    String telegramUsername "❓"
+    String firstName "❓"
+    String lastName "❓"
     }
   
 

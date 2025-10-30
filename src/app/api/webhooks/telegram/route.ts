@@ -85,12 +85,6 @@ export async function POST(req: NextRequest) {
     const telegramId = message.from.id.toString();
     const userName = `${message.from.first_name} ${message.from.last_name || ''}`.trim();
 
-    // Проверяем команду /start
-    if (message.text === '/start') {
-      await sendOrganizationNameRequest(telegramId, userName);
-      return NextResponse.json({ ok: true });
-    }
-
     // Проверяем привязку клиента к объекту
     const binding = await prisma.clientBinding.findFirst({
       where: { telegramId },
@@ -104,6 +98,29 @@ export async function POST(req: NextRequest) {
         }
       }
     });
+
+    // Проверяем команду /start
+    if (message.text === '/start') {
+      // Если уже привязан - показываем текущий объект
+      if (binding) {
+        const message = `✅ Вы уже привязаны к объекту:
+
+🏢 ${binding.object.name}
+📍 ${binding.object.address || 'Адрес не указан'}
+👤 Ответственный менеджер: ${binding.object.manager?.name || 'Не назначен'}
+
+Можете отправлять задания! 📝
+
+Если нужно изменить объект, обратитесь к администратору системы.`;
+
+        await sendTelegramMessage(telegramId, message);
+        return NextResponse.json({ ok: true });
+      }
+      
+      // Если не привязан - запрашиваем название организации
+      await sendOrganizationNameRequest(telegramId, userName);
+      return NextResponse.json({ ok: true });
+    }
 
     // Обработка текстового сообщения как поиска организации (если клиент не привязан)
     if (message.text && !binding) {
@@ -358,10 +375,18 @@ async function handleCallbackQuery(callbackQuery: any) {
             objectId 
           } 
         },
-        update: { objectId },
+        update: { 
+          objectId,
+          telegramUsername: callbackQuery.from.username,
+          firstName: callbackQuery.from.first_name,
+          lastName: callbackQuery.from.last_name
+        },
         create: { 
           telegramId, 
-          objectId 
+          objectId,
+          telegramUsername: callbackQuery.from.username,
+          firstName: callbackQuery.from.first_name,
+          lastName: callbackQuery.from.last_name
         }
       });
 

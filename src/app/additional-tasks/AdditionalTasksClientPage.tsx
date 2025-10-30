@@ -15,11 +15,13 @@ import {
   User,
   Edit,
   Trash,
-  XCircle
+  XCircle,
+  Users
 } from 'lucide-react';
 import AdditionalTaskCard from '@/components/AdditionalTaskCard';
 import type { AdditionalTask, CleaningObject, User as UserType } from '@/types';
 import CreateTaskModal from '@/components/CreateTaskModal';
+import TelegramBindingsManager from '@/components/TelegramBindingsManager';
 
 export default function AdditionalTasksClientPage() {
   const [tasks, setTasks] = useState<AdditionalTask[]>([]);
@@ -35,6 +37,9 @@ export default function AdditionalTasksClientPage() {
 
   // Модальное окно создания
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  
+  // Модальное окно управления Telegram
+  const [isTelegramManagerOpen, setIsTelegramManagerOpen] = useState(false);
 
   useEffect(() => {
     fetchCurrentUser();
@@ -242,15 +247,23 @@ export default function AdditionalTasksClientPage() {
               </div>
             )}
 
-            {/* Кнопка создания */}
+            {/* Кнопки управления */}
             {['ADMIN', 'DEPUTY', 'DEPUTY_ADMIN'].includes(currentUser?.role) && (
-              <Button 
-                onClick={() => setIsCreateModalOpen(true)}
-                className="ml-auto"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Создать задание
-              </Button>
+              <div className="ml-auto flex gap-2">
+                <Button 
+                  onClick={() => setIsTelegramManagerOpen(true)}
+                  variant="outline"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Telegram аккаунты
+                </Button>
+                <Button 
+                  onClick={() => setIsCreateModalOpen(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Создать задание
+                </Button>
+              </div>
             )}
           </div>
         </CardContent>
@@ -294,6 +307,12 @@ export default function AdditionalTasksClientPage() {
         onClose={() => setIsCreateModalOpen(false)}
         onTaskCreated={handleTaskCreated}
         objects={objects}
+      />
+
+      {/* Модальное окно управления Telegram аккаунтами */}
+      <TelegramBindingsManager
+        isOpen={isTelegramManagerOpen}
+        onClose={() => setIsTelegramManagerOpen(false)}
       />
     </div>
   );
