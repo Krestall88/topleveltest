@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
 
     // Проверяем команду /start
     if (message.text === '/start') {
-      await sendObjectSelectionMessage(telegramId, userName);
+      await sendOrganizationNameRequest(telegramId, userName);
       return NextResponse.json({ ok: true });
     }
 
@@ -105,9 +105,15 @@ export async function POST(req: NextRequest) {
       }
     });
 
+    // Обработка текстового сообщения как поиска организации (если клиент не привязан)
+    if (message.text && !binding) {
+      await handleOrganizationSearch(telegramId, userName, message.text);
+      return NextResponse.json({ ok: true });
+    }
+
     if (!binding) {
-      // Клиент не привязан - отправляем ссылку для выбора объекта
-      await sendObjectSelectionMessage(telegramId, userName);
+      // Клиент не привязан - просим ввести название организации
+      await sendOrganizationNameRequest(telegramId, userName);
       return NextResponse.json({ ok: true });
     }
 
@@ -122,7 +128,8 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function sendObjectSelectionMessage(telegramId: string, userName: string) {
+// Просим пользователя ввести название организации
+async function sendOrganizationNameRequest(telegramId: string, userName: string) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) {
     console.error('❌ TELEGRAM_BOT_TOKEN не настроен');
@@ -130,28 +137,73 @@ async function sendObjectSelectionMessage(telegramId: string, userName: string) 
   }
 
   try {
-    // Получаем список объектов из базы данных
-    console.log('🔍 Запрашиваем объекты из базы данных...');
-    
+    const message = `Привет, ${userName}! 👋
+
+Для отправки заданий по уборке, мне нужно знать, от какой организации вы пишете.
+
+📝 Пожалуйста, напишите название вашей организации (завода, управляющей компании, агентства и т.д.)
+
+Например: "Завод Металлург" или "УК Комфорт" или "Клининговое агентство Чистота"`;
+
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: telegramId,
+        text: message
+      })
+    });
+
+    if (!response.ok) {
+      console.error('❌ Ошибка отправки сообщения в Telegram:', await response.text());
+    } else {
+      console.log('✅ Запрос названия организации отправлен:', telegramId);
+    }
+  } catch (error) {
+    console.error('❌ Ошибка в sendOrganizationNameRequest:', error);
+  }
+}
+
+// Поиск организации по введенному тексту
+async function handleOrganizationSearch(telegramId: string, userName: string, searchText: string) {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) {
+    console.error('❌ TELEGRAM_BOT_TOKEN не настроен');
+    return;
+  }
+
+  try {
+    console.log('🔍 Поиск организации по запросу:', searchText);
+
+    // Ищем объекты по названию (нечувствительно к регистру)
     const objects = await prisma.cleaningObject.findMany({
+      where: {
+        OR: [
+          { name: { contains: searchText, mode: 'insensitive' } },
+          { address: { contains: searchText, mode: 'insensitive' } },
+          { description: { contains: searchText, mode: 'insensitive' } }
+        ]
+      },
       select: {
         id: true,
         name: true,
-        address: true,
-        manager: {
-          select: { name: true }
-        }
+        address: true
       },
-      orderBy: { name: 'asc' }
+      take: 5 // Ограничиваем результаты
     });
 
     console.log('📊 Найдено объектов:', objects.length);
-    console.log('📋 Объекты:', objects.map(obj => ({ id: obj.id, name: obj.name })));
 
     if (objects.length === 0) {
-      const message = `Привет, ${userName}! 👋
+      // Объект не найден
+      const message = `❌ К сожалению, я не нашел организацию по запросу "${searchText}".
 
-К сожалению, в системе пока нет доступных объектов для выбора. Обратитесь к администратору.`;
+🔄 Попробуйте:
+• Проверить правильность написания
+• Использовать сокращенное название
+• Написать только ключевое слово
+
+📞 Если проблема сохраняется, обратитесь к администратору системы.`;
 
       await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: 'POST',
@@ -164,49 +216,70 @@ async function sendObjectSelectionMessage(telegramId: string, userName: string) 
       return;
     }
 
-    // Создаем кнопку для открытия веб-приложения выбора объекта
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001';
-    const webAppUrl = `${baseUrl}/choose-object?telegramId=${telegramId}`;
-    
-    const keyboard = {
-      inline_keyboard: [[{
-        text: '🏢 Выбрать объект',
-        web_app: { url: webAppUrl }
-      }]]
-    };
+    if (objects.length === 1) {
+      // Найден один объект - предлагаем подтвердить
+      const object = objects[0];
+      const keyboard = {
+        inline_keyboard: [
+          [
+            { text: '✅ Да, это мой объект', callback_data: `confirm_object_${object.id}` },
+            { text: '❌ Нет, другой объект', callback_data: 'search_again' }
+          ]
+        ]
+      };
 
-    const message = `Привет, ${userName}! 👋
+      const message = `✅ Я нашел объект:
 
-Для отправки заданий по уборке, сначала выберите объект, с которого вы пишете.
+🏢 ${object.name}
+📍 ${object.address}
 
-👇 Нажмите кнопку ниже, чтобы выбрать объект из удобного списка:`;
+Это ваша организация?`;
 
-    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: telegramId,
-        text: message,
-        reply_markup: keyboard
-      })
-    });
-
-    if (!response.ok) {
-      console.error('❌ Ошибка отправки сообщения в Telegram:', await response.text());
+      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: telegramId,
+          text: message,
+          reply_markup: keyboard
+        })
+      });
     } else {
-      console.log('✅ Сообщение с выбором объекта отправлено:', telegramId);
+      // Найдено несколько объектов - показываем список с кнопками
+      const keyboard = {
+        inline_keyboard: [
+          ...objects.map(obj => [{
+            text: `🏢 ${obj.name}`,
+            callback_data: `confirm_object_${obj.id}`
+          }]),
+          [{ text: '🔄 Ввести другое название', callback_data: 'search_again' }]
+        ]
+      };
+
+      const message = `✅ Я нашел несколько организаций по вашему запросу:
+
+Выберите вашу организацию из списка ниже:`;
+
+      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: telegramId,
+          text: message,
+          reply_markup: keyboard
+        })
+      });
     }
   } catch (error) {
-    console.error('❌ Ошибка в sendObjectSelectionMessage:', error);
+    console.error('❌ Ошибка в handleOrganizationSearch:', error);
     
-    // Отправляем сообщение об ошибке пользователю
     try {
       await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: telegramId,
-          text: `❌ Произошла ошибка при загрузке списка объектов. Попробуйте позже или обратитесь к администратору.\n\nОшибка: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`
+          text: `❌ Произошла ошибка при поиске организации. Попробуйте еще раз или обратитесь к администратору.`
         })
       });
     } catch (sendError) {
@@ -237,9 +310,15 @@ async function handleCallbackQuery(callbackQuery: any) {
       })
     });
 
-    // Обрабатываем выбор объекта
-    if (data?.startsWith('select_object_')) {
-      const objectId = data.replace('select_object_', '');
+    // Обрабатываем кнопку "Ввести другое название"
+    if (data === 'search_again') {
+      await sendOrganizationNameRequest(telegramId, userName);
+      return;
+    }
+
+    // Обрабатываем подтверждение объекта
+    if (data?.startsWith('confirm_object_')) {
+      const objectId = data.replace('confirm_object_', '');
       
       // Получаем информацию об объекте
       const object = await prisma.cleaningObject.findUnique({
