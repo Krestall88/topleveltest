@@ -117,6 +117,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    // Проверяем, не было ли binding создано только что (защита от обработки поискового запроса как задания)
+    const bindingAge = Date.now() - new Date(binding.createdAt).getTime();
+    const isRecentBinding = bindingAge < 5000; // Меньше 5 секунд
+    
+    // Игнорируем текстовые сообщения сразу после создания binding
+    if (message.text && isRecentBinding) {
+      console.log('⏭️ Игнорируем текстовое сообщение - binding только что создан');
+      return NextResponse.json({ ok: true });
+    }
+
     // Обрабатываем сообщение как дополнительное задание
     await processAdditionalTask(message, binding, telegramId, userName);
 
