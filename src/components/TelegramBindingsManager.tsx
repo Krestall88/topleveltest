@@ -57,7 +57,6 @@ export default function TelegramBindingsManager({ isOpen, onClose }: TelegramBin
   // Форма создания
   const [createForm, setCreateForm] = useState({
     telegramId: '',
-    telegramUsername: '',
     firstName: '',
     lastName: '',
     objectId: ''
@@ -116,7 +115,6 @@ export default function TelegramBindingsManager({ isOpen, onClose }: TelegramBin
     setEditingId(binding.id);
     setEditForm({
       objectId: binding.objectId,
-      telegramUsername: binding.telegramUsername || '',
       firstName: binding.firstName || '',
       lastName: binding.lastName || ''
     });
@@ -126,7 +124,6 @@ export default function TelegramBindingsManager({ isOpen, onClose }: TelegramBin
     setEditingId(null);
     setEditForm({
       objectId: '',
-      telegramUsername: '',
       firstName: '',
       lastName: ''
     });
@@ -172,7 +169,6 @@ export default function TelegramBindingsManager({ isOpen, onClose }: TelegramBin
         setShowCreateForm(false);
         setCreateForm({
           telegramId: '',
-          telegramUsername: '',
           firstName: '',
           lastName: '',
           objectId: ''
@@ -190,9 +186,6 @@ export default function TelegramBindingsManager({ isOpen, onClose }: TelegramBin
   const getUserDisplay = (binding: ClientBinding) => {
     if (binding.firstName || binding.lastName) {
       return `${binding.firstName || ''} ${binding.lastName || ''}`.trim();
-    }
-    if (binding.telegramUsername) {
-      return `@${binding.telegramUsername}`;
     }
     return `ID: ${binding.telegramId}`;
   };
@@ -234,14 +227,6 @@ export default function TelegramBindingsManager({ isOpen, onClose }: TelegramBin
                     value={createForm.telegramId}
                     onChange={(e) => setCreateForm({ ...createForm, telegramId: e.target.value })}
                     placeholder="123456789"
-                  />
-                </div>
-                <div>
-                  <Label>Username</Label>
-                  <Input
-                    value={createForm.telegramUsername}
-                    onChange={(e) => setCreateForm({ ...createForm, telegramUsername: e.target.value })}
-                    placeholder="username"
                   />
                 </div>
                 <div>
