@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,8 +55,17 @@ export default function EditDeputyModal({
   const [loadingData, setLoadingData] = useState(false);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [localOpen, setLocalOpen] = useState(false);
+  
+  // Используем ref для хранения актуального userId без пересоздания функции
+  const userIdRef = useRef<string | null>(null);
+  
+  // Обновляем ref при изменении user
+  useEffect(() => {
+    userIdRef.current = user?.id || null;
+  }, [user?.id]);
 
-  const loadData = useCallback(async (userId: string) => {
+  const loadData = useCallback(async () => {
+    const userId = userIdRef.current;
     if (!userId) return;
     
     try {
@@ -104,7 +113,7 @@ export default function EditDeputyModal({
 
   useEffect(() => {
     if (isOpen && user?.id) {
-      loadData(user.id); // Передаем userId как параметр
+      loadData(); // loadData использует ref, не нужен параметр
       setFormData({
         name: user.name || '',
         email: user.email || '',
@@ -121,7 +130,8 @@ export default function EditDeputyModal({
       setLoadingData(false);
       setLoading(false);
     }
-  }, [isOpen, user?.id, loadData]); // loadData теперь стабилен, можно добавить
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, user?.id]); // НЕ добавляем loadData - он стабилен через ref
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
