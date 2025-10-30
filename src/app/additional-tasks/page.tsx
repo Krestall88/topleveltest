@@ -2,6 +2,9 @@ import { Suspense } from 'react';
 import AppLayout from '@/components/AppLayout';
 import AdditionalTasksClientPage from './AdditionalTasksClientPage';
 
+// Отключаем статическую генерацию для этой страницы
+export const dynamic = 'force-dynamic';
+
 export default function AdditionalTasksPage() {
   return (
     <AppLayout>
