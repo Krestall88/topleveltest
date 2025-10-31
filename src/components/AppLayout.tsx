@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTaskPolling } from '@/hooks/useTaskPolling';
+import { Menu, X } from 'lucide-react';
 
 interface User {
   id: string;
@@ -21,6 +22,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [user, setUser] = useState<User | null>(null);
   const [mounted, setMounted] = useState(false);
   const [newTasksCount, setNewTasksCount] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -127,176 +129,222 @@ export default function AppLayout({ children }: AppLayoutProps) {
     return false;
   };
 
+  // Компонент меню для переиспользования
+  const MenuContent = () => (
+    <>
+      {isAccountant ? (
+        // Для бухгалтера показываем только инвентарь
+        <Link
+          href="/inventory"
+          className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/inventory')}`}
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <span className="mr-3">📦</span>
+          Инвентарь
+        </Link>
+      ) : (
+        // Для всех остальных ролей показываем меню согласно правам доступа
+        <>
+          {canViewMenuItem('dashboard') && (
+            <Link
+              href="/"
+              className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/')}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <span className="mr-3">🏠</span>
+              Дашборд
+            </Link>
+          )}
+          
+          {canViewMenuItem('objects') && (
+            <Link
+              href="/objects"
+              className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/objects')}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <span className="mr-3">🏢</span>
+              Объекты
+            </Link>
+          )}
+          
+          {canViewMenuItem('admin') && (
+            <Link
+              href="/admin"
+              className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/admin')}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <span className="mr-3">👥</span>
+              Администраторы
+            </Link>
+          )}
+          
+          {canViewMenuItem('managers') && (
+            <Link
+              href="/managers"
+              className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/managers')}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <span className="mr-3">🔧</span>
+              Менеджеры
+            </Link>
+          )}
+          
+          {canViewMenuItem('completion-settings') && (
+            <Link
+              href="/completion-settings"
+              className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/completion-settings')}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <span className="mr-3">⚙️</span>
+              Настройки завершения
+            </Link>
+          )}
+          
+          {canViewMenuItem('manager-calendar') && (
+            <Link
+              href="/manager-calendar"
+              className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/manager-calendar')}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <span className="mr-3">📅</span>
+              Календарь задач
+            </Link>
+          )}
+          
+          {canViewMenuItem('additional-tasks') && (
+            <Link
+              href="/additional-tasks"
+              className={`flex items-center justify-between px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/additional-tasks')}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <div className="flex items-center">
+                <span className="mr-3">💬</span>
+                Доп. задания
+              </div>
+              {newTasksCount > 0 && (
+                <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                  {newTasksCount}
+                </span>
+              )}
+            </Link>
+          )}
+          
+          {canViewMenuItem('photos') && (
+            <Link
+              href="/photos"
+              className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/photos')}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <span className="mr-3">📷</span>
+              Фотоотчёты
+            </Link>
+          )}
+          
+          {canViewMenuItem('reporting') && (
+            <Link
+              href="/reporting"
+              className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/reporting')}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <span className="mr-3">📋</span>
+              Отчетность по чек-листам
+            </Link>
+          )}
+          
+          {canViewMenuItem('inventory') && (
+            <Link
+              href="/inventory"
+              className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/inventory')}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <span className="mr-3">📦</span>
+              Инвентарь
+            </Link>
+          )}
+          
+          {canViewMenuItem('audit') && (
+            <Link
+              href="/audit"
+              className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/audit')}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <span className="mr-3">📋</span>
+              История действий
+            </Link>
+          )}
+        </>
+      )}
+      
+      {/* Кнопка выхода для всех пользователей */}
+      <div className="mt-4 pt-4 border-t border-slate-700">
+        <button
+          onClick={async () => {
+            try {
+              await fetch('/api/auth/logout', { method: 'POST' });
+              window.location.href = '/auth/login';
+            } catch (error) {
+              console.error('Ошибка выхода:', error);
+              window.location.href = '/auth/login';
+            }
+          }}
+          className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 w-full text-left"
+        >
+          <span className="mr-3">🚪</span>
+          Выход
+        </button>
+        {user && (
+          <div className="px-3 py-2 text-xs text-gray-400">
+            {user.name} ({user.role})
+          </div>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Левое меню - точно как на первом скриншоте */}
-      <div className="w-48 bg-slate-800 text-white flex-shrink-0">
+      {/* Мобильная шапка */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 bg-slate-800 text-white z-50 px-4 py-3 flex items-center justify-between">
+        <h2 className="text-sm font-medium">Клининг-Контроль</h2>
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 hover:bg-slate-700 rounded"
+        >
+          {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        </button>
+      </div>
+
+      {/* Мобильное меню */}
+      {isMobileMenuOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <div 
+            className="fixed top-0 left-0 bottom-0 w-64 bg-slate-800 text-white overflow-y-auto pt-16"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <nav className="p-2">
+              <MenuContent />
+            </nav>
+          </div>
+        </div>
+      )}
+
+      {/* Десктопное меню */}
+      <div className="hidden lg:block w-48 bg-slate-800 text-white flex-shrink-0">
         <div className="p-4 border-b border-slate-700">
           <h2 className="text-sm font-medium text-white">
             Клининг-<br />Контроль
           </h2>
         </div>
         <nav className="p-2">
-          {isAccountant ? (
-            // Для бухгалтера показываем только инвентарь
-            <Link
-              href="/inventory"
-              className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/inventory')}`}
-            >
-              <span className="mr-3">📦</span>
-              Инвентарь
-            </Link>
-          ) : (
-            // Для всех остальных ролей показываем меню согласно правам доступа
-            <>
-              {canViewMenuItem('dashboard') && (
-                <Link
-                  href="/"
-                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/')}`}
-                >
-                  <span className="mr-3">🏠</span>
-                  Дашборд
-                </Link>
-              )}
-              
-              {canViewMenuItem('objects') && (
-                <Link
-                  href="/objects"
-                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/objects')}`}
-                >
-                  <span className="mr-3">🏢</span>
-                  Объекты
-                </Link>
-              )}
-              
-              {canViewMenuItem('admin') && (
-                <Link
-                  href="/admin"
-                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/admin')}`}
-                >
-                  <span className="mr-3">👥</span>
-                  Администраторы
-                </Link>
-              )}
-              
-              {canViewMenuItem('managers') && (
-                <Link
-                  href="/managers"
-                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/managers')}`}
-                >
-                  <span className="mr-3">🔧</span>
-                  Менеджеры
-                </Link>
-              )}
-              
-              {canViewMenuItem('completion-settings') && (
-                <Link
-                  href="/completion-settings"
-                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/completion-settings')}`}
-                >
-                  <span className="mr-3">⚙️</span>
-                  Настройки завершения
-                </Link>
-              )}
-              
-              {canViewMenuItem('manager-calendar') && (
-                <Link
-                  href="/manager-calendar"
-                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/manager-calendar')}`}
-                >
-                  <span className="mr-3">📅</span>
-                  Календарь задач
-                </Link>
-              )}
-              
-              {canViewMenuItem('additional-tasks') && (
-                <Link
-                  href="/additional-tasks"
-                  className={`flex items-center justify-between px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/additional-tasks')}`}
-                >
-                  <div className="flex items-center">
-                    <span className="mr-3">💬</span>
-                    Доп. задания
-                  </div>
-                  {newTasksCount > 0 && (
-                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                      {newTasksCount}
-                    </span>
-                  )}
-                </Link>
-              )}
-              
-              {canViewMenuItem('photos') && (
-                <Link
-                  href="/photos"
-                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/photos')}`}
-                >
-                  <span className="mr-3">📷</span>
-                  Фотоотчёты
-                </Link>
-              )}
-              
-              {canViewMenuItem('reporting') && (
-                <Link
-                  href="/reporting"
-                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/reporting')}`}
-                >
-                  <span className="mr-3">📋</span>
-                  Отчетность по чек-листам
-                </Link>
-              )}
-              
-              {canViewMenuItem('inventory') && (
-                <Link
-                  href="/inventory"
-                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/inventory')}`}
-                >
-                  <span className="mr-3">📦</span>
-                  Инвентарь
-                </Link>
-              )}
-              
-              
-              {canViewMenuItem('audit') && (
-                <Link
-                  href="/audit"
-                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/audit')}`}
-                >
-                  <span className="mr-3">📋</span>
-                  История действий
-                </Link>
-              )}
-            </>
-          )}
-          
-          {/* Кнопка выхода для всех пользователей */}
-          <div className="mt-4 pt-4 border-t border-slate-700">
-            <button
-              onClick={async () => {
-                try {
-                  await fetch('/api/auth/logout', { method: 'POST' });
-                  window.location.href = '/auth/login';
-                } catch (error) {
-                  console.error('Ошибка выхода:', error);
-                  window.location.href = '/auth/login';
-                }
-              }}
-              className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 w-full text-left"
-            >
-              <span className="mr-3">🚪</span>
-              Выход
-            </button>
-            {user && (
-              <div className="px-3 py-2 text-xs text-gray-400">
-                {user.name} ({user.role})
-              </div>
-            )}
-          </div>
+          <MenuContent />
         </nav>
       </div>
       
       {/* Основной контент */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto pt-16 lg:pt-0">
         {children}
       </main>
     </div>

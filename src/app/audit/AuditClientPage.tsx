@@ -161,7 +161,7 @@ export default function AuditClientPage({ users }: AuditClientPageProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
       {/* Вкладки */}
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
@@ -196,9 +196,9 @@ export default function AuditClientPage({ users }: AuditClientPageProps) {
       ) : (
         <>
           {/* Заголовок и статистика */}
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <h2 className="text-xl font-semibold">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+              <h2 className="text-lg sm:text-xl font-semibold">
                 Записи аудита ({pagination.totalCount})
               </h2>
               {(filters.userId || filters.action || filters.entity || filters.dateFrom || filters.dateTo) && (
@@ -212,7 +212,7 @@ export default function AuditClientPage({ users }: AuditClientPageProps) {
             </div>
             <button
               onClick={exportData}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+              className="w-full sm:w-auto bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
             >
               <Download className="h-4 w-4" />
               <span>Экспорт</span>
@@ -220,8 +220,8 @@ export default function AuditClientPage({ users }: AuditClientPageProps) {
           </div>
 
       {/* Фильтры */}
-      <div className="bg-white border rounded-lg p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="bg-white border rounded-lg p-3 md:p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
           {/* Пользователь */}
           <div className="relative">
             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -323,16 +323,16 @@ export default function AuditClientPage({ users }: AuditClientPageProps) {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="overflow-x-auto -mx-4 md:mx-0">
+              <table className="w-full text-sm min-w-[800px]">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Дата и время</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Пользователь</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Действие</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Тип</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Подробности</th>
-                    <th className="text-center py-3 px-4 font-medium text-gray-900"></th>
+                    <th className="text-left py-2 md:py-3 px-3 md:px-4 font-medium text-gray-900 text-xs md:text-sm">Дата и время</th>
+                    <th className="text-left py-2 md:py-3 px-3 md:px-4 font-medium text-gray-900 text-xs md:text-sm">Пользователь</th>
+                    <th className="text-left py-2 md:py-3 px-3 md:px-4 font-medium text-gray-900 text-xs md:text-sm">Действие</th>
+                    <th className="text-left py-2 md:py-3 px-3 md:px-4 font-medium text-gray-900 text-xs md:text-sm">Тип</th>
+                    <th className="text-left py-2 md:py-3 px-3 md:px-4 font-medium text-gray-900 text-xs md:text-sm">Подробности</th>
+                    <th className="text-center py-2 md:py-3 px-3 md:px-4 font-medium text-gray-900 text-xs md:text-sm"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">

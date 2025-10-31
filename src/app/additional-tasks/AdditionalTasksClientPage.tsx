@@ -263,9 +263,9 @@ export default function AdditionalTasksClientPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 p-4 md:p-6">
       {/* Статистика */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
         {Object.entries(statusStats).map(([status, stats]) => {
           const Icon = stats.icon;
           return (
@@ -289,8 +289,8 @@ export default function AdditionalTasksClientPage() {
 
       {/* Фильтры и действия */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-4">
+        <CardContent className="p-3 md:p-4">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 md:gap-4">
             {/* Фильтр по статусу */}
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium">Статус:</label>
@@ -353,19 +353,22 @@ export default function AdditionalTasksClientPage() {
 
             {/* Кнопки управления */}
             {['ADMIN', 'DEPUTY', 'DEPUTY_ADMIN'].includes(currentUser?.role) && (
-              <div className="ml-auto flex gap-2">
+              <div className="w-full sm:w-auto sm:ml-auto flex flex-col sm:flex-row gap-2">
                 <Button 
                   onClick={() => setIsTelegramManagerOpen(true)}
                   variant="outline"
+                  className="w-full sm:w-auto"
                 >
                   <Users className="h-4 w-4 mr-2" />
-                  Telegram аккаунты
+                  <span className="hidden sm:inline">Telegram аккаунты</span>
+                  <span className="sm:hidden">Telegram</span>
                 </Button>
                 <Button 
                   onClick={() => setIsCreateModalOpen(true)}
+                  className="w-full sm:w-auto"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Создать задание
+                  Создать
                 </Button>
               </div>
             )}
@@ -374,18 +377,19 @@ export default function AdditionalTasksClientPage() {
       </Card>
 
       {/* Переключатель режима отображения */}
-      <div className="flex justify-center mb-6">
-        <div className="inline-flex rounded-lg border-2 border-gray-300 bg-white p-1 shadow-sm">
+      <div className="flex justify-center mb-4 md:mb-6">
+        <div className="inline-flex w-full sm:w-auto rounded-lg border-2 border-gray-300 bg-white p-1 shadow-sm">
           <button
             onClick={() => setViewMode('pending')}
-            className={`px-6 py-3 rounded-md text-sm font-semibold transition-all flex items-center gap-2 ${
+            className={`flex-1 sm:flex-none px-3 sm:px-6 py-2 sm:py-3 rounded-md text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1 sm:gap-2 ${
               viewMode === 'pending'
                 ? 'bg-blue-600 text-white shadow-md'
                 : 'text-gray-700 hover:bg-gray-50'
             }`}
           >
-            📄 На исполнение
-            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+            <span className="hidden sm:inline">📄 На исполнение</span>
+            <span className="sm:hidden">📄 Активные</span>
+            <span className={`px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-bold ${
               viewMode === 'pending' 
                 ? 'bg-white text-blue-600' 
                 : 'bg-blue-100 text-blue-600'
@@ -395,14 +399,14 @@ export default function AdditionalTasksClientPage() {
           </button>
           <button
             onClick={() => setViewMode('completed')}
-            className={`px-6 py-3 rounded-md text-sm font-semibold transition-all flex items-center gap-2 ${
+            className={`flex-1 sm:flex-none px-3 sm:px-6 py-2 sm:py-3 rounded-md text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-1 sm:gap-2 ${
               viewMode === 'completed'
                 ? 'bg-green-600 text-white shadow-md'
                 : 'text-gray-700 hover:bg-gray-50'
             }`}
           >
             ✅ Выполнено
-            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+            <span className={`px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-bold ${
               viewMode === 'completed' 
                 ? 'bg-white text-green-600' 
                 : 'bg-green-100 text-green-600'
