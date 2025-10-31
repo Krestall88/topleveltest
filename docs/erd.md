@@ -276,7 +276,16 @@ QUALITY_CHECK QUALITY_CHECK
     DateTime takenAt "❓"
     DateTime completedAt "❓"
     String completionNote "❓"
+    String completionPhotos 
     DateTime receivedAt 
+    }
+  
+
+  "AdditionalTaskComment" {
+    String id "🗝️"
+    DateTime createdAt 
+    String content 
+    Boolean isAdmin 
     }
   
 
@@ -398,6 +407,7 @@ QUALITY_CHECK QUALITY_CHECK
     "User" o{--}o "notifications" : "notifications"
     "User" o{--}o "task_admin_comments" : "adminComments"
     "User" o{--}o "ReportingTaskAttachment" : "reportingTaskAttachments"
+    "User" o{--}o "AdditionalTaskComment" : "additionalTaskComments"
     "CleaningObject" o{--}o "AdditionalTask" : "additionalTasks"
     "CleaningObject" o{--}o "Checklist" : "checklists"
     "CleaningObject" o|--|| "User" : "creator"
@@ -468,6 +478,9 @@ QUALITY_CHECK QUALITY_CHECK
     "AdditionalTask" o|--|| "User" : "assignedTo"
     "AdditionalTask" o|--|o "User" : "completedBy"
     "AdditionalTask" o|--|| "CleaningObject" : "object"
+    "AdditionalTask" o{--}o "AdditionalTaskComment" : "comments"
+    "AdditionalTaskComment" o|--|| "AdditionalTask" : "task"
+    "AdditionalTaskComment" o|--|| "User" : "user"
     "DeputyAdminAssignment" o|--|| "User" : "assignedBy"
     "DeputyAdminAssignment" o|--|| "User" : "deputyAdmin"
     "DeputyAdminAssignment" o|--|| "CleaningObject" : "object"

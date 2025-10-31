@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import ManagerAssignmentModal from '@/components/ManagerAssignmentModal';
 import ManagerDetailModal from '@/components/ManagerDetailModal';
-import { UserPlus, Users } from 'lucide-react';
+import { UserPlus, Users, Search } from 'lucide-react';
 
 interface Manager {
   id: string;
@@ -40,6 +40,7 @@ export default function ManagersClientPage({ user }: Props) {
   const [managers, setManagers] = useState<Manager[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -194,6 +195,17 @@ export default function ManagersClientPage({ user }: Props) {
     return <div className="text-center py-8">Загрузка менеджеров...</div>;
   }
 
+  // Фильтрация менеджеров по поисковому запросу
+  const filteredManagers = managers.filter(manager => {
+    const query = searchQuery.toLowerCase();
+    return (
+      manager.name.toLowerCase().includes(query) ||
+      manager.email.toLowerCase().includes(query) ||
+      (manager.phone && manager.phone.toLowerCase().includes(query)) ||
+      (manager.objectNames && manager.objectNames.toLowerCase().includes(query))
+    );
+  });
+
   return (
     <div className="space-y-6">
       {error && (
@@ -203,8 +215,8 @@ export default function ManagersClientPage({ user }: Props) {
       )}
 
       {/* Заголовок и кнопки управления */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">👥 Управление менеджерами</h2>
+      <div className="flex justify-between items-center mt-6">
+        <h2 className="text-2xl font-bold text-gray-900">👥 Управление менеджерами</h2>
         <div className="flex gap-2">
           <Button 
             variant="outline" 
@@ -224,42 +236,46 @@ export default function ManagersClientPage({ user }: Props) {
         </div>
       </div>
 
+      {/* Поиск */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        <Input
+          type="text"
+          placeholder="Поиск по имени, email, телефону или объектам..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 py-6 text-base"
+        />
+      </div>
+
       {/* Статистика */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-blue-600">{managers.length}</div>
-            <div className="text-sm text-gray-600">Всего менеджеров</div>
+          <CardContent className="p-6">
+            <div className="text-3xl font-bold text-blue-600">{managers.length}</div>
+            <div className="text-sm text-gray-600 mt-1">Всего менеджеров</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-600">
+          <CardContent className="p-6">
+            <div className="text-3xl font-bold text-green-600">
               {managers.reduce((sum, m) => sum + m.objectsCount, 0)}
             </div>
-            <div className="text-sm text-gray-600">Всего объектов</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-purple-600">
-              {managers.reduce((sum, m) => sum + m.sites.length, 0)}
-            </div>
-            <div className="text-sm text-gray-600">Всего участков</div>
+            <div className="text-sm text-gray-600 mt-1">Всего объектов</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Список менеджеров */}
       <div className="grid gap-4">
-        {managers.length === 0 ? (
+        {filteredManagers.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center text-gray-500">
-              Менеджеры не найдены. Добавьте первого менеджера.
+              {searchQuery ? 'Менеджеры не найдены по вашему запросу.' : 'Менеджеры не найдены. Добавьте первого менеджера.'}
             </CardContent>
           </Card>
         ) : (
-          managers.map((manager) => (
+          filteredManagers.map((manager) => (
             <Card key={manager.id} className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="flex justify-between items-start">

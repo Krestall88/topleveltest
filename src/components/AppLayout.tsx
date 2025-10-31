@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import NotificationBell from '@/components/NotificationBell';
+import { useTaskPolling } from '@/hooks/useTaskPolling';
 
 interface User {
   id: string;
@@ -20,9 +20,20 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [newTasksCount, setNewTasksCount] = useState(0);
 
   useEffect(() => {
     setMounted(true);
+    
+    // Пытаемся загрузить пользователя из localStorage
+    const cachedUser = localStorage.getItem('currentUser');
+    if (cachedUser) {
+      try {
+        setUser(JSON.parse(cachedUser));
+      } catch (e) {
+        console.error('Error parsing cached user:', e);
+      }
+    }
     
     // Получаем информацию о текущем пользователе
     const fetchUser = async () => {
@@ -31,6 +42,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
+          // Сохраняем в localStorage для быстрой загрузки
+          localStorage.setItem('currentUser', JSON.stringify(data.user));
         }
       } catch (error) {
         console.error('Error fetching user:', error);
@@ -38,6 +51,41 @@ export default function AppLayout({ children }: AppLayoutProps) {
     };
 
     fetchUser();
+    fetchNewTasksCount();
+  }, []);
+
+  // Функция для получения количества новых заданий
+  const fetchNewTasksCount = async () => {
+    try {
+      const response = await fetch('/api/additional-tasks');
+      if (response.ok) {
+        const tasks = await response.json();
+        const newTasks = tasks.filter((task: any) => task.status === 'NEW');
+        setNewTasksCount(newTasks.length);
+      }
+    } catch (error) {
+      console.error('Error fetching new tasks count:', error);
+    }
+  };
+
+  // Polling для обновления счетчика каждые 30 секунд
+  useTaskPolling(fetchNewTasksCount, 30000, !!user);
+
+  // Обновляем счетчик при переходе на страницу дополнительных заданий
+  useEffect(() => {
+    if (pathname === '/additional-tasks' && user) {
+      fetchNewTasksCount();
+    }
+  }, [pathname, user]);
+
+  // Слушаем события обновления счетчика из других компонентов
+  useEffect(() => {
+    const handleTaskUpdate = () => {
+      fetchNewTasksCount();
+    };
+
+    window.addEventListener('taskStatusChanged', handleTaskUpdate);
+    return () => window.removeEventListener('taskStatusChanged', handleTaskUpdate);
   }, []);
 
   const isActive = (path: string) => {
@@ -67,7 +115,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     
     // Менеджер видит ограниченный набор
     if (role === 'MANAGER') {
-      const managerMenus = ['objects', 'manager-calendar', 'additional-tasks', 'photos', 'inventory', 'notifications', 'reporting'];
+      const managerMenus = ['objects', 'manager-calendar', 'additional-tasks', 'photos', 'inventory', 'reporting'];
       return managerMenus.includes(menuItem);
     }
     
@@ -87,9 +135,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <h2 className="text-sm font-medium text-white">
             Клининг-<br />Контроль
           </h2>
-          <div className="mt-2">
-            <NotificationBell />
-          </div>
         </div>
         <nav className="p-2">
           {isAccountant ? (
@@ -167,10 +212,17 @@ export default function AppLayout({ children }: AppLayoutProps) {
               {canViewMenuItem('additional-tasks') && (
                 <Link
                   href="/additional-tasks"
-                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/additional-tasks')}`}
+                  className={`flex items-center justify-between px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/additional-tasks')}`}
                 >
-                  <span className="mr-3">💬</span>
-                  Доп. задания
+                  <div className="flex items-center">
+                    <span className="mr-3">💬</span>
+                    Доп. задания
+                  </div>
+                  {newTasksCount > 0 && (
+                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                      {newTasksCount}
+                    </span>
+                  )}
                 </Link>
               )}
               
@@ -204,15 +256,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 </Link>
               )}
               
-              {canViewMenuItem('notifications') && (
-                <Link
-                  href="/notifications"
-                  className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/notifications')}`}
-                >
-                  <span className="mr-3">🔔</span>
-                  Уведомления
-                </Link>
-              )}
               
               {canViewMenuItem('audit') && (
                 <Link

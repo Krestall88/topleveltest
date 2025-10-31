@@ -127,6 +127,28 @@ const PhotosClientPage = ({ initialPhotos, objects }: PhotosClientPageProps) => 
     setShowUpload(false);
   };
 
+  const handlePhotoDeleted = async (photoId: string) => {
+    if (!confirm('Вы уверены, что хотите удалить эту фотографию?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/photos/${photoId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Обновляем список фотографий
+        setPhotos(photos.filter(p => p.id !== photoId));
+      } else {
+        alert('Ошибка при удалении фотографии');
+      }
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+      alert('Ошибка при удалении фотографии');
+    }
+  };
+
   const clearFilters = () => {
     setFilters({
       search: '',
@@ -333,7 +355,7 @@ const PhotosClientPage = ({ initialPhotos, objects }: PhotosClientPageProps) => 
 
       {/* Галерея фотографий */}
       <div className="bg-white border rounded-lg p-6">
-        <PhotoGallery photos={filteredPhotos} />
+        <PhotoGallery photos={filteredPhotos} onPhotoDeleted={handlePhotoDeleted} />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Calendar, User, MessageSquare, Download } from 'lucide-react';
+import { X, Calendar, User, MessageSquare, Download, Trash2 } from 'lucide-react';
 
 interface PhotoReport {
   id: string;
@@ -29,9 +29,10 @@ interface PhotoReport {
 interface PhotoGalleryProps {
   photos: PhotoReport[];
   onPhotoClick?: (photo: PhotoReport) => void;
+  onPhotoDeleted?: (photoId: string) => void;
 }
 
-export default function PhotoGallery({ photos, onPhotoClick }: PhotoGalleryProps) {
+export default function PhotoGallery({ photos, onPhotoClick, onPhotoDeleted }: PhotoGalleryProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoReport | null>(null);
 
   const formatDate = (dateString: string) => {
@@ -65,18 +66,33 @@ export default function PhotoGallery({ photos, onPhotoClick }: PhotoGalleryProps
         {photos.map((photo) => (
           <div
             key={photo.id}
-            className="relative group cursor-pointer rounded-lg overflow-hidden bg-gray-100 aspect-square"
-            onClick={() => handlePhotoClick(photo)}
+            className="relative group rounded-lg overflow-hidden bg-gray-100 aspect-square"
           >
             <img
               src={photo.url}
               alt={photo.comment || 'Фотоотчёт'}
-              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform group-hover:scale-105 cursor-pointer"
+              onClick={() => handlePhotoClick(photo)}
             />
             
             {/* Оверлей с информацией */}
-            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-end">
-              <div className="p-3 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex flex-col justify-between p-3">
+              <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                {onPhotoDeleted && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPhotoDeleted(photo.id);
+                    }}
+                    className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-colors"
+                    title="Удалить фотографию"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              
+              <div className="text-white opacity-0 group-hover:opacity-100 transition-opacity">
                 <div className="flex items-center space-x-1 text-xs">
                   <User className="h-3 w-3" />
                   <span>{photo.uploader.name}</span>
@@ -112,6 +128,18 @@ export default function PhotoGallery({ photos, onPhotoClick }: PhotoGalleryProps
             <div className="flex justify-between items-center p-4 border-b">
               <h3 className="text-lg font-semibold">Фотоотчёт</h3>
               <div className="flex items-center space-x-2">
+                {onPhotoDeleted && (
+                  <button
+                    onClick={() => {
+                      onPhotoDeleted(selectedPhoto.id);
+                      setSelectedPhoto(null);
+                    }}
+                    className="p-2 text-red-500 hover:text-red-700"
+                    title="Удалить"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+                )}
                 <button
                   onClick={() => downloadPhoto(selectedPhoto.url, `photo-${selectedPhoto.id}.jpg`)}
                   className="p-2 text-gray-500 hover:text-gray-700"

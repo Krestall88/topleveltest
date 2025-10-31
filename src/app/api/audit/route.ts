@@ -15,28 +15,27 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Построение фильтров
-    const filters: Record<string, unknown> = {};
+    const whereClause: Record<string, unknown> = {};
 
     if (userId) {
-      filters.userId = userId;
+      whereClause.userId = userId;
     }
 
     if (action) {
-      filters.action = action;
       whereClause.action = action;
     }
 
     if (resource) {
-      whereClause.entityType = resource;
+      whereClause.entity = resource;
     }
 
     if (dateFrom || dateTo) {
       whereClause.createdAt = {};
       if (dateFrom) {
-        whereClause.createdAt.gte = new Date(dateFrom);
+        (whereClause.createdAt as any).gte = new Date(dateFrom);
       }
       if (dateTo) {
-        whereClause.createdAt.lte = new Date(dateTo + 'T23:59:59');
+        (whereClause.createdAt as any).lte = new Date(dateTo + 'T23:59:59');
       }
     }
 
@@ -88,11 +87,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, action, resource, resourceId, details, ipAddress, userAgent } = body;
+    const { userId, action, entity, entityId, details, ipAddress, userAgent } = body;
 
-    if (!userId || !action || !resource) {
+    if (!userId || !action || !entity) {
       return NextResponse.json(
-        { error: 'Обязательные поля: userId, action, resource' },
+        { error: 'Обязательные поля: userId, action, entity' },
         { status: 400 }
       );
     }
@@ -101,11 +100,9 @@ export async function POST(request: NextRequest) {
       data: {
         userId,
         action,
-        resource,
-        resourceId: resourceId || null,
+        entity,
+        entityId: entityId || null,
         details: details || {},
-        ipAddress: ipAddress || null,
-        userAgent: userAgent || null,
       },
       include: {
         user: {

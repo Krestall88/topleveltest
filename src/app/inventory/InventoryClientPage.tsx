@@ -31,6 +31,7 @@ interface Expense {
   createdAt: string;
   user: { name: string | null };
   task?: Task;
+  description?: string;
 }
 
 interface Props {

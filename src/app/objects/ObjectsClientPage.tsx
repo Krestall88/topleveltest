@@ -248,12 +248,6 @@ export default function ObjectsClientPage() {
             >
               + Создать объект с техкартами
             </Button>
-            <Button
-              onClick={() => setIsAddModalOpen(true)}
-              variant="outline"
-            >
-              + Быстрое добавление
-            </Button>
           </div>
         )}
       </div>

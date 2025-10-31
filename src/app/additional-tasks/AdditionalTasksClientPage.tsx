@@ -22,6 +22,7 @@ import AdditionalTaskCard from '@/components/AdditionalTaskCard';
 import type { AdditionalTask, CleaningObject, User as UserType } from '@/types';
 import CreateTaskModal from '@/components/CreateTaskModal';
 import TelegramBindingsManager from '@/components/TelegramBindingsManager';
+import { useTaskPolling } from '@/hooks/useTaskPolling';
 
 export default function AdditionalTasksClientPage() {
   const [tasks, setTasks] = useState<AdditionalTask[]>([]);
@@ -41,8 +42,13 @@ export default function AdditionalTasksClientPage() {
   // Модальное окно управления Telegram
   const [isTelegramManagerOpen, setIsTelegramManagerOpen] = useState(false);
   
-  // Режим отображения: список или группировка
-  const [viewMode, setViewMode] = useState<'list' | 'grouped'>('grouped');
+  // Режим отображения: на исполнение или выполнено
+  const [viewMode, setViewMode] = useState<'pending' | 'completed'>('pending');
+  
+  // Polling для real-time уведомлений
+  const [lastCheckTime, setLastCheckTime] = useState(new Date());
+  const [newTasksCount, setNewTasksCount] = useState(0);
+  const [showNotification, setShowNotification] = useState(false);
 
   useEffect(() => {
     fetchCurrentUser();
@@ -94,16 +100,18 @@ export default function AdditionalTasksClientPage() {
     }
   };
 
-  const handleStatusChange = async (taskId: string, action: 'take' | 'complete', note?: string) => {
+  const handleStatusChange = async (taskId: string, action: 'take' | 'complete', note?: string, photos?: string[]) => {
     try {
       const response = await fetch(`/api/additional-tasks/${taskId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, completionNote: note })
+        body: JSON.stringify({ action, completionNote: note, completionPhotos: photos })
       });
 
       if (response.ok) {
         await fetchTasks(); // Перезагружаем список
+        // Отправляем событие для обновления счетчика в меню
+        window.dispatchEvent(new Event('taskStatusChanged'));
       } else {
         const errorData = await response.json();
         alert(errorData.message || 'Ошибка обновления задания');
@@ -122,6 +130,8 @@ export default function AdditionalTasksClientPage() {
 
       if (response.ok) {
         await fetchTasks(); // Перезагружаем список
+        // Отправляем событие для обновления счетчика в меню
+        window.dispatchEvent(new Event('taskStatusChanged'));
       } else {
         const errorData = await response.json();
         alert(errorData.message || 'Ошибка удаления задания');
@@ -134,8 +144,46 @@ export default function AdditionalTasksClientPage() {
 
   const handleTaskCreated = async (newTask: AdditionalTask) => {
     await fetchTasks(); // Перезагружаем список
+    // Отправляем событие для обновления счетчика в меню
+    window.dispatchEvent(new Event('taskStatusChanged'));
   };
 
+  // Проверка новых заданий для polling
+  const checkForNewTasks = async () => {
+    try {
+      const response = await fetch(`/api/additional-tasks?since=${lastCheckTime.toISOString()}`);
+      if (response.ok) {
+        const newTasks = await response.json();
+        if (newTasks.length > 0) {
+          setNewTasksCount(newTasks.length);
+          setShowNotification(true);
+          setLastCheckTime(new Date());
+          
+          // Автоматически скрыть уведомление через 10 секунд
+          setTimeout(() => setShowNotification(false), 10000);
+        }
+      }
+    } catch (error) {
+      console.error('Ошибка проверки новых заданий:', error);
+    }
+  };
+
+  // Обновить список и сбросить счетчик
+  const handleRefreshTasks = async () => {
+    await fetchTasks();
+    setNewTasksCount(0);
+    setShowNotification(false);
+    setLastCheckTime(new Date());
+  };
+
+  // Polling каждые 30 секунд
+  useTaskPolling(checkForNewTasks, 30000, !!currentUser);
+
+  // Фильтрация заданий
+  const filteredTasks = tasks.filter(task => {
+    if (sourceFilter !== 'all' && task.source !== sourceFilter) return false;
+    return true;
+  });
 
   // Группировка по менеджерам и объектам
   const groupTasksByManager = () => {
@@ -190,13 +238,12 @@ export default function AdditionalTasksClientPage() {
     }));
   };
   
-  const groupedByManager = viewMode === 'grouped' ? groupTasksByManager() : [];
+  // Фильтруем задания по статусу в зависимости от вкладки
+  const tasksForView = viewMode === 'pending' 
+    ? filteredTasks.filter(t => t.status !== 'COMPLETED')
+    : filteredTasks.filter(t => t.status === 'COMPLETED');
 
-  // Фильтрация заданий
-  const filteredTasks = tasks.filter(task => {
-    if (sourceFilter !== 'all' && task.source !== sourceFilter) return false;
-    return true;
-  });
+  const groupedByManager = groupTasksByManager();
 
   // Группировка по статусам
   const tasksByStatus = {
@@ -284,7 +331,6 @@ export default function AdditionalTasksClientPage() {
               >
                 <option value="all">Все</option>
                 <option value="TELEGRAM">Telegram</option>
-                <option value="EMAIL">Email</option>
                 <option value="MANUAL">Ручное</option>
               </select>
             </div>
@@ -328,33 +374,47 @@ export default function AdditionalTasksClientPage() {
       </Card>
 
       {/* Переключатель режима отображения */}
-      <div className="flex justify-end mb-4">
-        <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1">
+      <div className="flex justify-center mb-6">
+        <div className="inline-flex rounded-lg border-2 border-gray-300 bg-white p-1 shadow-sm">
           <button
-            onClick={() => setViewMode('grouped')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              viewMode === 'grouped'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-700 hover:bg-gray-100'
+            onClick={() => setViewMode('pending')}
+            className={`px-6 py-3 rounded-md text-sm font-semibold transition-all flex items-center gap-2 ${
+              viewMode === 'pending'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-gray-700 hover:bg-gray-50'
             }`}
           >
-            По менеджерам
+            📄 На исполнение
+            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+              viewMode === 'pending' 
+                ? 'bg-white text-blue-600' 
+                : 'bg-blue-100 text-blue-600'
+            }`}>
+              {filteredTasks.filter(t => t.status !== 'COMPLETED').length}
+            </span>
           </button>
           <button
-            onClick={() => setViewMode('list')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              viewMode === 'list'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-700 hover:bg-gray-100'
+            onClick={() => setViewMode('completed')}
+            className={`px-6 py-3 rounded-md text-sm font-semibold transition-all flex items-center gap-2 ${
+              viewMode === 'completed'
+                ? 'bg-green-600 text-white shadow-md'
+                : 'text-gray-700 hover:bg-gray-50'
             }`}
           >
-            Список
+            ✅ Выполнено
+            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+              viewMode === 'completed' 
+                ? 'bg-white text-green-600' 
+                : 'bg-green-100 text-green-600'
+            }`}>
+              {filteredTasks.filter(t => t.status === 'COMPLETED').length}
+            </span>
           </button>
         </div>
       </div>
 
       {/* Список заданий */}
-      {filteredTasks.length === 0 ? (
+      {tasksForView.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
             <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -369,9 +429,9 @@ export default function AdditionalTasksClientPage() {
             </p>
           </CardContent>
         </Card>
-      ) : viewMode === 'list' ? (
+      ) : (
         <div className="space-y-4">
-          {filteredTasks.map((task) => (
+          {tasksForView.map((task) => (
             <AdditionalTaskCard
               key={task.id}
               task={task}
@@ -380,10 +440,15 @@ export default function AdditionalTasksClientPage() {
               showActions={true}
               isCurrentUser={currentUser?.id === task.assignedTo?.id}
               canDelete={currentUser && ['ADMIN', 'DEPUTY_ADMIN'].includes(currentUser.role)}
+              currentUserId={currentUser?.id || ''}
+              isAdmin={currentUser ? ['ADMIN', 'DEPUTY_ADMIN'].includes(currentUser.role) : false}
             />
           ))}
         </div>
-      ) : (
+      )}
+
+      {/* Группировка по менеджерам (скрыто, но оставлено для будущего использования) */}
+      {false && (
         <div className="space-y-6">
           {groupedByManager.map((managerGroup) => (
             <Card key={managerGroup.manager.id} className="shadow-sm hover:shadow-md transition-shadow">
@@ -414,7 +479,7 @@ export default function AdditionalTasksClientPage() {
 
                 {/* Объекты */}
                 <div className="space-y-4">
-                  {managerGroup.objects.map((objectGroup) => (
+                  {managerGroup.objects.map((objectGroup: any) => (
                     <div key={objectGroup.id} className="border-l-4 border-blue-400 pl-4">
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="font-medium text-gray-800 flex items-center gap-2">
@@ -428,7 +493,7 @@ export default function AdditionalTasksClientPage() {
                         </div>
                       </div>
                       <div className="space-y-3">
-                        {objectGroup.tasks.map((task) => (
+                        {objectGroup.tasks.map((task: AdditionalTask) => (
                           <AdditionalTaskCard
                             key={task.id}
                             task={task}
@@ -436,7 +501,7 @@ export default function AdditionalTasksClientPage() {
                             onDelete={handleDeleteTask}
                             showActions={true}
                             isCurrentUser={currentUser?.id === task.assignedTo?.id}
-                            canDelete={currentUser && ['ADMIN', 'DEPUTY_ADMIN'].includes(currentUser.role)}
+                            canDelete={currentUser ? ['ADMIN', 'DEPUTY_ADMIN'].includes(currentUser.role) : false}
                           />
                         ))}
                       </div>
@@ -462,6 +527,36 @@ export default function AdditionalTasksClientPage() {
         isOpen={isTelegramManagerOpen}
         onClose={() => setIsTelegramManagerOpen(false)}
       />
+
+      {/* Уведомление о новых заданиях */}
+      {showNotification && newTasksCount > 0 && (
+        <div className="fixed bottom-6 right-6 z-50 animate-bounce">
+          <Card className="bg-blue-600 text-white shadow-2xl border-none">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-white rounded-full p-2">
+                  <AlertCircle className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-lg">
+                    🔔 {newTasksCount} {newTasksCount === 1 ? 'новое задание' : 'новых заданий'}!
+                  </p>
+                  <p className="text-sm text-blue-100">
+                    Получено новое задание от клиента
+                  </p>
+                </div>
+                <Button
+                  onClick={handleRefreshTasks}
+                  className="ml-4 bg-white text-blue-600 hover:bg-blue-50"
+                  size="sm"
+                >
+                  Обновить
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

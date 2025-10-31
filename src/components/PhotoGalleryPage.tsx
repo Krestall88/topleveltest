@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Camera, Calendar, User, Building2, Eye, Download } from 'lucide-react';
+import { Camera, Calendar, User, Building2, Eye, Download, Filter, X, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 
 interface PhotoReport {
@@ -40,18 +40,35 @@ interface PhotoReport {
 
 export default function PhotoGalleryPage() {
   const [photos, setPhotos] = useState<PhotoReport[]>([]);
+  const [filteredPhotos, setFilteredPhotos] = useState<PhotoReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoReport | null>(null);
-  const [filterObject, setFilterObject] = useState<string>('all');
   const [objects, setObjects] = useState<any[]>([]);
+  const [managers, setManagers] = useState<any[]>([]);
+  const [sites, setSites] = useState<any[]>([]);
+  const [areas, setAreas] = useState<any[]>([]);
+  const [roomGroups, setRoomGroups] = useState<any[]>([]);
+  const [rooms, setRooms] = useState<any[]>([]);
+  
+  const [filters, setFilters] = useState({
+    objectId: 'all',
+    managerId: 'all',
+    siteId: 'all',
+    areaId: 'all',
+    roomGroupId: 'all',
+    roomId: 'all',
+    dateFrom: '',
+    dateTo: '',
+    specificDate: ''
+  });
 
   // Загрузка фотоотчетов
   const loadPhotos = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (filterObject && filterObject !== 'all') {
-        params.append('objectId', filterObject);
+      if (filters.objectId && filters.objectId !== 'all') {
+        params.append('objectId', filters.objectId);
       }
       params.append('limit', '100');
 

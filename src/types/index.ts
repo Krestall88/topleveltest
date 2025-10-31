@@ -36,6 +36,21 @@ export interface AdditionalTask {
   receivedAt?: string;
   attachments?: string[];
   completionComment?: string;
+  takenAt?: string;
+  completedBy?: User;
+  completionNote?: string;
+  completionPhotos?: string[];
+  comments?: AdditionalTaskComment[];
+}
+
+export interface AdditionalTaskComment {
+  id: string;
+  createdAt: string;
+  taskId: string;
+  userId: string;
+  user?: User;
+  content: string;
+  isAdmin: boolean;
 }
 
 export interface InventoryBalance {

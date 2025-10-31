@@ -29,9 +29,17 @@ export async function GET(req: NextRequest) {
     const status = url.searchParams.get('status');
     const objectId = url.searchParams.get('objectId');
     const myTasks = url.searchParams.get('myTasks') === 'true';
+    const since = url.searchParams.get('since'); // Для polling - получить задания после определенного времени
 
     // Строим условия фильтрации
     const whereClause: Record<string, unknown> = {};
+
+    // Фильтр по времени создания (для polling)
+    if (since) {
+      whereClause.createdAt = {
+        gte: new Date(since)
+      };
+    }
 
     // Фильтр по ролям
     if (user.role === 'MANAGER') {

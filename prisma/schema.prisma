@@ -44,6 +44,7 @@ model User {
   notifications            Notification[]
   adminComments            TaskAdminComment[]      @relation("AdminComments")
   reportingTaskAttachments ReportingTaskAttachment[] @relation("ReportingTaskAttachments")
+  additionalTaskComments   AdditionalTaskComment[] @relation("AdditionalTaskComments")
 }
 
 model CleaningObject {
@@ -314,25 +315,38 @@ model ClientBinding {
 }
 
 model AdditionalTask {
-  id             String               @id @default(cuid())
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
-  title          String
-  content        String
-  source         String
-  sourceDetails  Json
-  attachments    String[]
-  status         AdditionalTaskStatus @default(NEW)
-  objectId       String
-  assignedToId   String
-  takenAt        DateTime?
-  completedAt    DateTime?
-  completedById  String?
-  completionNote String?
-  receivedAt     DateTime
-  assignedTo     User                 @relation("AssignedAdditionalTasks", fields: [assignedToId], references: [id])
-  completedBy    User?                @relation("CompletedAdditionalTasks", fields: [completedById], references: [id])
-  object         CleaningObject       @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  id                 String                     @id @default(cuid())
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+  title              String
+  content            String
+  source             String
+  sourceDetails      Json
+  attachments        String[]
+  status             AdditionalTaskStatus       @default(NEW)
+  objectId           String
+  assignedToId       String
+  takenAt            DateTime?
+  completedAt        DateTime?
+  completedById      String?
+  completionNote     String?
+  completionPhotos   String[]                   @default([])
+  receivedAt         DateTime
+  assignedTo         User                       @relation("AssignedAdditionalTasks", fields: [assignedToId], references: [id])
+  completedBy        User?                      @relation("CompletedAdditionalTasks", fields: [completedById], references: [id])
+  object             CleaningObject             @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  comments           AdditionalTaskComment[]
+}
+
+model AdditionalTaskComment {
+  id        String         @id @default(cuid())
+  createdAt DateTime       @default(now())
+  taskId    String
+  userId    String
+  content   String
+  isAdmin   Boolean        @default(false)
+  task      AdditionalTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User           @relation("AdditionalTaskComments", fields: [userId], references: [id])
 }
 
 model DeputyAdminAssignment {

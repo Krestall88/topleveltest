@@ -2,17 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { Search, Filter, Calendar, User, Eye, Download, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
-import { getActionDescription, getResourceDescription } from '@/lib/audit';
+import { getActionName, getEntityName, formatDetails } from '@/lib/audit-translations';
 import ManagerActivityLog from '@/components/ManagerActivityLog';
 
 interface AuditLog {
   id: string;
   action: string;
-  resource: string;
-  resourceId?: string;
+  entity: string;
+  entityId?: string;
   details?: any;
-  ipAddress?: string;
-  userAgent?: string;
   createdAt: string;
   user: {
     id: string;
@@ -56,7 +54,7 @@ export default function AuditClientPage({ users }: AuditClientPageProps) {
     search: '',
     userId: '',
     action: '',
-    resource: '',
+    entity: '',
     dateFrom: '',
     dateTo: '',
   });
@@ -71,7 +69,7 @@ export default function AuditClientPage({ users }: AuditClientPageProps) {
       
       if (filters.userId) params.append('userId', filters.userId);
       if (filters.action) params.append('action', filters.action);
-      if (filters.resource) params.append('resource', filters.resource);
+      if (filters.entity) params.append('resource', filters.entity);
       if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
       if (filters.dateTo) params.append('dateTo', filters.dateTo);
 
@@ -101,7 +99,7 @@ export default function AuditClientPage({ users }: AuditClientPageProps) {
       search: '',
       userId: '',
       action: '',
-      resource: '',
+      entity: '',
       dateFrom: '',
       dateTo: '',
     });
@@ -115,11 +113,10 @@ export default function AuditClientPage({ users }: AuditClientPageProps) {
       записи: auditLogs.map(log => ({
         дата: new Date(log.createdAt).toLocaleString('ru-RU'),
         пользователь: log.user.name,
-        действие: getActionDescription(log.action),
-        ресурс: getResourceDescription(log.resource),
-        идентификатор_ресурса: log.resourceId,
-        детали: log.details,
-        ip_адрес: log.ipAddress,
+        действие: getActionName(log.action),
+        сущность: getEntityName(log.entity),
+        идентификатор: log.entityId,
+        детали: formatDetails(log.action, log.details),
       })),
     };
     
@@ -143,15 +140,15 @@ export default function AuditClientPage({ users }: AuditClientPageProps) {
     const actions = [...new Set(auditLogs.map(log => log.action))];
     return actions.map(action => ({
       value: action,
-      label: getActionDescription(action),
+      label: getActionName(action),
     }));
   };
 
-  const getUniqueResources = () => {
-    const resources = [...new Set(auditLogs.map(log => log.resource))];
-    return resources.map(resource => ({
-      value: resource,
-      label: getResourceDescription(resource),
+  const getUniqueEntities = () => {
+    const entities = [...new Set(auditLogs.map(log => log.entity))];
+    return entities.map(entity => ({
+      value: entity,
+      label: getEntityName(entity),
     }));
   };
 
@@ -204,7 +201,7 @@ export default function AuditClientPage({ users }: AuditClientPageProps) {
               <h2 className="text-xl font-semibold">
                 Записи аудита ({pagination.totalCount})
               </h2>
-              {(filters.userId || filters.action || filters.resource || filters.dateFrom || filters.dateTo) && (
+              {(filters.userId || filters.action || filters.entity || filters.dateFrom || filters.dateTo) && (
                 <button
                   onClick={clearFilters}
                   className="text-sm text-blue-600 hover:text-blue-800"
@@ -259,18 +256,18 @@ export default function AuditClientPage({ users }: AuditClientPageProps) {
             </select>
           </div>
 
-          {/* Ресурс */}
+          {/* Тип */}
           <div className="relative">
             <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <select
-              value={filters.resource}
-              onChange={(e) => setFilters({ ...filters, resource: e.target.value })}
+              value={filters.entity}
+              onChange={(e) => setFilters({ ...filters, entity: e.target.value })}
               className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
             >
-              <option value="">Все ресурсы</option>
-              {getUniqueResources().map((resource) => (
-                <option key={resource.value} value={resource.value}>
-                  {resource.label}
+              <option value="">Все типы</option>
+              {getUniqueEntities().map((entity) => (
+                <option key={entity.value} value={entity.value}>
+                  {entity.label}
                 </option>
               ))}
             </select>
@@ -333,16 +330,15 @@ export default function AuditClientPage({ users }: AuditClientPageProps) {
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Дата и время</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Пользователь</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Действие</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Ресурс</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">ID ресурса</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">IP адрес</th>
-                    <th className="text-center py-3 px-4 font-medium text-gray-900">Действия</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">Тип</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">Подробности</th>
+                    <th className="text-center py-3 px-4 font-medium text-gray-900"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {auditLogs.map((log) => (
                     <tr key={log.id} className="hover:bg-gray-50">
-                      <td className="py-3 px-4 text-gray-900">
+                      <td className="py-3 px-4 text-gray-900 whitespace-nowrap">
                         {formatTime(log.createdAt)}
                       </td>
                       <td className="py-3 px-4">
@@ -352,22 +348,19 @@ export default function AuditClientPage({ users }: AuditClientPageProps) {
                         </div>
                       </td>
                       <td className="py-3 px-4 text-gray-900">
-                        {getActionDescription(log.action)}
+                        {getActionName(log.action)}
                       </td>
-                      <td className="py-3 px-4 text-gray-900">
-                        {getResourceDescription(log.resource)}
+                      <td className="py-3 px-4 text-gray-600 text-sm">
+                        {getEntityName(log.entity)}
                       </td>
-                      <td className="py-3 px-4 text-gray-500 font-mono text-xs">
-                        {log.resourceId || '-'}
-                      </td>
-                      <td className="py-3 px-4 text-gray-500 font-mono text-xs">
-                        {log.ipAddress || '-'}
+                      <td className="py-3 px-4 text-gray-700 text-sm max-w-md">
+                        {formatDetails(log.action, log.details) || '-'}
                       </td>
                       <td className="py-3 px-4 text-center">
                         <button
                           onClick={() => setSelectedLog(log)}
                           className="p-1 text-gray-400 hover:text-blue-600"
-                          title="Просмотреть детали"
+                          title="Подробнее"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
@@ -415,55 +408,35 @@ export default function AuditClientPage({ users }: AuditClientPageProps) {
               <h3 className="text-lg font-semibold">Детали записи аудита</h3>
             </div>
             
-            <div className="p-6 overflow-y-auto">
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
               <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Дата и время</label>
-                  <p className="text-sm">{formatTime(selectedLog.createdAt)}</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Дата и время</label>
+                    <p className="text-sm mt-1">{formatTime(selectedLog.createdAt)}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Пользователь</label>
+                    <p className="text-sm mt-1">{selectedLog.user.name}</p>
+                    <p className="text-xs text-gray-500">{selectedLog.user.email}</p>
+                  </div>
                 </div>
                 
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Пользователь</label>
-                  <p className="text-sm">{selectedLog.user.name} ({selectedLog.user.email})</p>
-                </div>
-                
-                <div>
+                <div className="border-t pt-4">
                   <label className="text-sm font-medium text-gray-500">Действие</label>
-                  <p className="text-sm">{getActionDescription(selectedLog.action)}</p>
+                  <p className="text-base font-semibold mt-1">{getActionName(selectedLog.action)}</p>
                 </div>
                 
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Ресурс</label>
-                  <p className="text-sm">{getResourceDescription(selectedLog.resource)}</p>
+                  <label className="text-sm font-medium text-gray-500">Тип операции</label>
+                  <p className="text-sm mt-1">{getEntityName(selectedLog.entity)}</p>
                 </div>
                 
-                {selectedLog.resourceId && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">ID ресурса</label>
-                    <p className="text-sm font-mono">{selectedLog.resourceId}</p>
-                  </div>
-                )}
-                
-                {selectedLog.ipAddress && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">IP адрес</label>
-                    <p className="text-sm font-mono">{selectedLog.ipAddress}</p>
-                  </div>
-                )}
-                
-                {selectedLog.userAgent && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">User Agent</label>
-                    <p className="text-sm font-mono text-xs break-all">{selectedLog.userAgent}</p>
-                  </div>
-                )}
-                
-                {selectedLog.details && Object.keys(selectedLog.details).length > 0 && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Дополнительные детали</label>
-                    <pre className="text-xs bg-gray-100 p-3 rounded mt-2 overflow-x-auto">
-                      {JSON.stringify(selectedLog.details, null, 2)}
-                    </pre>
+                {formatDetails(selectedLog.action, selectedLog.details) && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <label className="text-sm font-medium text-blue-900 block mb-2">Подробная информация</label>
+                    <p className="text-sm text-blue-800 whitespace-pre-wrap">{formatDetails(selectedLog.action, selectedLog.details)}</p>
                   </div>
                 )}
               </div>

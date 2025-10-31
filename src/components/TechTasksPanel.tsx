@@ -31,16 +31,10 @@ interface TechTasksPanelProps {
 export default function TechTasksPanel({ techTasks, context }: TechTasksPanelProps) {
   const [selectedTask, setSelectedTask] = useState<TechTask | null>(null);
   const [showSeasonModal, setShowSeasonModal] = useState(false);
-  const [showNotesModal, setShowNotesModal] = useState(false);
 
   const handleSeasonClick = (task: TechTask) => {
     setSelectedTask(task);
     setShowSeasonModal(true);
-  };
-
-  const handleNotesClick = (task: TechTask) => {
-    setSelectedTask(task);
-    setShowNotesModal(true);
   };
 
   const getFrequencyColor = (frequency: string) => {
@@ -129,15 +123,15 @@ export default function TechTasksPanel({ techTasks, context }: TechTasksPanelPro
                       )}
                       
                       {task.notes && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleNotesClick(task)}
-                          className="flex items-center gap-1 text-xs"
-                        >
-                          <MessageSquare className="h-3 w-3" />
-                          Примечания
-                        </Button>
+                        <div className="bg-green-50 border border-green-200 p-2 rounded-md">
+                          <div className="flex items-center gap-1 text-xs font-medium text-green-800 mb-1">
+                            <MessageSquare className="h-3 w-3" />
+                            Примечания:
+                          </div>
+                          <p className="text-xs text-green-700 whitespace-pre-wrap">
+                            {task.notes}
+                          </p>
+                        </div>
                       )}
                       
                       {!task.period && !task.notes && (
@@ -193,43 +187,6 @@ export default function TechTasksPanel({ techTasks, context }: TechTasksPanelPro
         </DialogContent>
       </Dialog>
 
-      {/* Модальное окно для примечаний */}
-      <Dialog open={showNotesModal} onOpenChange={setShowNotesModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-green-600" />
-              Примечания
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-medium text-sm text-gray-700 mb-2">Техзадание:</h4>
-              <p className="text-sm bg-gray-50 p-3 rounded-md">
-                {selectedTask?.name}
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-medium text-sm text-gray-700 mb-2">Дополнительная информация:</h4>
-              <div className="bg-green-50 border border-green-200 p-3 rounded-md">
-                <p className="text-sm text-green-800 whitespace-pre-wrap">
-                  {selectedTask?.notes}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex justify-end">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowNotesModal(false)}
-              >
-                Закрыть
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

@@ -17,45 +17,22 @@ import {
   CheckCircle,
   PlayCircle,
   Calendar,
-  Trash2
+  Trash2,
+  Upload,
+  X
 } from 'lucide-react';
-
-interface AdditionalTask {
-  id: string;
-  title: string;
-  content: string;
-  source: string;
-  sourceDetails: any;
-  attachments: string[];
-  status: 'NEW' | 'IN_PROGRESS' | 'COMPLETED';
-  receivedAt: string;
-  takenAt?: string;
-  completedAt?: string;
-  completionNote?: string;
-  object: {
-    id: string;
-    name: string;
-    address: string;
-  };
-  assignedTo: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  completedBy?: {
-    id: string;
-    name: string;
-    email: string;
-  };
-}
+import type { AdditionalTask } from '@/types';
+import AdditionalTaskComments from './AdditionalTaskComments';
 
 interface AdditionalTaskCardProps {
   task: AdditionalTask;
-  onStatusChange?: (taskId: string, action: 'take' | 'complete', note?: string) => void;
+  onStatusChange?: (taskId: string, action: 'take' | 'complete', note?: string, photos?: string[]) => void;
   onDelete?: (taskId: string) => void;
   showActions?: boolean;
   isCurrentUser?: boolean;
   canDelete?: boolean;
+  currentUserId?: string;
+  isAdmin?: boolean;
 }
 
 const statusConfig = {
@@ -88,11 +65,15 @@ export default function AdditionalTaskCard({
   onDelete,
   showActions = true,
   isCurrentUser = false,
-  canDelete = false
+  canDelete = false,
+  currentUserId = '',
+  isAdmin = false
 }: AdditionalTaskCardProps) {
   const [isCompleting, setIsCompleting] = useState(false);
   const [completionNote, setCompletionNote] = useState('');
   const [showCompleteForm, setShowCompleteForm] = useState(false);
+  const [completionPhotos, setCompletionPhotos] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   const statusInfo = statusConfig[task.status];
   const sourceInfo = sourceConfig[task.source as keyof typeof sourceConfig] || sourceConfig.MANUAL;
@@ -107,10 +88,45 @@ export default function AdditionalTaskCard({
 
   const handleCompleteTask = () => {
     if (onStatusChange) {
-      onStatusChange(task.id, 'complete', completionNote.trim() || undefined);
+      onStatusChange(task.id, 'complete', completionNote.trim() || undefined, completionPhotos);
       setShowCompleteForm(false);
       setCompletionNote('');
+      setCompletionPhotos([]);
     }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    const uploadedUrls: string[] = [];
+
+    for (const file of Array.from(files)) {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          uploadedUrls.push(data.url);
+        }
+      } catch (error) {
+        console.error('Error uploading photo:', error);
+      }
+    }
+
+    setCompletionPhotos([...completionPhotos, ...uploadedUrls]);
+    setUploading(false);
+  };
+
+  const removePhoto = (index: number) => {
+    setCompletionPhotos(completionPhotos.filter((_, i) => i !== index));
   };
 
   const formatDate = (dateString: string) => {
@@ -140,11 +156,11 @@ export default function AdditionalTaskCard({
             <div className="flex items-center gap-4 text-sm text-gray-600">
               <div className="flex items-center gap-1">
                 <Building className="h-4 w-4" />
-                <span>{task.object.name}</span>
+                <span>{task.object?.name || 'Неизвестный объект'}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
-                <span>{formatDate(task.receivedAt)}</span>
+                <span>{task.receivedAt ? formatDate(task.receivedAt) : 'Не указано'}</span>
               </div>
             </div>
           </div>
@@ -169,11 +185,11 @@ export default function AdditionalTaskCard({
         </div>
 
         {/* Вложения */}
-        {task.attachments.length > 0 && (
+        {task.attachments && task.attachments.length > 0 && (
           <div className="space-y-2">
             <p className="text-sm font-medium text-gray-700">Вложения:</p>
             <div className="flex flex-col gap-2">
-              {task.attachments.map((attachment, index) => {
+              {task.attachments?.map((attachment, index) => {
                 const AttachmentIcon = getAttachmentIcon(attachment);
                 const isAudio = attachment.includes('voice') || attachment.includes('audio');
                 
@@ -239,6 +255,28 @@ export default function AdditionalTaskCard({
                     </p>
                   </div>
                 )}
+                {task.completionPhotos && task.completionPhotos.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Фотографии выполненной работы:</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {task.completionPhotos.map((photo, index) => (
+                        <a
+                          key={index}
+                          href={photo}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block"
+                        >
+                          <img 
+                            src={photo} 
+                            alt={`Фото ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg border border-gray-300 hover:border-blue-500 transition-colors cursor-pointer"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -274,6 +312,8 @@ export default function AdditionalTaskCard({
                   <CheckCircle className="h-5 w-5" />
                   <span>Закрытие задания</span>
                 </div>
+                
+                {/* Комментарий */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Комментарий о выполнении
@@ -290,11 +330,60 @@ export default function AdditionalTaskCard({
                     Комментарий обязателен для закрытия задания
                   </p>
                 </div>
+
+                {/* Загрузка фотографий */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Фотографии выполненной работы
+                  </label>
+                  
+                  {/* Превью загруженных фото */}
+                  {completionPhotos.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2 mb-2">
+                      {completionPhotos.map((photo, index) => (
+                        <div key={index} className="relative group">
+                          <img 
+                            src={photo} 
+                            alt={`Фото ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg border border-gray-300"
+                          />
+                          <button
+                            onClick={() => removePhoto(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Кнопка загрузки */}
+                  <label className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green-500 hover:bg-green-50 transition-colors">
+                    <Upload className="h-5 w-5 text-gray-500" />
+                    <span className="text-sm text-gray-600">
+                      {uploading ? 'Загрузка...' : 'Добавить фото'}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handlePhotoUpload}
+                      disabled={uploading}
+                      className="hidden"
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Можно загрузить несколько фотографий
+                  </p>
+                </div>
+
+                {/* Кнопки действий */}
                 <div className="flex gap-2">
                   <Button 
                     onClick={handleCompleteTask}
                     className="flex-1 bg-green-600 hover:bg-green-700"
-                    disabled={!completionNote.trim()}
+                    disabled={!completionNote.trim() || uploading}
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Закрыть задание
@@ -303,6 +392,7 @@ export default function AdditionalTaskCard({
                     onClick={() => {
                       setShowCompleteForm(false);
                       setCompletionNote('');
+                      setCompletionPhotos([]);
                     }}
                     variant="outline"
                     className="flex-1"
@@ -315,9 +405,18 @@ export default function AdditionalTaskCard({
           </div>
         )}
 
+        {/* Система комментариев */}
+        {currentUserId && (
+          <AdditionalTaskComments
+            taskId={task.id}
+            currentUserId={currentUserId}
+            isAdmin={isAdmin}
+          />
+        )}
+
         {/* Кнопка удаления для админов */}
         {canDelete && onDelete && (
-          <div className="border-t pt-3">
+          <div className="border-t pt-3 mt-4">
             <Button 
               onClick={() => {
                 if (confirm('Вы уверены, что хотите удалить это задание?')) {

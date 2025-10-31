@@ -72,7 +72,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
-    const { action, completionNote } = await req.json();
+    const { action, completionNote, completionPhotos } = await req.json();
 
     // Получаем текущее задание
     const task = await prisma.additionalTask.findUnique({
@@ -119,7 +119,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
           status: 'COMPLETED',
           completedAt: new Date(),
           completedById: user.userId,
-          completionNote: completionNote || null
+          completionNote: completionNote || null,
+          completionPhotos: completionPhotos || []
         };
         auditAction = 'ADDITIONAL_TASK_COMPLETED';
         break;
