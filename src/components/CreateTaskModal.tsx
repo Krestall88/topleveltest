@@ -110,7 +110,7 @@ export default function CreateTaskModal({
           <DialogTitle>Создать дополнительное задание</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 md:space-y-4">
           {/* Объект */}
           <div className="space-y-2">
             <Label htmlFor="object">Объект *</Label>
@@ -136,14 +136,15 @@ export default function CreateTaskModal({
 
           {/* Заголовок */}
           <div className="space-y-2">
-            <Label htmlFor="title">Заголовок *</Label>
+            <Label htmlFor="title" className="text-sm">Заголовок *</Label>
             <Input
               id="title"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Краткое описание задания..."
+              placeholder="Краткое описание..."
               maxLength={100}
               required
+              className="text-sm"
             />
             <p className="text-xs text-gray-500">
               {formData.title.length}/100 символов
@@ -152,34 +153,38 @@ export default function CreateTaskModal({
 
           {/* Содержание */}
           <div className="space-y-2">
-            <Label htmlFor="content">Описание *</Label>
+            <Label htmlFor="content" className="text-sm">Описание *</Label>
             <Textarea
               id="content"
               value={formData.content}
               onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-              placeholder="Подробное описание задания..."
-              rows={4}
+              placeholder="Подробное описание..."
+              rows={3}
               required
+              className="text-sm resize-none"
             />
           </div>
 
           {/* Вложения */}
           <div className="space-y-2">
-            <Label>Вложения (ссылки)</Label>
-            <div className="flex gap-2">
+            <Label className="text-sm">Вложения (ссылки)</Label>
+            <div className="flex flex-col sm:flex-row gap-2">
               <Input
                 value={newAttachment}
                 onChange={(e) => setNewAttachment(e.target.value)}
-                placeholder="Ссылка на файл или документ..."
+                placeholder="Ссылка..."
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAttachment())}
+                className="text-sm"
               />
               <Button 
                 type="button" 
                 onClick={addAttachment}
                 variant="outline"
                 size="sm"
+                className="w-full sm:w-auto"
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-4 w-4 sm:mr-0" />
+                <span className="sm:hidden ml-2">Добавить</span>
               </Button>
             </div>
             
@@ -187,7 +192,7 @@ export default function CreateTaskModal({
               <div className="space-y-1">
                 {formData.attachments.map((attachment, index) => (
                   <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                    <span className="flex-1 text-sm truncate">{attachment}</span>
+                    <span className="flex-1 text-xs md:text-sm truncate break-all">{attachment}</span>
                     <Button
                       type="button"
                       onClick={() => removeAttachment(index)}
@@ -203,15 +208,16 @@ export default function CreateTaskModal({
           </div>
 
           {/* Кнопки */}
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={handleClose}>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={handleClose} className="w-full sm:w-auto">
               Отмена
             </Button>
             <Button 
               type="submit" 
               disabled={isCreating || !formData.title.trim() || !formData.content.trim() || !formData.objectId}
+              className="w-full sm:w-auto"
             >
-              {isCreating ? 'Создание...' : 'Создать задание'}
+              {isCreating ? 'Создание...' : 'Создать'}
             </Button>
           </div>
         </form>

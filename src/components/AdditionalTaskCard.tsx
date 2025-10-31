@@ -149,11 +149,11 @@ export default function AdditionalTaskCard({
     <Card className={`transition-all duration-200 ${
       task.status === 'NEW' ? 'border-red-200 shadow-md' : 'border-gray-200'
     }`}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-lg mb-2">{task.title}</CardTitle>
-            <div className="flex items-center gap-4 text-sm text-gray-600">
+      <CardHeader className="pb-2 md:pb-3">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-2">
+          <div className="flex-1 w-full">
+            <CardTitle className="text-base md:text-lg mb-2 break-words">{task.title}</CardTitle>
+            <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-600">
               <div className="flex items-center gap-1">
                 <Building className="h-4 w-4" />
                 <span>{task.object?.name || 'Неизвестный объект'}</span>
@@ -165,12 +165,12 @@ export default function AdditionalTaskCard({
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Badge className={sourceInfo.color}>
+          <div className="flex items-center gap-2 shrink-0">
+            <Badge className={`${sourceInfo.color} text-xs`}>
               <SourceIcon className="h-3 w-3 mr-1" />
-              {sourceInfo.label}
+              <span className="hidden sm:inline">{sourceInfo.label}</span>
             </Badge>
-            <Badge className={statusInfo.color}>
+            <Badge className={`${statusInfo.color} text-xs`}>
               <StatusIcon className="h-3 w-3 mr-1" />
               {statusInfo.label}
             </Badge>
@@ -178,10 +178,10 @@ export default function AdditionalTaskCard({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 md:space-y-4">
         {/* Содержимое задания */}
-        <div className="bg-gray-50 rounded-lg p-3">
-          <p className="text-sm whitespace-pre-wrap">{task.content}</p>
+        <div className="bg-gray-50 rounded-lg p-2 md:p-3">
+          <p className="text-xs md:text-sm whitespace-pre-wrap break-words">{task.content}</p>
         </div>
 
         {/* Вложения */}
@@ -250,15 +250,15 @@ export default function AdditionalTaskCard({
                 )}
                 {task.completionNote && (
                   <div className="bg-green-50 rounded p-2 mt-2">
-                    <p className="text-sm text-green-800">
+                    <p className="text-xs md:text-sm text-green-800 break-words">
                       <strong>Комментарий:</strong> {task.completionNote}
                     </p>
                   </div>
                 )}
                 {task.completionPhotos && task.completionPhotos.length > 0 && (
                   <div className="mt-3">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Фотографии выполненной работы:</p>
-                    <div className="grid grid-cols-3 gap-2">
+                    <p className="text-xs md:text-sm font-medium text-gray-700 mb-2">Фотографии:</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {task.completionPhotos.map((photo, index) => (
                         <a
                           key={index}
@@ -270,7 +270,7 @@ export default function AdditionalTaskCard({
                           <img 
                             src={photo} 
                             alt={`Фото ${index + 1}`}
-                            className="w-full h-24 object-cover rounded-lg border border-gray-300 hover:border-blue-500 transition-colors cursor-pointer"
+                            className="w-full h-20 sm:h-24 object-cover rounded-lg border border-gray-300 hover:border-blue-500 transition-colors cursor-pointer"
                           />
                         </a>
                       ))}

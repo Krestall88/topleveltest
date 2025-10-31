@@ -71,40 +71,48 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
-        className="max-w-4xl max-h-[90vh] overflow-y-auto"
+        className="max-w-4xl"
       >
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <div>
-              <span>{getFrequencyLabel(frequency)}</span>
-              <div className="text-sm font-normal text-gray-600 mt-1">
-                Менеджер: {managerName} • Всего задач: {tasks.length}
+          <DialogTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <div className="w-full">
+              <span className="text-base md:text-lg break-words">{getFrequencyLabel(frequency)}</span>
+              <div className="text-xs md:text-sm font-normal text-gray-600 mt-1">
+                {managerName} • {tasks.length} задач
               </div>
             </div>
           </DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="overdue" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overdue" className="text-red-600">
-              <AlertTriangle className="h-4 w-4 mr-2" />
-              Просроченные ({overdueTasks.length})
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1">
+            <TabsTrigger value="overdue" className="text-red-600 text-xs sm:text-sm px-2">
+              <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Просроч.</span>
+              <span className="sm:hidden">({overdueTasks.length})</span>
+              <span className="hidden sm:inline"> ({overdueTasks.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="today" className="text-blue-600">
-              <Clock className="h-4 w-4 mr-2" />
-              Текущие ({todayTasks.length})
+            <TabsTrigger value="today" className="text-blue-600 text-xs sm:text-sm px-2">
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Текущ.</span>
+              <span className="sm:hidden">({todayTasks.length})</span>
+              <span className="hidden sm:inline"> ({todayTasks.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="completed" className="text-green-600">
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Выполненные ({completedTasks.length})
+            <TabsTrigger value="completed" className="text-green-600 text-xs sm:text-sm px-2">
+              <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Выполн.</span>
+              <span className="sm:hidden">({completedTasks.length})</span>
+              <span className="hidden sm:inline"> ({completedTasks.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="pending" className="text-gray-600">
-              <Calendar className="h-4 w-4 mr-2" />
-              Предстоящие ({pendingTasks.length})
+            <TabsTrigger value="pending" className="text-gray-600 text-xs sm:text-sm px-2">
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Предст.</span>
+              <span className="sm:hidden">({pendingTasks.length})</span>
+              <span className="hidden sm:inline"> ({pendingTasks.length})</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overdue" className="space-y-4 mt-4">
+          <TabsContent value="overdue" className="space-y-3 md:space-y-4 mt-3 md:mt-4">
             {overdueTasks.length > 0 ? (
               <div className="space-y-2">
                 {overdueTasks.map((task) => (
@@ -208,12 +216,12 @@ const TaskCard: React.FC<{
   };
 
   return (
-    <div className="p-4 border rounded-lg bg-white hover:shadow-sm transition-shadow">
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1">
-          <h4 className="font-medium text-gray-900 mb-2">{task.description}</h4>
+    <div className="p-3 md:p-4 border rounded-lg bg-white hover:shadow-sm transition-shadow">
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-2 mb-2 md:mb-3">
+        <div className="flex-1 w-full">
+          <h4 className="font-medium text-sm md:text-base text-gray-900 mb-2 break-words">{task.description}</h4>
           
-          <div className="flex items-center gap-4 text-sm text-gray-600">
+          <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-600">
             <div className="flex items-center gap-1">
               <MapPin className="w-4 h-4" />
               <span>{task.objectName}</span>

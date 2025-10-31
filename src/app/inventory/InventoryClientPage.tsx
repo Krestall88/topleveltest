@@ -206,46 +206,46 @@ export default function InventoryClientPage({ session }: Props) {
   if (error) return <div>Ошибка: {error}</div>;
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Управление инвентарем</h1>
+    <div className="container mx-auto p-3 md:p-4 max-w-full overflow-x-hidden">
+      <h1 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Управление инвентарем</h1>
       
       {isAdmin && (
-        <form onSubmit={handleSubmit} className="mb-8 p-4 border rounded shadow-sm">
-          <h2 className="text-xl mb-4">Добавить новую позицию</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <input type="text" value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} placeholder="Название" className="p-2 border rounded" required />
-            <input type="number" value={quantity} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuantity(Number(e.target.value))} placeholder="Количество" className="p-2 border rounded" required />
-            <input type="text" value={unit} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUnit(e.target.value)} placeholder="Ед. изм." className="p-2 border rounded" required />
-            <input type="number" value={price} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrice(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Цена за ед." className="p-2 border rounded" />
+        <form onSubmit={handleSubmit} className="mb-6 md:mb-8 p-3 md:p-4 border rounded shadow-sm">
+          <h2 className="text-lg md:text-xl mb-3 md:mb-4">Добавить новую позицию</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <input type="text" value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} placeholder="Название" className="p-2 border rounded text-sm" required />
+            <input type="number" value={quantity} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuantity(Number(e.target.value))} placeholder="Количество" className="p-2 border rounded text-sm" required />
+            <input type="text" value={unit} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUnit(e.target.value)} placeholder="Ед. изм." className="p-2 border rounded text-sm" required />
+            <input type="number" value={price} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrice(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Цена" className="p-2 border rounded text-sm" />
           </div>
-          <button type="submit" className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Добавить</button>
+          <button type="submit" className="mt-3 md:mt-4 w-full sm:w-auto px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm">Добавить</button>
         </form>
       )}
 
-      <div className="overflow-x-auto shadow-md sm:rounded-lg">
-        <table className="min-w-full bg-white">
+      <div className="overflow-x-auto -mx-3 md:mx-0 shadow-md sm:rounded-lg">
+        <table className="min-w-full bg-white text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Количество</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Цена</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
+              <th scope="col" className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Название</th>
+              <th scope="col" className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Кол-во</th>
+              <th scope="col" className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Цена</th>
+              <th scope="col" className="px-3 md:px-6 py-2 md:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Действия</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {items.map((item) => (
               <tr key={item.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                  <div className="text-xs md:text-sm font-medium text-gray-900 break-words max-w-[150px] md:max-w-none">{item.name}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{item.quantity} {item.unit}</div>
+                <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                  <div className="text-xs md:text-sm text-gray-900">{item.quantity} {item.unit}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{item.price ? `${item.price} руб.` : 'Не указана'}</div>
+                <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                  <div className="text-xs md:text-sm text-gray-900">{item.price ? `${item.price} р.` : '-'}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div className="flex items-center space-x-2">
+                <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap text-xs md:text-sm font-medium">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2 sm:space-x-2">
                     {isAdmin && (
                       <>
                         <button onClick={() => openEditModal(item)} className="px-3 py-1 bg-yellow-500 text-white rounded text-sm hover:bg-yellow-600">Изм.</button>

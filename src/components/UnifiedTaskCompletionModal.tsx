@@ -263,7 +263,7 @@ export default function UnifiedTaskCompletionModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent 
-        className="max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="max-w-2xl"
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -272,13 +272,13 @@ export default function UnifiedTaskCompletionModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           {/* Информация о задаче */}
-          <div className="p-4 bg-gray-50 rounded-lg border">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg text-gray-900">{task.description}</h3>
-                <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+          <div className="p-3 md:p-4 bg-gray-50 rounded-lg border">
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-2 mb-3">
+              <div className="flex-1 w-full">
+                <h3 className="font-semibold text-base md:text-lg text-gray-900 break-words">{task.description}</h3>
+                <div className="flex flex-wrap items-center gap-2 md:gap-4 mt-2 text-xs md:text-sm text-gray-600">
                   <div className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
                     <span>{task.objectName}</span>
@@ -297,7 +297,7 @@ export default function UnifiedTaskCompletionModal({
               </div>
               <Badge 
                 variant={task.status === 'OVERDUE' ? 'destructive' : 'default'}
-                className="ml-4"
+                className="shrink-0 text-xs"
               >
                 {task.status === 'OVERDUE' ? 'Просрочено' : 
                  task.status === 'AVAILABLE' ? 'На сегодня' : 
@@ -305,7 +305,7 @@ export default function UnifiedTaskCompletionModal({
               </Badge>
             </div>
             
-            <div className="text-sm text-gray-600">
+            <div className="text-xs md:text-sm text-gray-600">
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
                 <span>Периодичность: {task.frequency}</span>
@@ -320,7 +320,7 @@ export default function UnifiedTaskCompletionModal({
 
           {/* Информация о завершении (если задача завершена) */}
           {task.status === 'COMPLETED' && task.completedAt && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="p-3 md:p-4 bg-green-50 border border-green-200 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle className="w-5 h-5 text-green-600" />
                 <span className="font-semibold text-green-900">Задача завершена</span>
@@ -336,7 +336,7 @@ export default function UnifiedTaskCompletionModal({
                 {task.completionComment && (
                   <div className="mt-2 pt-2 border-t border-green-300">
                     <span className="font-medium">Комментарий:</span>
-                    <p className="mt-1 text-gray-800 whitespace-pre-wrap">{task.completionComment}</p>
+                    <p className="mt-1 text-gray-800 whitespace-pre-wrap break-words">{task.completionComment}</p>
                   </div>
                 )}
               </div>
@@ -363,9 +363,9 @@ export default function UnifiedTaskCompletionModal({
                 id="comment"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                placeholder="Опишите как была выполнена задача, какие материалы использовались..."
-                rows={4}
-                className="resize-none"
+                placeholder="Опишите как была выполнена задача..."
+                rows={3}
+                className="resize-none text-sm"
               />
               <p className="text-xs text-gray-500">
                 Комментарий поможет другим понять, как была выполнена задача
@@ -382,7 +382,7 @@ export default function UnifiedTaskCompletionModal({
               {photoRequired && <span className="text-red-500">*</span>}
             </Label>
             
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 md:p-6 text-center hover:border-gray-400 transition-colors">
               <input
                 type="file"
                 accept="image/*"
@@ -404,13 +404,13 @@ export default function UnifiedTaskCompletionModal({
 
             {/* Превью загруженных фото */}
             {photos.length > 0 && (
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-3">
                 {photos.map((photo, index) => (
                   <div key={index} className="relative group">
                     <img
                       src={URL.createObjectURL(photo)}
                       alt={`Фото ${index + 1}`}
-                      className="w-full h-24 object-cover rounded-lg border"
+                      className="w-full h-20 sm:h-24 object-cover rounded-lg border"
                     />
                     <button
                       onClick={() => removePhoto(index)}
@@ -444,10 +444,10 @@ export default function UnifiedTaskCompletionModal({
                 <p className="mt-2 text-sm">Загрузка комментариев...</p>
               </div>
             ) : adminComments.length > 0 ? (
-              <div className="space-y-3 max-h-60 overflow-y-auto">
+              <div className="space-y-2 md:space-y-3 max-h-48 md:max-h-60 overflow-y-auto">
                 {adminComments.map((comment) => (
-                  <div key={comment.id} className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <div className="flex items-start justify-between mb-2">
+                  <div key={comment.id} className="bg-blue-50 border border-blue-200 rounded-lg p-2 md:p-3">
+                    <div className="flex flex-col sm:flex-row items-start justify-between gap-1 mb-2">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">
                           {getCommentTypeLabel(comment.type)}
@@ -460,7 +460,7 @@ export default function UnifiedTaskCompletionModal({
                         {new Date(comment.createdAt).toLocaleString('ru-RU')}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-800 whitespace-pre-wrap">{comment.content}</p>
+                    <p className="text-xs md:text-sm text-gray-800 whitespace-pre-wrap break-words">{comment.content}</p>
                   </div>
                 ))}
               </div>
@@ -476,26 +476,26 @@ export default function UnifiedTaskCompletionModal({
                 <select
                   value={commentType}
                   onChange={(e) => setCommentType(e.target.value as any)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  className="w-full sm:w-auto px-2 md:px-3 py-2 border border-gray-300 rounded-md text-xs md:text-sm"
                 >
                   <option value="ADMIN_NOTE">Заметка</option>
                   <option value="COMPLETION_FEEDBACK">Отзыв о выполнении</option>
                   <option value="INSTRUCTION">Указание</option>
                 </select>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Textarea
                   value={newAdminComment}
                   onChange={(e) => setNewAdminComment(e.target.value)}
-                  placeholder="Добавить комментарий администратора..."
+                  placeholder="Добавить комментарий..."
                   rows={2}
-                  className="resize-none flex-1"
+                  className="resize-none flex-1 text-sm"
                 />
                 <Button
                   onClick={handleSendAdminComment}
                   disabled={isSendingComment || !newAdminComment.trim()}
                   size="sm"
-                  className="self-end"
+                  className="self-end w-full sm:w-auto"
                 >
                   {isSendingComment ? (
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -508,11 +508,11 @@ export default function UnifiedTaskCompletionModal({
           </div>
 
           {/* Кнопки */}
-          <div className="flex gap-3 pt-4 border-t">
+          <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pt-4 border-t">
             <Button 
               onClick={handleClose} 
               variant="outline" 
-              className={task.status === 'COMPLETED' ? 'w-full' : 'flex-1'}
+              className="w-full sm:flex-1"
               disabled={isSubmitting}
             >
               {task.status === 'COMPLETED' ? 'Закрыть' : 'Отмена'}
@@ -521,7 +521,7 @@ export default function UnifiedTaskCompletionModal({
               <Button 
                 onClick={handleSubmit} 
                 disabled={isSubmitting}
-                className="flex-1 bg-green-600 hover:bg-green-700"
+                className="w-full sm:flex-1 bg-green-600 hover:bg-green-700"
               >
                 {isSubmitting ? (
                   <>
