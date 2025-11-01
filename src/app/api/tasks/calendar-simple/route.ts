@@ -376,12 +376,15 @@ export async function GET(req: NextRequest) {
         const taskObject = task.object || task.checklist?.object;
         const objectId = taskObject?.id;
         const objectName = taskObject?.name;
+        const manager = taskObject?.manager;
         
         if (!acc[objectId]) {
           acc[objectId] = {
             object: { id: objectId, name: objectName },
+            manager: manager || null,
             tasks: [],
-            stats: { total: 0, completed: 0, overdue: 0, today: 0 }
+            stats: { total: 0, completed: 0, overdue: 0, today: 0 },
+            byPeriodicity: []
           };
         }
         
@@ -394,6 +397,33 @@ export async function GET(req: NextRequest) {
         
         return acc;
       }, {});
+      
+      // Группируем задачи по периодичности внутри каждого объекта
+      Object.values(byObject).forEach((objectGroup: any) => {
+        const periodicityMap = new Map();
+        
+        objectGroup.tasks.forEach((task: any) => {
+          const frequency = task.frequency || task.techCard?.frequency || 'Без периодичности';
+          
+          if (!periodicityMap.has(frequency)) {
+            periodicityMap.set(frequency, {
+              frequency,
+              tasks: [],
+              stats: { total: 0, completed: 0, overdue: 0, today: 0 }
+            });
+          }
+          
+          const periodGroup = periodicityMap.get(frequency);
+          periodGroup.tasks.push(task);
+          periodGroup.stats.total++;
+          
+          if (task.status === 'OVERDUE') periodGroup.stats.overdue++;
+          else if (task.status === 'AVAILABLE') periodGroup.stats.today++;
+          else if (task.status === 'COMPLETED') periodGroup.stats.completed++;
+        });
+        
+        objectGroup.byPeriodicity = Array.from(periodicityMap.values());
+      });
     }
 
     return NextResponse.json({
@@ -402,7 +432,7 @@ export async function GET(req: NextRequest) {
       upcoming: upcoming.sort((a: any, b: any) => a.scheduledFor.getTime() - b.scheduledFor.getTime()),
       completed: completed, // Реальные завершенные задачи из БД
       byManager: Object.values(byManager),
-      byObject: Object.values(byObject),
+      byObject: Object.values(byObject).sort((a: any, b: any) => (a.object?.name || '').localeCompare(b.object?.name || '')),
       total: allTasks.length,
       userRole: user.role
     });

@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TaskCalendarView from '@/components/TaskCalendarView';
 import TaskPreviewModal from '@/components/TaskPreviewModal';
@@ -12,7 +11,6 @@ import ManagerTasksModal from '@/components/ManagerTasksModal';
 import TaskDetailModal from '@/components/TaskDetailModal';
 import AdminTaskDetailModal from '@/components/AdminTaskDetailModal';
 import TaskLocationBreadcrumb from '@/components/TaskLocationBreadcrumb';
-import ManagerCard from '@/components/ManagerCard';
 import PeriodTasksModal from '@/components/PeriodTasksModal';
 import TaskCompletionModal from '@/components/TaskCompletionModal';
 import { Calendar, Clock, TrendingUp, AlertTriangle, CheckCircle, Eye } from 'lucide-react';
@@ -673,70 +671,123 @@ export default function ManagerCalendarClientPage() {
 
       {/* Задачи */}
       {tasks.userRole === 'ADMIN' || tasks.userRole === 'DEPUTY' ? (
-        // Для администратора - группировка по менеджерам/объектам
-        <div className="space-y-6">
-          <Tabs defaultValue="by-manager" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="by-manager">По менеджерам</TabsTrigger>
-              <TabsTrigger value="by-object">По объектам</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="by-manager" className="space-y-4">
-              {tasks.byManager && tasks.byManager.length > 0 ? (
-                tasks.byManager.map((managerData: any) => (
-                  <ManagerCard
-                    key={managerData.manager.id}
-                    manager={managerData.manager}
-                    objects={managerData.objects || []}
-                    stats={managerData.stats}
-                    byPeriodicity={managerData.byPeriodicity || []}
-                    tasks={managerData.tasks || []}
-                    onViewPeriodTasks={handleViewPeriodTasks}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-12 text-gray-500">
-                  <div className="text-lg font-medium mb-2">Нет данных по менеджерам</div>
-                  <p className="text-sm">Менеджеры появятся здесь после назначения задач</p>
-                </div>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="by-object" className="space-y-4">
-              {tasks.byObject?.map((group: any) => (
-                <Card key={group.object.id}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>🏢 {group.object.name}</span>
-                      <div className="flex gap-2 text-sm">
-                        <Badge variant="destructive">{group.stats.overdue} просрочено</Badge>
-                        <Badge variant="default">{group.stats.today} сегодня</Badge>
-                        <Badge variant="secondary">{group.stats.completed} выполнено</Badge>
-                      </div>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {group.tasks.slice(0, 5).map((task: any) => (
-                        <div key={task.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                          <div>
-                            <span className="font-medium">{task.techCard?.name || task.description}</span>
-                            <span className="text-sm text-gray-500 ml-2">({task.room?.name || task.roomName || 'Общее'})</span>
-                          </div>
-                          <Badge variant={task.status === 'COMPLETED' ? 'default' : 'outline'}>
-                            {task.status === 'COMPLETED' ? 'Выполнено' : 'В работе'}
-                          </Badge>
-                        </div>
-                      ))}
-                      {group.tasks.length > 5 && (
-                        <p className="text-sm text-gray-500">И еще {group.tasks.length - 5} задач...</p>
+        // Для администратора - группировка по объектам с менеджером
+        <div className="space-y-4">
+          {tasks.byObject && tasks.byObject.length > 0 ? (
+            tasks.byObject.map((objectGroup: any) => (
+              <Card key={objectGroup.object.id}>
+                <CardHeader>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        🏢 {objectGroup.object.name}
+                      </CardTitle>
+                      {objectGroup.manager && (
+                        <p className="text-sm text-gray-600 mt-1">
+                          👤 Ответственный: {objectGroup.manager.name}
+                          {objectGroup.manager.phone && (
+                            <span className="ml-2 text-gray-500">• {objectGroup.manager.phone}</span>
+                          )}
+                        </p>
                       )}
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </TabsContent>
-          </Tabs>
+                    <div className="flex flex-wrap gap-2 text-sm">
+                      <Badge variant="destructive">{objectGroup.stats.overdue} просрочено</Badge>
+                      <Badge variant="default">{objectGroup.stats.today} сегодня</Badge>
+                      <Badge variant="secondary">{objectGroup.stats.completed} выполнено</Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {/* Группировка по периодичности */}
+                  {objectGroup.byPeriodicity && objectGroup.byPeriodicity.length > 0 ? (
+                    <div className="space-y-4">
+                      {objectGroup.byPeriodicity.map((periodGroup: any, index: number) => (
+                        <div key={index} className="border rounded-lg p-3 bg-gray-50">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-blue-600" />
+                              <span className="font-semibold text-gray-900">{periodGroup.frequency}</span>
+                            </div>
+                            <div className="flex gap-2 text-xs">
+                              {periodGroup.stats.overdue > 0 && (
+                                <Badge variant="destructive" className="text-xs">{periodGroup.stats.overdue}</Badge>
+                              )}
+                              {periodGroup.stats.today > 0 && (
+                                <Badge variant="default" className="text-xs">{periodGroup.stats.today}</Badge>
+                              )}
+                              {periodGroup.stats.completed > 0 && (
+                                <Badge variant="secondary" className="text-xs">{periodGroup.stats.completed}</Badge>
+                              )}
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            {periodGroup.tasks.slice(0, 5).map((task: any) => (
+                              <div 
+                                key={task.id} 
+                                className="flex items-center justify-between p-2 bg-white rounded border cursor-pointer hover:border-blue-300 transition-colors"
+                                onClick={() => {
+                                  if (objectGroup.manager) {
+                                    setPeriodModalData({
+                                      managerId: objectGroup.manager.id,
+                                      managerName: objectGroup.manager.name,
+                                      frequency: periodGroup.frequency,
+                                      tasks: periodGroup.tasks
+                                    });
+                                  }
+                                }}
+                              >
+                                <div className="flex-1">
+                                  <span className="font-medium text-sm">{task.techCard?.name || task.description}</span>
+                                  <span className="text-xs text-gray-500 ml-2">({task.room?.name || task.roomName || 'Общее'})</span>
+                                </div>
+                                <Badge 
+                                  variant={
+                                    task.status === 'COMPLETED' ? 'default' : 
+                                    task.status === 'OVERDUE' ? 'destructive' :
+                                    task.status === 'AVAILABLE' ? 'default' : 'outline'
+                                  }
+                                  className="text-xs"
+                                >
+                                  {task.status === 'COMPLETED' ? 'Выполнено' : 
+                                   task.status === 'OVERDUE' ? 'Просрочено' :
+                                   task.status === 'AVAILABLE' ? 'На сегодня' : 'Предстоящая'}
+                                </Badge>
+                              </div>
+                            ))}
+                            {periodGroup.tasks.length > 5 && (
+                              <button
+                                onClick={() => {
+                                  if (objectGroup.manager) {
+                                    setPeriodModalData({
+                                      managerId: objectGroup.manager.id,
+                                      managerName: objectGroup.manager.name,
+                                      frequency: periodGroup.frequency,
+                                      tasks: periodGroup.tasks
+                                    });
+                                  }
+                                }}
+                                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                              >
+                                Показать все {periodGroup.tasks.length} задач →
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 text-center py-4">Нет задач для этого объекта</p>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              <div className="text-lg font-medium mb-2">Нет данных по объектам</div>
+              <p className="text-sm">Объекты с задачами появятся здесь</p>
+            </div>
+          )}
         </div>
       ) : (
         // Для менеджера - простой список задач по статусам
@@ -924,7 +975,7 @@ export default function ManagerCalendarClientPage() {
               handleTaskCompleted(completedTask.id, completedTask);
             } else {
               console.log('🔍 ДИАГНОСТИКА: Нет completedTask, вызываем debouncedLoadStats');
-              debouncedLoadStats(true);
+              debouncedLoadStats();
             }
           }}
         />

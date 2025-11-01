@@ -79,14 +79,27 @@ export interface ManagerTaskGroup {
   }>;
 }
 
+// Группировка задач по периодичности
+export interface PeriodicityGroup {
+  frequency: string;
+  tasks: UnifiedTask[];
+  stats: TaskStats;
+}
+
 // Группировка задач по объекту
 export interface ObjectTaskGroup {
   object: {
     id: string;
     name: string;
   };
+  manager?: {
+    id: string;
+    name: string;
+    phone?: string | null;
+  } | null;
   tasks: UnifiedTask[];
   stats: TaskStats;
+  byPeriodicity?: PeriodicityGroup[];
 }
 
 // Результат API календаря
@@ -951,8 +964,10 @@ export function groupTasksByObject(tasks: UnifiedTask[]): ObjectTaskGroup[] {
           id: task.objectId,
           name: task.objectName
         },
+        manager: task.manager || null,
         tasks: [],
-        stats: { total: 0, completed: 0, overdue: 0, today: 0, pending: 0 }
+        stats: { total: 0, completed: 0, overdue: 0, today: 0, pending: 0 },
+        byPeriodicity: []
       });
     }
     
@@ -977,7 +992,45 @@ export function groupTasksByObject(tasks: UnifiedTask[]): ObjectTaskGroup[] {
     }
   });
   
-  return Array.from(objectMap.values());
+  // Группируем задачи по периодичности внутри каждого объекта
+  objectMap.forEach((objectGroup) => {
+    const periodicityMap = new Map<string, PeriodicityGroup>();
+    
+    objectGroup.tasks.forEach(task => {
+      const frequency = task.frequency || 'Без периодичности';
+      
+      if (!periodicityMap.has(frequency)) {
+        periodicityMap.set(frequency, {
+          frequency,
+          tasks: [],
+          stats: { total: 0, completed: 0, overdue: 0, today: 0, pending: 0 }
+        });
+      }
+      
+      const periodGroup = periodicityMap.get(frequency)!;
+      periodGroup.tasks.push(task);
+      periodGroup.stats.total++;
+      
+      switch (task.status) {
+        case 'OVERDUE':
+          periodGroup.stats.overdue++;
+          break;
+        case 'AVAILABLE':
+          periodGroup.stats.today++;
+          break;
+        case 'COMPLETED':
+          periodGroup.stats.completed++;
+          break;
+        case 'PENDING':
+          periodGroup.stats.pending++;
+          break;
+      }
+    });
+    
+    objectGroup.byPeriodicity = Array.from(periodicityMap.values());
+  });
+  
+  return Array.from(objectMap.values()).sort((a, b) => a.object.name.localeCompare(b.object.name));
 }
 
 // Материализация виртуальной задачи

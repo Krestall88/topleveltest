@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import UnifiedTaskCompletionModal from '@/components/UnifiedTaskCompletionModal';
 import SimpleTaskListModal from '@/components/SimpleTaskListModal';
-import ManagerCard from '@/components/ManagerCard';
+import ObjectCard from '@/components/ObjectCard';
 import { Calendar, Clock, TrendingUp, AlertTriangle, CheckCircle, Eye } from 'lucide-react';
 import { UnifiedTask, CalendarResponse, ManagerTaskGroup, ObjectTaskGroup } from '@/lib/unified-task-system';
 
@@ -67,6 +67,7 @@ export default function UnifiedCalendarPage() {
   const [loading, setLoading] = useState(true);
   const [calendarData, setCalendarData] = useState<CalendarResponse | null>(null);
   const [taskCompletionModal, setTaskCompletionModal] = useState<UnifiedTask | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [periodModalData, setPeriodModalData] = useState<{
     managerId: string;
     managerName: string;
@@ -297,6 +298,61 @@ export default function UnifiedCalendarPage() {
     }
   };
 
+  // Функция перегруппировки данных по объектам (вместо менеджеров)
+  const regroupByObjects = (byManagerData: ManagerTaskGroup[]) => {
+    const objectsMap = new Map();
+    
+    byManagerData.forEach(managerGroup => {
+      managerGroup.tasks.forEach(task => {
+        const objectId = task.objectId;
+        const objectName = task.objectName;
+        
+        if (!objectsMap.has(objectId)) {
+          objectsMap.set(objectId, {
+            object: { id: objectId, name: objectName },
+            manager: managerGroup.manager,
+            tasks: [],
+            stats: { total: 0, completed: 0, overdue: 0, today: 0 },
+            byPeriodicity: []
+          });
+        }
+        
+        const objectGroup = objectsMap.get(objectId);
+        objectGroup.tasks.push(task);
+        objectGroup.stats.total++;
+        
+        if (task.status === 'OVERDUE') objectGroup.stats.overdue++;
+        else if (task.status === 'AVAILABLE') objectGroup.stats.today++;
+        else if (task.status === 'COMPLETED') objectGroup.stats.completed++;
+      });
+    });
+    
+    // Группируем задачи по периодичности внутри каждого объекта
+    objectsMap.forEach(objectGroup => {
+      const periodicityMap = new Map();
+      
+      objectGroup.tasks.forEach((task: UnifiedTask) => {
+        const frequency = task.frequency || 'Без периодичности';
+        
+        if (!periodicityMap.has(frequency)) {
+          periodicityMap.set(frequency, {
+            frequency,
+            count: 0,
+            tasks: []
+          });
+        }
+        
+        const periodGroup = periodicityMap.get(frequency);
+        periodGroup.tasks.push(task);
+        periodGroup.count++;
+      });
+      
+      objectGroup.byPeriodicity = Array.from(periodicityMap.values());
+    });
+    
+    return Array.from(objectsMap.values()).sort((a, b) => a.object.name.localeCompare(b.object.name));
+  };
+
   // Обработчик просмотра задач периода
   const handleViewPeriodTasks = (managerId: string, frequency: string, periodTasks: UnifiedTask[]) => {
     const manager = calendarData?.byManager?.find((m: ManagerTaskGroup) => m.manager.id === managerId);
@@ -483,70 +539,85 @@ export default function UnifiedCalendarPage() {
 
       {/* Задачи */}
       {calendarData && (calendarData.userRole === 'ADMIN' || calendarData.userRole === 'DEPUTY_ADMIN' || calendarData.userRole === 'MANAGER') ? (
-        // Для администратора - группировка по менеджерам/объектам
-        <div className="space-y-6">
-          <Tabs defaultValue="by-manager" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="by-manager">По менеджерам</TabsTrigger>
-              <TabsTrigger value="by-object">По объектам</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="by-manager" className="space-y-4">
-              {calendarData.byManager && calendarData.byManager.length > 0 ? (
-                calendarData.byManager.map((managerData: ManagerTaskGroup) => (
-                  <ManagerCard
-                    key={managerData.manager.id}
-                    manager={managerData.manager}
-                    objects={managerData.objects || []}
-                    stats={managerData.stats}
-                    byPeriodicity={managerData.byPeriodicity || []}
-                    tasks={managerData.tasks || []}
-                    onViewPeriodTasks={handleViewPeriodTasks}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-12 text-gray-500">
-                  <div className="text-lg font-medium mb-2">Нет данных по менеджерам</div>
-                  <p className="text-sm">Менеджеры появятся здесь после назначения задач</p>
-                </div>
+        // Для администратора - группировка по объектам (перегруппированные данные из byManager)
+        <div className="space-y-4">
+          {/* Поисковая строка */}
+          {calendarData.byManager && calendarData.byManager.length > 0 && (
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Поиск по объектам или менеджерам..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-3 pl-10 pr-4 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               )}
-            </TabsContent>
-            
-            <TabsContent value="by-object" className="space-y-4">
-              {calendarData.byObject?.map((group: ObjectTaskGroup) => (
-                <Card key={group.object.id}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>🏢 {group.object.name}</span>
-                      <div className="flex gap-2 text-sm">
-                        <Badge variant="destructive">{group.stats.overdue} просрочено</Badge>
-                        <Badge variant="default">{group.stats.today} сегодня</Badge>
-                        <Badge variant="secondary">{group.stats.completed} выполнено</Badge>
-                      </div>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {group.tasks.slice(0, 5).map((task: UnifiedTask) => (
-                        <div key={task.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                          <div>
-                            <span className="font-medium">{task.description}</span>
-                            <span className="text-sm text-gray-500 ml-2">({task.roomName || 'Общее'})</span>
-                          </div>
-                          <Badge variant={task.status === 'COMPLETED' ? 'default' : 'outline'}>
-                            {task.status === 'COMPLETED' ? 'Выполнено' : 'В работе'}
-                          </Badge>
-                        </div>
-                      ))}
-                      {group.tasks.length > 5 && (
-                        <p className="text-sm text-gray-500">И еще {group.tasks.length - 5} задач...</p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </TabsContent>
-          </Tabs>
+            </div>
+          )}
+
+          {calendarData.byManager && calendarData.byManager.length > 0 ? (
+            (() => {
+              const filteredObjects = regroupByObjects(calendarData.byManager)
+                .filter((objectGroup: any) => {
+                  if (!searchQuery) return true;
+                  const query = searchQuery.toLowerCase();
+                  const objectName = objectGroup.object.name.toLowerCase();
+                  const managerName = objectGroup.manager?.name?.toLowerCase() || '';
+                  return objectName.includes(query) || managerName.includes(query);
+                });
+
+              if (filteredObjects.length === 0) {
+                return (
+                  <div className="text-center py-12 text-gray-500">
+                    <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <div className="text-lg font-medium mb-2">Ничего не найдено</div>
+                    <p className="text-sm">Попробуйте изменить поисковый запрос</p>
+                  </div>
+                );
+              }
+
+              return filteredObjects.map((objectGroup: any) => (
+                <ObjectCard
+                  key={objectGroup.object.id}
+                  object={objectGroup.object}
+                  manager={objectGroup.manager}
+                  stats={objectGroup.stats}
+                  byPeriodicity={objectGroup.byPeriodicity}
+                  tasks={objectGroup.tasks}
+                  onViewPeriodTasks={handleViewPeriodTasks}
+                />
+              ));
+            })()
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              <div className="text-lg font-medium mb-2">Нет данных по объектам</div>
+              <p className="text-sm">Объекты с задачами появятся здесь</p>
+            </div>
+          )}
         </div>
       ) : (
         // Для менеджера - задачи по статусам с вкладками
