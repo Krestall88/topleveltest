@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import UnifiedTaskCompletionModal from '@/components/UnifiedTaskCompletionModal';
 import SimpleTaskListModal from '@/components/SimpleTaskListModal';
 import ObjectCard from '@/components/ObjectCard';
+import ObjectCompletionSettingsModal from '@/components/ObjectCompletionSettingsModal';
 import { Calendar, Clock, TrendingUp, AlertTriangle, CheckCircle, Eye } from 'lucide-react';
 import { UnifiedTask, CalendarResponse, ManagerTaskGroup, ObjectTaskGroup } from '@/lib/unified-task-system';
 
@@ -68,6 +69,7 @@ export default function UnifiedCalendarPage() {
   const [calendarData, setCalendarData] = useState<CalendarResponse | null>(null);
   const [taskCompletionModal, setTaskCompletionModal] = useState<UnifiedTask | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [settingsModal, setSettingsModal] = useState<{ objectId: string; objectName: string } | null>(null);
   const [periodModalData, setPeriodModalData] = useState<{
     managerId: string;
     managerName: string;
@@ -609,6 +611,11 @@ export default function UnifiedCalendarPage() {
                   byPeriodicity={objectGroup.byPeriodicity}
                   tasks={objectGroup.tasks}
                   onViewPeriodTasks={handleViewPeriodTasks}
+                  onOpenSettings={
+                    calendarData.userRole === 'ADMIN' || calendarData.userRole === 'DEPUTY_ADMIN'
+                      ? (objectId, objectName) => setSettingsModal({ objectId, objectName })
+                      : undefined
+                  }
                 />
               ));
             })()
@@ -801,6 +808,20 @@ export default function UnifiedCalendarPage() {
             setPeriodModalData(null);
             setTaskCompletionModal(task);
           }}
+        />
+      )}
+
+      {/* Модальное окно настроек завершения задач */}
+      {settingsModal && (
+        <ObjectCompletionSettingsModal
+          isOpen={!!settingsModal}
+          onClose={() => {
+            setSettingsModal(null);
+            // Перезагружаем данные после изменения настроек
+            loadCalendarData();
+          }}
+          objectId={settingsModal.objectId}
+          objectName={settingsModal.objectName}
         />
       )}
     </div>

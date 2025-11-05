@@ -40,6 +40,11 @@ export default function UnifiedTaskCompletionModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  // Настройки завершения
+  const [photoRequired, setPhotoRequired] = useState(false);
+  const [commentRequired, setCommentRequired] = useState(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  
   // Комментарии администратора
   const [adminComments, setAdminComments] = useState<AdminComment[]>([]);
   const [newAdminComment, setNewAdminComment] = useState('');
@@ -52,9 +57,36 @@ export default function UnifiedTaskCompletionModal({
       setComment(task.completionComment || '');
       setPhotos([]);
       setError(null);
+      setSettingsLoaded(false);
       loadAdminComments();
+      loadObjectSettings();
     }
   }, [task, isOpen]);
+
+  const loadObjectSettings = async () => {
+    if (!task) return;
+    
+    try {
+      console.log('🔍 MODAL: Загружаем настройки объекта:', task.objectId);
+      const response = await fetch(`/api/objects/${task.objectId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('🔍 MODAL: Настройки объекта получены:', {
+          requirePhotoForCompletion: data.requirePhotoForCompletion,
+          requireCommentForCompletion: data.requireCommentForCompletion
+        });
+        setPhotoRequired(data.requirePhotoForCompletion || false);
+        setCommentRequired(data.requireCommentForCompletion || false);
+        setSettingsLoaded(true);
+      } else {
+        console.error('❌ MODAL: Ошибка загрузки настроек:', response.status);
+        setSettingsLoaded(true); // Все равно разрешаем продолжить
+      }
+    } catch (error) {
+      console.error('❌ MODAL: Ошибка загрузки настроек объекта:', error);
+      setSettingsLoaded(true); // Все равно разрешаем продолжить
+    }
+  };
 
   const loadAdminComments = async () => {
     if (!task) return;
@@ -113,10 +145,6 @@ export default function UnifiedTaskCompletionModal({
 
   if (!task) return null;
 
-  // Для новой системы пока не требуем обязательные фото/комментарии
-  // В будущем можно добавить эти требования в UnifiedTask
-  const photoRequired = false;
-  const commentRequired = false;
   const minPhotos = 1;
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,23 +182,48 @@ export default function UnifiedTaskCompletionModal({
       return;
     }
 
+    // Ждем загрузки настроек
+    if (!settingsLoaded) {
+      console.log('⏳ MODAL: Ожидание загрузки настроек...');
+      setError('Загрузка настроек объекта...');
+      // Ждем максимум 3 секунды
+      let attempts = 0;
+      while (!settingsLoaded && attempts < 30) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
+      if (!settingsLoaded) {
+        console.log('⚠️ MODAL: Настройки не загрузились, продолжаем без проверки');
+      }
+    }
+
     setIsSubmitting(true);
     setError('');
     
+    console.log('🔍 MODAL: Проверка требований завершения:', {
+      settingsLoaded,
+      commentRequired,
+      hasComment: !!comment.trim(),
+      photoRequired,
+      photosCount: photos.length,
+      minPhotos
+    });
+    
     if (commentRequired && !comment.trim()) {
+      console.log('❌ MODAL: Требуется комментарий');
       setError('Для завершения задачи требуется комментарий');
       setIsSubmitting(false);
       return;
     }
 
     if (photoRequired && photos.length < minPhotos) {
+      console.log('❌ MODAL: Требуется фото');
       setError(`Требуется минимум ${minPhotos} фото для завершения задачи`);
       setIsSubmitting(false);
       return;
     }
 
     try {
-      setIsSubmitting(true);
       setError(null);
 
       // Загружаем фото

@@ -117,7 +117,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     
     // Менеджер видит ограниченный набор
     if (role === 'MANAGER') {
-      const managerMenus = ['objects', 'manager-calendar', 'additional-tasks', 'photos', 'inventory', 'reporting'];
+      const managerMenus = ['objects', 'manager-calendar', 'additional-tasks', 'photos', 'inventory'];
       return managerMenus.includes(menuItem);
     }
     

@@ -73,10 +73,30 @@ export async function POST(req: NextRequest) {
       console.log('✅ UNIFIED COMPLETE: Обновляем существующую задачу');
       
       // Проверяем права доступа для менеджеров
-      if (user.role === 'MANAGER' && existingTask.checklist?.object.managerId !== user.id) {
-        return NextResponse.json({ 
-          message: 'Вы можете работать только со своими объектами' 
-        }, { status: 403 });
+      if (user.role === 'MANAGER') {
+        const objectManagerId = existingTask.checklist?.object.managerId;
+        if (objectManagerId && objectManagerId !== user.id) {
+          return NextResponse.json({ 
+            message: 'Вы можете работать только со своими объектами' 
+          }, { status: 403 });
+        }
+        
+        // Проверяем требования завершения (только для статуса COMPLETED)
+        if (status === 'COMPLETED' && existingTask.checklist?.object) {
+          const object = existingTask.checklist.object;
+          
+          if (object.requirePhotoForCompletion && (!photos || photos.length === 0)) {
+            return NextResponse.json({ 
+              message: 'Для завершения задачи требуется прикрепить фото' 
+            }, { status: 400 });
+          }
+          
+          if (object.requireCommentForCompletion && !comment) {
+            return NextResponse.json({ 
+              message: 'Для завершения задачи требуется оставить комментарий' 
+            }, { status: 400 });
+          }
+        }
       }
 
       const completedAt = status === 'COMPLETED' ? new Date() : null;
@@ -149,6 +169,51 @@ export async function POST(req: NextRequest) {
     } else {
       // Виртуальная задача, материализуем её
       console.log('🔧 UNIFIED COMPLETE: Материализуем виртуальную задачу');
+      
+      // Проверяем права доступа и требования завершения для менеджеров (для виртуальных задач)
+      if (user.role === 'MANAGER' && taskId.includes('-')) {
+        try {
+          // Извлекаем objectId из taskId (формат: techCardId-objectId-roomId-date)
+          const parts = taskId.split('-');
+          if (parts.length >= 4) {
+            const objectId = parts[parts.length - 3];
+            const object = await prisma.cleaningObject.findUnique({
+              where: { id: objectId },
+              select: { 
+                managerId: true,
+                requirePhotoForCompletion: true,
+                requireCommentForCompletion: true
+              }
+            });
+            
+            if (object) {
+              // Проверяем права доступа
+              if (object.managerId !== user.id) {
+                return NextResponse.json({ 
+                  message: 'Вы можете работать только со своими объектами' 
+                }, { status: 403 });
+              }
+              
+              // Проверяем требования завершения (только для статуса COMPLETED)
+              if (status === 'COMPLETED') {
+                if (object.requirePhotoForCompletion && (!photos || photos.length === 0)) {
+                  return NextResponse.json({ 
+                    message: 'Для завершения задачи требуется прикрепить фото' 
+                  }, { status: 400 });
+                }
+                
+                if (object.requireCommentForCompletion && !comment) {
+                  return NextResponse.json({ 
+                    message: 'Для завершения задачи требуется оставить комментарий' 
+                  }, { status: 400 });
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.warn('⚠️ UNIFIED COMPLETE: Не удалось проверить права доступа:', error);
+        }
+      }
       
       try {
         const materializedTask = await materializeVirtualTask(
