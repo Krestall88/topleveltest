@@ -94,20 +94,6 @@ export default function LoginPage() {
               {loading ? 'Вход...' : 'Войти'}
             </Button>
           </form>
-
-          <div className="mt-6 pt-4 border-t">
-            <p className="text-sm text-gray-600 mb-2">Быстрый вход:</p>
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full text-xs"
-                onClick={() => quickLogin('admin@cleaning.com', 'admin123')}
-              >
-                👑 Администратор
-              </Button>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

@@ -75,6 +75,15 @@ INSTRUCTION INSTRUCTION
 QUALITY_CHECK QUALITY_CHECK
         }
     
+
+
+        ExpensePeriodType {
+            DAILY DAILY
+MONTHLY MONTHLY
+SEMI_ANNUAL SEMI_ANNUAL
+ANNUAL ANNUAL
+        }
+    
   "User" {
     String id "🗝️"
     DateTime createdAt 
@@ -210,6 +219,31 @@ QUALITY_CHECK QUALITY_CHECK
     String description 
     RequestStatus status 
     String source "❓"
+    }
+  
+
+  "ExpenseCategory" {
+    String id "🗝️"
+    DateTime createdAt 
+    DateTime updatedAt 
+    String name 
+    String description "❓"
+    Boolean isActive 
+    Int sortOrder 
+    }
+  
+
+  "ExpenseCategoryLimit" {
+    String id "🗝️"
+    DateTime createdAt 
+    DateTime updatedAt 
+    Decimal amount 
+    ExpensePeriodType periodType 
+    Int month "❓"
+    Int year "❓"
+    Boolean isRecurring 
+    DateTime startDate "❓"
+    DateTime endDate "❓"
     }
   
 
@@ -397,6 +431,7 @@ QUALITY_CHECK QUALITY_CHECK
     "User" o{--}o "ExcludedObject" : "excludedObjects"
     "User" o{--}o "InventoryExpense" : "inventoryExpenses"
     "User" o{--}o "InventoryLimit" : "setInventoryLimits"
+    "User" o{--}o "ExpenseCategoryLimit" : "setExpenseCategoryLimits"
     "User" o{--}o "PhotoReport" : "photoReports"
     "User" o{--}o "ReportingTask" : "assignedReportingTasks"
     "User" o{--}o "ReportingTask" : "createdReportingTasks"
@@ -417,6 +452,7 @@ QUALITY_CHECK QUALITY_CHECK
     "CleaningObject" o{--}o "ExcludedObject" : "excludedObjects"
     "CleaningObject" o{--}o "InventoryExpense" : "inventoryExpenses"
     "CleaningObject" o{--}o "InventoryLimit" : "inventoryLimits"
+    "CleaningObject" o{--}o "ExpenseCategoryLimit" : "expenseCategoryLimits"
     "CleaningObject" o{--}o "ObjectStructure" : "objectStructures"
     "CleaningObject" o{--}o "PhotoReport" : "photoReports"
     "CleaningObject" o{--}o "ReportingTask" : "reportingTasks"
@@ -463,9 +499,16 @@ QUALITY_CHECK QUALITY_CHECK
     "Request" o|--|| "User" : "creator"
     "Request" o|--|| "CleaningObject" : "object"
     "Request" o{--}o "Task" : "tasks"
+    "ExpenseCategory" o{--}o "ExpenseCategoryLimit" : "limits"
+    "ExpenseCategory" o{--}o "InventoryExpense" : "expenses"
+    "ExpenseCategoryLimit" o|--|| "ExpensePeriodType" : "enum:periodType"
+    "ExpenseCategoryLimit" o|--|| "CleaningObject" : "object"
+    "ExpenseCategoryLimit" o|--|| "ExpenseCategory" : "category"
+    "ExpenseCategoryLimit" o|--|| "User" : "setBy"
     "InventoryLimit" o|--|| "CleaningObject" : "object"
     "InventoryLimit" o|--|| "User" : "setBy"
     "InventoryExpense" o|--|| "CleaningObject" : "object"
+    "InventoryExpense" o|--|o "ExpenseCategory" : "category"
     "InventoryExpense" o|--|| "User" : "recordedBy"
     "PhotoReport" o|--|o "Checklist" : "checklist"
     "PhotoReport" o|--|o "CleaningObject" : "object"

@@ -69,6 +69,9 @@ export async function GET(req: NextRequest) {
         },
         recordedBy: {
           select: { id: true, name: true, email: true }
+        },
+        category: {
+          select: { id: true, name: true, description: true }
         }
       },
       orderBy: [
@@ -99,10 +102,10 @@ export async function POST(req: NextRequest) {
     const user = session.user;
 
     const body = await req.json();
-    const { objectId, amount, description, month, year } = body;
+    const { objectId, amount, description, month, year, categoryId } = body;
 
-    if (!objectId || !amount || !description) {
-      return NextResponse.json({ error: 'objectId, amount, and description are required' }, { status: 400 });
+    if (!objectId || !amount) {
+      return NextResponse.json({ error: 'objectId and amount are required' }, { status: 400 });
     }
 
     // Менеджеры могут добавлять расходы только по своим объектам
@@ -138,6 +141,89 @@ export async function POST(req: NextRequest) {
     const expenseMonth = month || (currentDate.getMonth() + 1);
     const expenseYear = year || currentDate.getFullYear();
 
+    // Проверяем лимиты если указана категория (БЕЗ БЛОКИРОВКИ)
+    let warning = null;
+    if (categoryId) {
+      const limits = await prisma.expenseCategoryLimit.findMany({
+        where: {
+          objectId,
+          categoryId,
+          category: {
+            isActive: true
+          }
+        },
+        include: {
+          category: true
+        }
+      });
+
+      for (const limit of limits) {
+        let totalSpent = 0;
+        const expenseAmount = parseFloat(amount);
+
+        // Рассчитываем потраченное в зависимости от типа периода
+        if (limit.periodType === 'DAILY') {
+          const today = new Date();
+          const expenses = await prisma.inventoryExpense.aggregate({
+            where: {
+              objectId,
+              categoryId,
+              createdAt: {
+                gte: new Date(today.getFullYear(), today.getMonth(), today.getDate()),
+                lt: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
+              }
+            },
+            _sum: { amount: true }
+          });
+          totalSpent = Number(expenses._sum.amount || 0);
+        } else if (limit.periodType === 'MONTHLY') {
+          const expenses = await prisma.inventoryExpense.aggregate({
+            where: {
+              objectId,
+              categoryId,
+              month: parseInt(expenseMonth),
+              year: parseInt(expenseYear)
+            },
+            _sum: { amount: true }
+          });
+          totalSpent = Number(expenses._sum.amount || 0);
+        } else if (limit.periodType === 'SEMI_ANNUAL' || limit.periodType === 'ANNUAL') {
+          if (limit.startDate && limit.endDate) {
+            const expenses = await prisma.inventoryExpense.aggregate({
+              where: {
+                objectId,
+                categoryId,
+                createdAt: {
+                  gte: limit.startDate,
+                  lte: limit.endDate
+                }
+              },
+              _sum: { amount: true }
+            });
+            totalSpent = Number(expenses._sum.amount || 0);
+          }
+        }
+
+        const newTotal = totalSpent + expenseAmount;
+        const limitAmount = Number(limit.amount);
+        const percentage = (newTotal / limitAmount) * 100;
+
+        // Формируем предупреждение (БЕЗ БЛОКИРОВКИ)
+        if (newTotal > limitAmount) {
+          const periodName = {
+            DAILY: 'ежедневный',
+            MONTHLY: 'месячный',
+            SEMI_ANNUAL: 'полугодовой',
+            ANNUAL: 'годовой'
+          }[limit.periodType];
+          
+          warning = `⚠️ Превышен ${periodName} лимит по категории "${limit.category.name}": ${newTotal.toLocaleString('ru-RU')}₽ из ${limitAmount.toLocaleString('ru-RU')}₽ (${percentage.toFixed(1)}%)`;
+        } else if (percentage >= 90) {
+          warning = `⚠️ Использовано ${percentage.toFixed(1)}% лимита по категории "${limit.category.name}"`;
+        }
+      }
+    }
+
     const expense = await prisma.inventoryExpense.create({
       data: {
         objectId,
@@ -145,6 +231,7 @@ export async function POST(req: NextRequest) {
         description,
         month: parseInt(expenseMonth),
         year: parseInt(expenseYear),
+        categoryId: categoryId || null,
         recordedById: user.id
       },
       include: {
@@ -153,6 +240,9 @@ export async function POST(req: NextRequest) {
         },
         recordedBy: {
           select: { id: true, name: true, email: true }
+        },
+        category: {
+          select: { id: true, name: true, description: true }
         }
       }
     });
@@ -163,12 +253,15 @@ export async function POST(req: NextRequest) {
         action: 'CREATE_INVENTORY_EXPENSE',
         entity: 'InventoryExpense',
         entityId: expense.id,
-        details: `Добавлен расход ${amount} руб. для объекта ${expense.object.name}: ${description}`,
+        details: `Добавлен расход ${amount} руб. для объекта ${expense.object.name}: ${description}${warning ? ` (${warning})` : ''}`,
         userId: user.id
       }
     });
 
-    return NextResponse.json(expense);
+    return NextResponse.json({ 
+      ...expense, 
+      warning: warning || undefined 
+    });
 
   } catch (error) {
     console.error('Error creating inventory expense:', error);

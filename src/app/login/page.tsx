@@ -73,20 +73,6 @@ export default function LoginPage() {
             Войти
           </button>
         </form>
-        
-        {/* Быстрый вход для тестирования */}
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-sm text-gray-600 mb-3 text-center">Быстрый вход для тестирования:</p>
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={() => quickLogin('admin@cleaning.com', 'admin123')}
-              className="w-full py-2 px-4 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
-            >
-              👑 Администратор
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

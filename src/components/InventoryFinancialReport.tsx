@@ -70,27 +70,135 @@ interface BulkLimitModalProps {
 // Модальное окно редактирования лимита
 function EditLimitModal({ isOpen, onClose, balance, onSave }: EditLimitModalProps) {
   const [amount, setAmount] = useState('');
+  const [periodType, setPeriodType] = useState<'DAILY' | 'MONTHLY' | 'SEMI_ANNUAL' | 'ANNUAL'>('MONTHLY');
   const [isRecurring, setIsRecurring] = useState(false);
   const [endMonth, setEndMonth] = useState('');
   const [endYear, setEndYear] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [categories, setCategories] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [showCreateCategory, setShowCreateCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryDescription, setNewCategoryDescription] = useState('');
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
 
   useEffect(() => {
     if (balance) {
       setAmount(balance.limit.toString());
     }
-  }, [balance]);
+    if (isOpen) {
+      loadCategories();
+      loadUserRole();
+    }
+  }, [balance, isOpen]);
+
+  const loadCategories = async () => {
+    try {
+      const response = await fetch('/api/expense-categories?activeOnly=true');
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.categories || []);
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
+
+  const loadUserRole = async () => {
+    try {
+      const response = await fetch('/api/auth/me', { credentials: 'include' });
+      if (response.ok) {
+        const data = await response.json();
+        setUserRole(data.user.role);
+      }
+    } catch (error) {
+      console.error('Error loading user role:', error);
+    }
+  };
+
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) {
+      alert('Введите название категории');
+      return;
+    }
+
+    setIsCreatingCategory(true);
+    try {
+      const response = await fetch('/api/expense-categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newCategoryName,
+          description: newCategoryDescription || null,
+          sortOrder: categories.length
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        await loadCategories();
+        setSelectedCategory(data.category.id);
+        setShowCreateCategory(false);
+        setNewCategoryName('');
+        setNewCategoryDescription('');
+      } else {
+        const data = await response.json();
+        alert(data.message || 'Ошибка создания категории');
+      }
+    } catch (error) {
+      console.error('Error creating category:', error);
+      alert('Ошибка создания категории');
+    } finally {
+      setIsCreatingCategory(false);
+    }
+  };
 
   const handleSave = () => {
-    onSave({
+    if (!selectedCategory) {
+      alert('Выберите категорию расходов');
+      return;
+    }
+    if (!amount || parseFloat(amount) <= 0) {
+      alert('Введите корректную сумму');
+      return;
+    }
+
+    const saveData: any = {
       objectId: balance?.objectId,
+      categoryId: selectedCategory,
       amount: parseFloat(amount),
-      month: balance?.month,
-      year: balance?.year,
-      isRecurring,
-      endDate: isRecurring && endMonth && endYear ? 
-        new Date(parseInt(endYear), parseInt(endMonth) - 1) : null
-    });
+      periodType,
+      isRecurring
+    };
+
+    // Для MONTHLY - добавляем месяц и год
+    if (periodType === 'MONTHLY') {
+      saveData.month = balance?.month;
+      saveData.year = balance?.year;
+      if (isRecurring && endMonth && endYear) {
+        saveData.endDate = new Date(parseInt(endYear), parseInt(endMonth) - 1);
+      }
+    }
+
+    // Для SEMI_ANNUAL и ANNUAL - добавляем даты
+    if (periodType === 'SEMI_ANNUAL' || periodType === 'ANNUAL') {
+      if (!startDate || !endDate) {
+        alert('Укажите даты начала и окончания периода');
+        return;
+      }
+      saveData.startDate = new Date(startDate);
+      saveData.endDate = new Date(endDate);
+    }
+
+    onSave(saveData);
     onClose();
+    setSelectedCategory('');
+    setAmount('');
+    setPeriodType('MONTHLY');
+    setStartDate('');
+    setEndDate('');
   };
 
   return (
@@ -101,7 +209,96 @@ function EditLimitModal({ isOpen, onClose, balance, onSave }: EditLimitModalProp
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium">Сумма лимита (руб.)</label>
+            <label className="text-sm font-medium">Категория расходов *</label>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Выберите категорию" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {(userRole === 'ADMIN' || userRole === 'DEPUTY_ADMIN') && (
+            <div>
+              {!showCreateCategory ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCreateCategory(true)}
+                  className="w-full"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Создать новую категорию
+                </Button>
+              ) : (
+                <div className="border rounded-lg p-4 space-y-3 bg-gray-50">
+                  <div>
+                    <label className="text-sm font-medium">Название категории *</label>
+                    <Input
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      placeholder="Например: Офисные принадлежности"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Описание</label>
+                    <Input
+                      value={newCategoryDescription}
+                      onChange={(e) => setNewCategoryDescription(e.target.value)}
+                      placeholder="Краткое описание"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleCreateCategory}
+                      disabled={isCreatingCategory}
+                    >
+                      {isCreatingCategory ? 'Создание...' : 'Создать'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setShowCreateCategory(false);
+                        setNewCategoryName('');
+                        setNewCategoryDescription('');
+                      }}
+                    >
+                      Отмена
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div>
+            <label className="text-sm font-medium">Тип периода *</label>
+            <Select value={periodType} onValueChange={(val: any) => setPeriodType(val)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Выберите тип периода" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="DAILY">Ежедневно</SelectItem>
+                <SelectItem value="MONTHLY">Ежемесячно</SelectItem>
+                <SelectItem value="SEMI_ANNUAL">Раз в 6 месяцев</SelectItem>
+                <SelectItem value="ANNUAL">Годовой</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Сумма лимита (руб.) *</label>
             <Input
               type="number"
               value={amount}
@@ -109,23 +306,26 @@ function EditLimitModal({ isOpen, onClose, balance, onSave }: EditLimitModalProp
               placeholder="40000"
             />
           </div>
-          
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="recurring"
-              checked={isRecurring}
-              onCheckedChange={(checked) => setIsRecurring(checked === true)}
-            />
-            <label htmlFor="recurring" className="text-sm">
-              Повторять каждый месяц
-            </label>
-          </div>
 
-          {isRecurring && (
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-sm font-medium">До месяца</label>
-                <Select value={endMonth} onValueChange={setEndMonth}>
+          {/* Для MONTHLY - показываем месяц/год и повторение */}
+          {periodType === 'MONTHLY' && (
+            <>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="recurring"
+                  checked={isRecurring}
+                  onCheckedChange={(checked) => setIsRecurring(checked === true)}
+                />
+                <label htmlFor="recurring" className="text-sm">
+                  Повторять каждый месяц
+                </label>
+              </div>
+
+              {isRecurring && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-sm font-medium">До месяца</label>
+                    <Select value={endMonth} onValueChange={setEndMonth}>
                   <SelectTrigger>
                     <SelectValue placeholder="Месяц" />
                   </SelectTrigger>
@@ -152,6 +352,44 @@ function EditLimitModal({ isOpen, onClose, balance, onSave }: EditLimitModalProp
                 </Select>
               </div>
             </div>
+              )}
+            </>
+          )}
+
+          {/* Для SEMI_ANNUAL и ANNUAL - показываем даты */}
+          {(periodType === 'SEMI_ANNUAL' || periodType === 'ANNUAL') && (
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-sm font-medium">Дата начала *</label>
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Дата окончания *</label>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Для DAILY - показываем чекбокс повторения */}
+          {periodType === 'DAILY' && (
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="recurring-daily"
+                checked={isRecurring}
+                onCheckedChange={(checked) => setIsRecurring(checked === true)}
+              />
+              <label htmlFor="recurring-daily" className="text-sm">
+                Повторять ежедневно
+              </label>
+            </div>
           )}
 
           <div className="flex justify-end space-x-2">
@@ -167,18 +405,40 @@ function EditLimitModal({ isOpen, onClose, balance, onSave }: EditLimitModalProp
 // Модальное окно добавления расхода
 function AddExpenseModal({ isOpen, onClose, balance, onSave }: AddExpenseModalProps) {
   const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
+  const [categories, setCategories] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [warning, setWarning] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadCategories();
+      setWarning(null);
+    }
+  }, [isOpen]);
+
+  const loadCategories = async () => {
+    try {
+      const response = await fetch('/api/expense-categories?activeOnly=true');
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.categories || []);
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
 
   const handleSave = () => {
-    if (!amount || !description) {
-      alert('Пожалуйста, заполните все поля');
+    if (!amount) {
+      alert('Пожалуйста, укажите сумму расхода');
       return;
     }
     
     const expenseData = {
       objectId: balance?.objectId,
+      categoryId: selectedCategory || null,
       amount: parseFloat(amount),
-      description,
+      description: '',
       month: balance?.month,
       year: balance?.year
     };
@@ -190,7 +450,8 @@ function AddExpenseModal({ isOpen, onClose, balance, onSave }: AddExpenseModalPr
     
     // Очищаем поля только после успешного сохранения
     setAmount('');
-    setDescription('');
+    setSelectedCategory('');
+    setWarning(null);
     // onClose() теперь вызывается в handleSaveExpense после успешного ответа
   };
 
@@ -201,23 +462,36 @@ function AddExpenseModal({ isOpen, onClose, balance, onSave }: AddExpenseModalPr
           <DialogTitle>Добавить расход - {balance?.objectName}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          {warning && (
+            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg text-sm">
+              ⚠️ {warning}
+            </div>
+          )}
+
           <div>
-            <label className="text-sm font-medium">Сумма расхода (руб.)</label>
+            <label className="text-sm font-medium">Категория расходов</label>
+            <Select value={selectedCategory || 'none'} onValueChange={(val) => setSelectedCategory(val === 'none' ? '' : val)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Выберите категорию (опционально)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Без категории</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Сумма расхода (руб.) *</label>
             <Input
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="5000"
-            />
-          </div>
-          
-          <div>
-            <label className="text-sm font-medium">Описание</label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Закупка моющих средств..."
-              rows={3}
             />
           </div>
 
@@ -233,18 +507,207 @@ function AddExpenseModal({ isOpen, onClose, balance, onSave }: AddExpenseModalPr
 
 // Модальное окно с графиком расходов
 function ExpenseChartModal({ isOpen, onClose, balance }: ExpenseChartModalProps) {
+  const [activeTab, setActiveTab] = useState<'general' | 'categories'>('general');
+  const [categoryStats, setCategoryStats] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && balance && activeTab === 'categories') {
+      loadCategoryStats();
+    }
+  }, [isOpen, balance, activeTab]);
+
+  const loadCategoryStats = async () => {
+    if (!balance) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `/api/expenses/stats/${balance.objectId}?month=${balance.month}&year=${balance.year}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setCategoryStats(data);
+      }
+    } catch (error) {
+      console.error('Error loading category stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Детальная аналитика расходов</DialogTitle>
+          <DialogTitle>Детальная аналитика расходов - {balance?.objectName}</DialogTitle>
         </DialogHeader>
+
+        {/* Вкладки */}
+        <div className="border-b border-gray-200">
+          <nav className="flex gap-4">
+            <button
+              onClick={() => setActiveTab('general')}
+              className={`px-4 py-2 border-b-2 font-medium transition-colors ${
+                activeTab === 'general'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Общее
+            </button>
+            <button
+              onClick={() => setActiveTab('categories')}
+              className={`px-4 py-2 border-b-2 font-medium transition-colors ${
+                activeTab === 'categories'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              По статьям
+            </button>
+          </nav>
+        </div>
+
         <div className="space-y-4">
-          {balance && (
+          {/* Вкладка "Общее" */}
+          {activeTab === 'general' && balance && (
             <ExpenseChart 
               objectId={balance.objectId} 
               objectName={balance.objectName}
             />
+          )}
+
+          {/* Вкладка "По статьям" */}
+          {activeTab === 'categories' && (
+            <div>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : categoryStats ? (
+                <div className="space-y-6">
+                  {/* Общая статистика */}
+                  {categoryStats.summary && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-sm text-gray-600 mb-1">Всего потрачено</div>
+                          <div className="text-2xl font-bold text-gray-900">
+                            {categoryStats.summary.totalSpent.toLocaleString('ru-RU')} ₽
+                          </div>
+                        </CardContent>
+                      </Card>
+                      {categoryStats.summary.totalLimit && (
+                        <>
+                          <Card>
+                            <CardContent className="p-4">
+                              <div className="text-sm text-gray-600 mb-1">Общий лимит</div>
+                              <div className="text-2xl font-bold text-gray-900">
+                                {categoryStats.summary.totalLimit.toLocaleString('ru-RU')} ₽
+                              </div>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardContent className="p-4">
+                              <div className="text-sm text-gray-600 mb-1">Остаток</div>
+                              <div className={`text-2xl font-bold ${
+                                categoryStats.summary.totalRemaining >= 0 ? 'text-green-600' : 'text-red-600'
+                              }`}>
+                                {categoryStats.summary.totalRemaining.toLocaleString('ru-RU')} ₽
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Карточки по категориям */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {categoryStats.categories?.map((cat: any) => (
+                      <Card key={cat.category.id} className={cat.percentage >= 100 ? 'border-red-200 bg-red-50' : ''}>
+                        <CardContent className="p-4">
+                          <h3 className="font-semibold text-gray-900 mb-3">{cat.category.name}</h3>
+                          
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Потрачено:</span>
+                              <span className="font-medium">{cat.spent.toLocaleString('ru-RU')} ₽</span>
+                            </div>
+                            
+                            {cat.hasLimit && (
+                              <>
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-gray-600">Лимит:</span>
+                                  <span className="font-medium">{cat.limit?.toLocaleString('ru-RU')} ₽</span>
+                                </div>
+                                
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-gray-600">Остаток:</span>
+                                  <span className={`font-medium ${
+                                    (cat.remaining || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                                  }`}>
+                                    {cat.remaining?.toLocaleString('ru-RU')} ₽
+                                  </span>
+                                </div>
+                                
+                                {/* Прогресс-бар */}
+                                <div className="mt-3">
+                                  <div className="flex justify-between text-xs text-gray-600 mb-1">
+                                    <span>Использовано</span>
+                                    <span>{cat.percentage.toFixed(1)}%</span>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div
+                                      className={`h-2 rounded-full transition-all ${
+                                        cat.percentage >= 100
+                                          ? 'bg-red-600'
+                                          : cat.percentage >= 90
+                                          ? 'bg-yellow-600'
+                                          : 'bg-green-600'
+                                      }`}
+                                      style={{ width: `${Math.min(cat.percentage, 100)}%` }}
+                                    />
+                                  </div>
+                                </div>
+
+                                {cat.percentage >= 100 && (
+                                  <div className="mt-2 text-xs text-red-700 bg-red-100 px-2 py-1 rounded">
+                                    ⚠️ Лимит превышен
+                                  </div>
+                                )}
+                                {cat.percentage >= 90 && cat.percentage < 100 && (
+                                  <div className="mt-2 text-xs text-yellow-700 bg-yellow-100 px-2 py-1 rounded">
+                                    ⚠️ Лимит почти исчерпан
+                                  </div>
+                                )}
+                              </>
+                            )}
+
+                            {!cat.hasLimit && (
+                              <div className="mt-2 text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                                Лимит не установлен
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {(!categoryStats.categories || categoryStats.categories.length === 0) && (
+                    <div className="text-center py-12 text-gray-500">
+                      <p>Нет данных по категориям за выбранный период</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <p>Не удалось загрузить статистику</p>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </DialogContent>
@@ -403,21 +866,41 @@ export default function InventoryFinancialReport({ objectId }: InventoryFinancia
 
   const handleSaveLimit = async (data: any) => {
     try {
-      const response = await fetch('/api/inventory/limits', {
+      // Используем новый API для лимитов по категориям
+      const payload: any = {
+        categoryId: data.categoryId,
+        amount: data.amount,
+        periodType: data.periodType,
+        isRecurring: data.isRecurring
+      };
+
+      // Добавляем поля в зависимости от типа периода
+      if (data.periodType === 'MONTHLY') {
+        payload.month = data.month;
+        payload.year = data.year;
+        if (data.endDate) {
+          payload.endDate = data.endDate;
+        }
+      } else if (data.periodType === 'SEMI_ANNUAL' || data.periodType === 'ANNUAL') {
+        payload.startDate = data.startDate;
+        payload.endDate = data.endDate;
+      }
+
+      const response = await fetch(`/api/objects/${data.objectId}/expense-limits`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(data)
+        body: JSON.stringify(payload)
       });
       
       if (response.ok) {
         fetchBalances();
-        // Закрываем модальное окно
         setEditLimitModal({isOpen: false, balance: null});
+        alert('Лимит успешно установлен');
       } else {
         const errorData = await response.json();
         console.error('Error response:', errorData);
-        alert(`Ошибка: ${errorData.error || 'Не удалось установить лимит'}`);
+        alert(`Ошибка: ${errorData.message || 'Не удалось установить лимит'}`);
       }
     } catch (error) {
       console.error('Error saving limit:', error);
@@ -436,14 +919,25 @@ export default function InventoryFinancialReport({ objectId }: InventoryFinancia
         body: JSON.stringify(data)
       });
       
+      const responseData = await response.json();
+      
       if (response.ok) {
         fetchBalances();
-        // Закрываем модальное окно
         setAddExpenseModal({isOpen: false, balance: null});
+        
+        // Показываем предупреждение если есть
+        if (responseData.warning) {
+          alert(`✅ Расход добавлен\n\n⚠️ ${responseData.warning}`);
+        } else {
+          alert('✅ Расход успешно добавлен');
+        }
       } else {
-        const errorData = await response.json();
-        console.error('Error response:', errorData);
-        alert(`Ошибка: ${errorData.error || 'Не удалось создать расход'}`);
+        console.error('Error response:', responseData);
+        if (responseData.limitExceeded) {
+          alert(`❌ Превышен лимит!\n\n${responseData.warning || responseData.message}`);
+        } else {
+          alert(`Ошибка: ${responseData.error || responseData.message || 'Не удалось создать расход'}`);
+        }
       }
     } catch (error) {
       console.error('Error saving expense:', error);
@@ -593,8 +1087,8 @@ export default function InventoryFinancialReport({ objectId }: InventoryFinancia
         </Card>
       </div>
 
-      {/* Отчет по объектам */}
-      {balances.length === 0 ? (
+          {/* Отчет по объектам */}
+          {balances.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
             <DollarSign className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -606,8 +1100,8 @@ export default function InventoryFinancialReport({ objectId }: InventoryFinancia
             </p>
           </CardContent>
         </Card>
-      ) : (
-        <div className="grid gap-4">
+          ) : (
+            <div className="grid gap-4">
           {balances.map((balance) => (
             <Card key={balance.objectId} className={balance.isOverBudget ? 'border-red-200 bg-red-50' : ''}>
               <CardContent className="p-4">

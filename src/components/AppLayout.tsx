@@ -112,7 +112,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     
     // Заместитель администратора видит все, кроме управления администраторами
     if (role === 'DEPUTY_ADMIN') {
-      return menuItem !== 'admin';
+      return menuItem !== 'admin'; // Заместитель видит все включая expense-categories
     }
     
     // Менеджер видит ограниченный набор

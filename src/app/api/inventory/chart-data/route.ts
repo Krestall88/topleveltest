@@ -55,14 +55,26 @@ export async function GET(request: NextRequest) {
       const month = targetDate.getMonth() + 1;
       const year = targetDate.getFullYear();
 
-      // Получаем лимит за месяц
-      const limit = await prisma.inventoryLimit.findFirst({
+      // Получаем лимиты по категориям за месяц (только активные категории)
+      const categoryLimits = await prisma.expenseCategoryLimit.findMany({
         where: {
           objectId,
+          category: {
+            isActive: true
+          },
+          periodType: 'MONTHLY',
           month,
           year
+        },
+        select: {
+          amount: true
         }
       });
+
+      // Суммируем лимиты по категориям
+      const limitAmount = categoryLimits.reduce((sum: number, limit: any) => 
+        sum + parseFloat(limit.amount.toString()), 0
+      );
 
       // Получаем общую сумму расходов за месяц
       const expenses = await prisma.inventoryExpense.aggregate({
@@ -103,14 +115,16 @@ export async function GET(request: NextRequest) {
         year: 'numeric' 
       });
 
+      const spentAmount = Number(expenses._sum.amount || 0);
+
       chartData.push({
         month: monthName,
         monthNumber: month,
         year: year,
-        limit: limit?.amount || 0,
-        spent: expenses._sum.amount || 0,
-        balance: (limit?.amount || 0) - (expenses._sum.amount || 0),
-        isOverBudget: (expenses._sum.amount || 0) > (limit?.amount || 0),
+        limit: limitAmount,
+        spent: spentAmount,
+        balance: limitAmount - spentAmount,
+        isOverBudget: limitAmount > 0 ? spentAmount > limitAmount : false,
         expenseDetails: expenseDetails.map(expense => ({
           amount: expense.amount,
           description: expense.description,

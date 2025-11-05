@@ -24,7 +24,7 @@ async function getUserFromCookie() {
 
     return {
       id: user.id,
-      role: user.role as 'ADMIN' | 'DEPUTY' | 'MANAGER' | 'CLIENT',
+      role: user.role as 'ADMIN' | 'DEPUTY' | 'DEPUTY_ADMIN' | 'MANAGER' | 'CLIENT',
       name: user.name,
       email: user.email
     };
@@ -40,8 +40,8 @@ export default async function ReportingPage() {
     redirect('/auth/login');
   }
 
-  // Только админы и заместители могут видеть отчетность
-  if (user.role !== 'ADMIN' && user.role !== 'DEPUTY') {
+  // Только админы, заместители и заместители администратора могут видеть отчетность
+  if (user.role !== 'ADMIN' && user.role !== 'DEPUTY' && user.role !== 'DEPUTY_ADMIN') {
     redirect('/');
   }
 

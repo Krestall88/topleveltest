@@ -29,7 +29,7 @@ interface ReportingObject {
 }
 
 interface ReportingDashboardProps {
-  userRole: 'ADMIN' | 'DEPUTY' | 'MANAGER' | 'CLIENT';
+  userRole: 'ADMIN' | 'DEPUTY' | 'DEPUTY_ADMIN' | 'MANAGER' | 'CLIENT';
   userId: string;
 }
 

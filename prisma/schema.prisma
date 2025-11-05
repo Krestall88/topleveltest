@@ -34,6 +34,7 @@ model User {
   excludedObjects          ExcludedObject[]        @relation("ExcludedObjects")
   inventoryExpenses        InventoryExpense[]      @relation("InventoryExpenses")
   setInventoryLimits       InventoryLimit[]        @relation("SetInventoryLimits")
+  setExpenseCategoryLimits ExpenseCategoryLimit[]  @relation("SetExpenseCategoryLimits")
   photoReports             PhotoReport[]
   assignedReportingTasks   ReportingTask[]         @relation("AssignedReportingTasks")
   createdReportingTasks    ReportingTask[]         @relation("CreatedReportingTasks")
@@ -77,6 +78,7 @@ model CleaningObject {
   excludedObjects             ExcludedObject?         @relation("ExcludedObjects")
   inventoryExpenses           InventoryExpense[]
   inventoryLimits             InventoryLimit[]
+  expenseCategoryLimits       ExpenseCategoryLimit[]
   objectStructures            ObjectStructure[]
   photoReports                PhotoReport[]
   reportingTasks              ReportingTask[]         @relation("ReportingTasks")
@@ -238,6 +240,47 @@ model Request {
   tasks        Task[]
 }
 
+// Справочник статей расходов
+model ExpenseCategory {
+  id          String                  @id @default(cuid())
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  name        String                  @unique
+  description String?
+  isActive    Boolean                 @default(true)
+  sortOrder   Int                     @default(0)
+  limits      ExpenseCategoryLimit[]
+  expenses    InventoryExpense[]
+
+  @@index([isActive])
+}
+
+// Лимиты по статьям расходов для объектов
+model ExpenseCategoryLimit {
+  id                String          @id @default(cuid())
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  amount            Decimal         @db.Decimal(10, 2)
+  periodType        ExpensePeriodType @default(MONTHLY)
+  month             Int?            // Для MONTHLY
+  year              Int?            // Для MONTHLY
+  isRecurring       Boolean         @default(false)
+  startDate         DateTime?       // Для SEMI_ANNUAL, ANNUAL
+  endDate           DateTime?
+  objectId          String
+  categoryId        String
+  setById           String
+  object            CleaningObject  @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  category          ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  setBy             User            @relation("SetExpenseCategoryLimits", fields: [setById], references: [id])
+
+  @@unique([objectId, categoryId, periodType, month, year])
+  @@index([objectId])
+  @@index([categoryId])
+  @@index([month, year])
+}
+
+// Старая модель для обратной совместимости (можно удалить после миграции)
 model InventoryLimit {
   id          String         @id @default(cuid())
   createdAt   DateTime       @default(now())
@@ -258,18 +301,21 @@ model InventoryLimit {
 }
 
 model InventoryExpense {
-  id           String         @id @default(cuid())
-  createdAt    DateTime       @default(now())
-  amount       Decimal        @db.Decimal(10, 2)
+  id           String          @id @default(cuid())
+  createdAt    DateTime        @default(now())
+  amount       Decimal         @db.Decimal(10, 2)
   description  String?
   month        Int
   year         Int
   objectId     String
+  categoryId   String?         // Новое поле - статья расхода
   recordedById String
-  object       CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
-  recordedBy   User           @relation("InventoryExpenses", fields: [recordedById], references: [id])
+  object       CleaningObject  @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  category     ExpenseCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  recordedBy   User            @relation("InventoryExpenses", fields: [recordedById], references: [id])
 
   @@index([objectId])
+  @@index([categoryId])
   @@index([month, year])
 }
 
@@ -560,4 +606,11 @@ enum TaskAdminCommentType {
   COMPLETION_FEEDBACK
   INSTRUCTION
   QUALITY_CHECK
+}
+
+enum ExpensePeriodType {
+  DAILY           // Ежедневный лимит
+  MONTHLY         // Ежемесячный лимит
+  SEMI_ANNUAL     // Раз в 6 месяцев
+  ANNUAL          // Годовой лимит
 }

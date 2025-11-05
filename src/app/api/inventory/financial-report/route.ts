@@ -35,29 +35,35 @@ export async function GET(request: NextRequest) {
       objectFilter.id = { in: managedObjects.map(obj => obj.id) };
     }
 
+    // Для DEPUTY_ADMIN ограничиваем доступ только к назначенным объектам
+    if (user.role === 'DEPUTY_ADMIN') {
+      const assignments = await prisma.deputyAdminAssignment.findMany({
+        where: { deputyAdminId: user.id },
+        select: { objectId: true }
+      });
+      
+      const allowedObjectIds = assignments.map(a => a.objectId);
+      
+      if (objectId && !allowedObjectIds.includes(objectId)) {
+        return NextResponse.json({ error: 'Access denied to this object' }, { status: 403 });
+      }
+      
+      if (!objectId) {
+        objectFilter.id = { in: allowedObjectIds };
+      }
+    }
+
     if (objectId) {
       objectFilter.id = objectId;
     }
 
-    // Получаем объекты с лимитами и расходами
+    // Получаем объекты с расходами
     const objects = await prisma.cleaningObject.findMany({
       where: objectFilter,
       select: {
         id: true,
         name: true,
         address: true,
-        inventoryLimits: {
-          where: {
-            month: targetMonth,
-            year: targetYear
-          },
-          select: {
-            id: true,
-            amount: true,
-            month: true,
-            year: true
-          }
-        },
         inventoryExpenses: {
           where: {
             month: targetMonth,
@@ -74,10 +80,44 @@ export async function GET(request: NextRequest) {
       orderBy: { name: 'asc' }
     });
 
-    // Формируем отчет
-    const balances = objects.map(object => {
-      const limit = object.inventoryLimits[0]; // Берем первый лимит (должен быть один на месяц)
-      const limitAmount = limit ? parseFloat(limit.amount.toString()) : 40000; // Дефолтный лимит 40000
+    // Формируем отчет с учетом лимитов по статьям
+    const balances = await Promise.all(objects.map(async (object) => {
+      // Получаем все лимиты по категориям для этого объекта (только активные категории)
+      const categoryLimits = await prisma.expenseCategoryLimit.findMany({
+        where: {
+          objectId: object.id,
+          category: {
+            isActive: true
+          },
+          OR: [
+            // MONTHLY лимиты для текущего месяца/года
+            {
+              periodType: 'MONTHLY',
+              month: targetMonth,
+              year: targetYear
+            },
+            // DAILY лимиты (всегда активны)
+            {
+              periodType: 'DAILY'
+            },
+            // SEMI_ANNUAL и ANNUAL лимиты (проверяем даты)
+            {
+              periodType: { in: ['SEMI_ANNUAL', 'ANNUAL'] },
+              startDate: { lte: new Date(targetYear, targetMonth - 1, 1) },
+              endDate: { gte: new Date(targetYear, targetMonth - 1, 1) }
+            }
+          ]
+        },
+        select: {
+          amount: true,
+          periodType: true
+        }
+      });
+
+      // Суммируем лимиты по категориям (только MONTHLY для текущего месяца)
+      const limitAmount = categoryLimits
+        .filter((limit: any) => limit.periodType === 'MONTHLY')
+        .reduce((sum: number, limit: any) => sum + parseFloat(limit.amount.toString()), 0);
 
       const totalSpent = object.inventoryExpenses.reduce((sum, expense) => 
         sum + parseFloat(expense.amount.toString()), 0
@@ -92,12 +132,12 @@ export async function GET(request: NextRequest) {
         limit: limitAmount,
         spent: totalSpent,
         balance: balance,
-        isOverBudget: balance < 0,
+        isOverBudget: limitAmount > 0 ? balance < 0 : false, // Только если есть лимит
         month: targetMonth,
         year: targetYear,
         expensesCount: object.inventoryExpenses.length
       };
-    });
+    }));
 
     return NextResponse.json(balances);
 
