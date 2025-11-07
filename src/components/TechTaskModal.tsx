@@ -202,9 +202,7 @@ export default function TechTaskModal({
       if (formData.estimatedTime) {
         payload.estimatedTime = parseInt(String(formData.estimatedTime));
       }
-      if (formData.siteId) payload.siteId = formData.siteId;
-      if (formData.zoneId) payload.zoneId = formData.zoneId;
-      if (formData.roomGroupId) payload.roomGroupId = formData.roomGroupId;
+      // Отправляем только roomId, так как siteId, zoneId, roomGroupId не существуют в схеме TechCard
       if (formData.roomId) payload.roomId = formData.roomId;
 
       const url = isEdit ? `/api/techcards/${techTask!.id}` : '/api/techcards';

@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     console.log('📥 Получены данные для создания техкарты:', body);
-    const { name, workType, frequency, description, roomId, objectId, siteId, zoneId, roomGroupId } = body;
+    const { name, workType, frequency, description, roomId, objectId } = body;
 
     if (!name || !workType || !frequency || !objectId) {
       return NextResponse.json(
@@ -135,9 +135,6 @@ export async function POST(req: NextRequest) {
         frequency,
         ...(description && { description }),
         objectId,
-        ...(siteId && { siteId }),
-        ...(zoneId && { zoneId }),
-        ...(roomGroupId && { roomGroupId }),
         ...(roomId && { roomId }),
       },
       include: {

@@ -53,7 +53,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     const { id } = await params;
     const body = await req.json();
-    const { name, workType, frequency, description, siteId, zoneId, roomGroupId, roomId } = body;
+    const { name, workType, frequency, description, roomId } = body;
 
     console.log('🔄 Обновление техкарты:', { id, name, workType, frequency });
 
@@ -64,9 +64,6 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         workType,
         frequency,
         description,
-        ...(siteId !== undefined && { siteId: siteId || null }),
-        ...(zoneId !== undefined && { zoneId: zoneId || null }),
-        ...(roomGroupId !== undefined && { roomGroupId: roomGroupId || null }),
         ...(roomId !== undefined && { roomId: roomId || null }),
       },
       include: {
