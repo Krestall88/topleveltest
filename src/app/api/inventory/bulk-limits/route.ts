@@ -4,7 +4,7 @@ import { getAuthSession } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
-// POST - массовое создание лимитов
+// POST - массовое создание лимитов по категориям
 export async function POST(request: NextRequest) {
   try {
     const session = await getAuthSession();
@@ -19,15 +19,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
-    const { amount, objectIds, isRecurring, endDate } = await request.json();
+    const { 
+      categoryId, 
+      periodType, 
+      amount, 
+      objectIds, 
+      month, 
+      year, 
+      startDate, 
+      endDate, 
+      isRecurring 
+    } = await request.json();
 
-    if (!amount || !objectIds || !Array.isArray(objectIds) || objectIds.length === 0) {
+    if (!categoryId || !periodType || !amount || !objectIds || !Array.isArray(objectIds) || objectIds.length === 0) {
       return NextResponse.json({ error: 'Invalid data' }, { status: 400 });
     }
 
-    const currentDate = new Date();
-    const month = currentDate.getMonth() + 1;
-    const year = currentDate.getFullYear();
+    // Проверяем существование категории
+    const category = await prisma.expenseCategory.findUnique({
+      where: { id: categoryId }
+    });
+
+    if (!category || !category.isActive) {
+      return NextResponse.json({ error: 'Category not found or inactive' }, { status: 400 });
+    }
 
     const results = [];
 
@@ -55,86 +70,147 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      // Создаем или обновляем лимит
-      const existingLimit = await prisma.inventoryLimit.findFirst({
-        where: {
-          objectId,
-          month,
-          year
-        }
-      });
-
-      if (existingLimit) {
-        // Обновляем существующий лимит
-        const updatedLimit = await prisma.inventoryLimit.update({
-          where: { id: existingLimit.id },
-          data: {
-            amount: amount,
-            setById: user.id
-          }
-        });
-        results.push(updatedLimit);
-      } else {
-        // Создаем новый лимит
-        const newLimit = await prisma.inventoryLimit.create({
-          data: {
-            amount: amount,
-            month,
-            year,
+      // Создаем лимит в зависимости от типа периода
+      if (periodType === 'MONTHLY') {
+        // Проверяем существующий лимит
+        const existingLimit = await prisma.expenseCategoryLimit.findFirst({
+          where: {
             objectId,
-            setById: user.id
+            categoryId,
+            periodType: 'MONTHLY',
+            month,
+            year
           }
         });
-        results.push(newLimit);
-      }
 
-      // Если включено повторение, создаем лимиты на будущие месяцы
-      if (isRecurring && endDate) {
-        const end = new Date(endDate);
-        let currentMonth = month + 1;
-        let currentYear = year;
-
-        while (
-          currentYear < end.getFullYear() || 
-          (currentYear === end.getFullYear() && currentMonth <= end.getMonth() + 1)
-        ) {
-          if (currentMonth > 12) {
-            currentMonth = 1;
-            currentYear++;
-          }
-
-          // Проверяем, нет ли уже лимита на этот месяц
-          const existingFutureLimit = await prisma.inventoryLimit.findFirst({
-            where: {
-              objectId,
-              month: currentMonth,
-              year: currentYear
+        if (existingLimit) {
+          // Обновляем
+          const updated = await prisma.expenseCategoryLimit.update({
+            where: { id: existingLimit.id },
+            data: {
+              amount: amount,
+              setById: user.id
             }
           });
+          results.push(updated);
+        } else {
+          // Создаем новый
+          const created = await prisma.expenseCategoryLimit.create({
+            data: {
+              amount: amount,
+              periodType: 'MONTHLY',
+              month,
+              year,
+              isRecurring: isRecurring || false,
+              objectId,
+              categoryId,
+              setById: user.id
+            }
+          });
+          results.push(created);
+        }
 
-          if (!existingFutureLimit) {
-            await prisma.inventoryLimit.create({
-              data: {
-                amount: amount,
-                month: currentMonth,
-                year: currentYear,
+        // Если повторяющийся, создаем на будущие месяцы
+        if (isRecurring) {
+          const currentDate = new Date();
+          const endYear = currentDate.getFullYear() + 1;
+          
+          let currentMonth = month + 1;
+          let currentYear = year;
+
+          while (currentYear <= endYear) {
+            if (currentMonth > 12) {
+              currentMonth = 1;
+              currentYear++;
+            }
+
+            const existingFuture = await prisma.expenseCategoryLimit.findFirst({
+              where: {
                 objectId,
-                setById: user.id
+                categoryId,
+                periodType: 'MONTHLY',
+                month: currentMonth,
+                year: currentYear
               }
             });
-          }
 
-          currentMonth++;
+            if (!existingFuture) {
+              await prisma.expenseCategoryLimit.create({
+                data: {
+                  amount: amount,
+                  periodType: 'MONTHLY',
+                  month: currentMonth,
+                  year: currentYear,
+                  isRecurring: true,
+                  objectId,
+                  categoryId,
+                  setById: user.id
+                }
+              });
+            }
+
+            currentMonth++;
+          }
         }
+
+      } else if (periodType === 'DAILY') {
+        // Проверяем существующий дневной лимит
+        const existingLimit = await prisma.expenseCategoryLimit.findFirst({
+          where: {
+            objectId,
+            categoryId,
+            periodType: 'DAILY'
+          }
+        });
+
+        if (existingLimit) {
+          const updated = await prisma.expenseCategoryLimit.update({
+            where: { id: existingLimit.id },
+            data: {
+              amount: amount,
+              setById: user.id
+            }
+          });
+          results.push(updated);
+        } else {
+          const created = await prisma.expenseCategoryLimit.create({
+            data: {
+              amount: amount,
+              periodType: 'DAILY',
+              objectId,
+              categoryId,
+              setById: user.id
+            }
+          });
+          results.push(created);
+        }
+
+      } else if (periodType === 'SEMI_ANNUAL' || periodType === 'ANNUAL') {
+        if (!startDate || !endDate) {
+          continue;
+        }
+
+        const created = await prisma.expenseCategoryLimit.create({
+          data: {
+            amount: amount,
+            periodType: periodType,
+            startDate: new Date(startDate),
+            endDate: new Date(endDate),
+            objectId,
+            categoryId,
+            setById: user.id
+          }
+        });
+        results.push(created);
       }
 
       // Логируем действие
       await prisma.auditLog.create({
         data: {
-          action: 'BULK_SET_INVENTORY_LIMIT',
-          entity: 'InventoryLimit',
+          action: 'BULK_SET_CATEGORY_LIMIT',
+          entity: 'ExpenseCategoryLimit',
           entityId: objectId,
-          details: `Массовое установление лимита ${amount} руб. для объекта ${object.name}${isRecurring ? ' с повторением' : ''}`,
+          details: `Массовое установление лимита ${amount} руб. для категории ${category.name} на объекте ${object.name}`,
           userId: user.id
         }
       });

@@ -30,7 +30,7 @@ export async function GET(
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
-    const objectId = params.id;
+    const { id: objectId } = await params;
 
     const structures = await prisma.objectStructure.findMany({
       where: { objectId },
@@ -55,7 +55,7 @@ export async function POST(
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
-    const objectId = params.id;
+    const { id: objectId } = await params;
     const body = await req.json();
     const { objectName, techCardName, frequency, siteName, zoneName, roomGroupName, roomName, cleaningObjectName, notes, workType, description } = body;
 

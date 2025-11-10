@@ -32,7 +32,13 @@ export async function GET(req: NextRequest) {
     const objects = await prisma.cleaningObject.findMany({
       where: accessFilter,
       include: {
-        manager: { select: { id: true, name: true } },
+        manager: { select: { id: true, name: true, role: true } },
+        sites: {
+          include: {
+            manager: { select: { id: true, name: true, role: true } },
+            seniorManager: { select: { id: true, name: true, role: true } }
+          }
+        },
         rooms: true,
         techCards: true,
         _count: {

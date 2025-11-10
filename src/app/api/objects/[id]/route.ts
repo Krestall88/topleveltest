@@ -28,7 +28,10 @@ export async function GET(req: NextRequest, { params }: Params) {
         sites: {
           include: {
             manager: {
-              select: { id: true, name: true, email: true }
+              select: { id: true, name: true, email: true, role: true }
+            },
+            seniorManager: {
+              select: { id: true, name: true, email: true, role: true }
             },
             zones: {
               include: {
@@ -217,13 +220,70 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 // DELETE /api/objects/[id] - Удалить объект
 export async function DELETE(req: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
+    
+    console.log(`🗑️  Начинаем удаление объекта: ${id}`);
+    
+    // Удаляем связанные данные в правильном порядке
+    // 1. Техкарты
+    const techCardsCount = await prisma.techCard.deleteMany({ where: { objectId: id } });
+    console.log(`   ✅ Удалено техкарт: ${techCardsCount.count}`);
+    
+    // 2. Объекты уборки (через помещения)
+    const rooms = await prisma.room.findMany({ where: { objectId: id }, select: { id: true } });
+    for (const room of rooms) {
+      await prisma.cleaningObjectItem.deleteMany({ where: { roomId: room.id } });
+    }
+    console.log(`   ✅ Удалено объектов уборки`);
+    
+    // 3. Помещения
+    const roomsCount = await prisma.room.deleteMany({ where: { objectId: id } });
+    console.log(`   ✅ Удалено помещений: ${roomsCount.count}`);
+    
+    // 4. Группы помещений (через зоны через участки)
+    const sites = await prisma.site.findMany({ where: { objectId: id }, include: { zones: { include: { roomGroups: true } } } });
+    for (const site of sites) {
+      for (const zone of site.zones) {
+        await prisma.roomGroup.deleteMany({ where: { zoneId: zone.id } });
+      }
+      await prisma.zone.deleteMany({ where: { siteId: site.id } });
+    }
+    console.log(`   ✅ Удалено групп и зон`);
+    
+    // 5. Участки
+    const sitesCount = await prisma.site.deleteMany({ where: { objectId: id } });
+    console.log(`   ✅ Удалено участков: ${sitesCount.count}`);
+    
+    // 6. Остальные связанные данные
+    await prisma.checklist.deleteMany({ where: { objectId: id } });
+    await prisma.request.deleteMany({ where: { objectId: id } });
+    await prisma.additionalTask.deleteMany({ where: { objectId: id } });
+    await prisma.objectStructure.deleteMany({ where: { objectId: id } });
+    await prisma.photoReport.deleteMany({ where: { objectId: id } });
+    await prisma.taskExecution.deleteMany({ where: { objectId: id } });
+    await prisma.reportingTask.deleteMany({ where: { objectId: id } });
+    await prisma.inventoryExpense.deleteMany({ where: { objectId: id } });
+    await prisma.inventoryLimit.deleteMany({ where: { objectId: id } });
+    await prisma.expenseCategoryLimit.deleteMany({ where: { objectId: id } });
+    await prisma.clientBinding.deleteMany({ where: { objectId: id } });
+    await prisma.deputyAdminAssignment.deleteMany({ where: { objectId: id } });
+    await prisma.excludedObject.deleteMany({ where: { objectId: id } });
+    console.log(`   ✅ Удалены остальные связанные данные`);
+    
+    // 7. Сам объект
     await prisma.cleaningObject.delete({
-      where: { id: params.id },
+      where: { id },
     });
+    
+    console.log(`✅ Объект ${id} успешно удален`);
 
     return new NextResponse(null, { status: 204 }); // No Content
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ message: 'Не удалось удалить объект' }, { status: 500 });
+  } catch (error: any) {
+    console.error('❌ Ошибка удаления объекта:', error);
+    console.error('   Детали:', error.message);
+    return NextResponse.json({ 
+      message: 'Не удалось удалить объект', 
+      error: error.message 
+    }, { status: 500 });
   }
 }

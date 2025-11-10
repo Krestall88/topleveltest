@@ -11,13 +11,14 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     const session = await getAuthSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const site = await prisma.site.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         object: {
           select: {
@@ -65,6 +66,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     const session = await getAuthSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -80,14 +82,15 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { name, description, area, managerId } = body;
+    const { name, description, area, managerId, seniorManagerId } = body;
 
     // Проверяем существование участка
     const existingSite = await prisma.site.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         object: { select: { name: true } },
-        manager: { select: { name: true } }
+        manager: { select: { name: true } },
+        seniorManager: { select: { name: true } }
       }
     });
 
@@ -109,13 +112,28 @@ export async function PUT(
       }
     }
 
+    // Проверяем старшего менеджера, если указан
+    if (seniorManagerId) {
+      const seniorManager = await prisma.user.findUnique({
+        where: { id: seniorManagerId, role: 'SENIOR_MANAGER' }
+      });
+
+      if (!seniorManager) {
+        return NextResponse.json(
+          { error: 'Senior manager not found' },
+          { status: 404 }
+        );
+      }
+    }
+
     const updatedSite = await prisma.site.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name: name || existingSite.name,
         description,
         area: area ? parseFloat(area) : null,
-        managerId
+        managerId,
+        seniorManagerId
       },
       include: {
         object: {
@@ -150,7 +168,7 @@ export async function PUT(
         userId: session.user.id,
         action: 'UPDATE_SITE',
         entity: 'SITE',
-        entityId: params.id,
+        entityId: id,
         details: `Обновлен участок: ${updatedSite.name}${changes.length > 0 ? ` (${changes.join(', ')})` : ''}`
       }
     });
@@ -178,7 +196,7 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { name, description, area, comment, managerId } = body;
+    const { name, description, area, comment, managerId, seniorManagerId } = body;
 
     const updatedSite = await prisma.site.update({
       where: { id },
@@ -187,7 +205,8 @@ export async function PATCH(
         description,
         area: area ? parseFloat(area) : null,
         comment,
-        managerId: managerId || null,
+        managerId: managerId !== undefined ? managerId : undefined,
+        seniorManagerId: seniorManagerId !== undefined ? seniorManagerId : undefined,
       },
       include: {
         manager: {
@@ -217,6 +236,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = await params;
     const session = await getAuthSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -233,7 +253,7 @@ export async function DELETE(
 
     // Проверяем существование участка
     const site = await prisma.site.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         object: { select: { name: true } },
         zones: { select: { id: true } }
@@ -253,7 +273,7 @@ export async function DELETE(
     }
 
     await prisma.site.delete({
-      where: { id: params.id }
+      where: { id }
     });
 
     // Логируем в аудит
@@ -262,7 +282,7 @@ export async function DELETE(
         userId: session.user.id,
         action: 'DELETE_SITE',
         entity: 'SITE',
-        entityId: params.id,
+        entityId: id,
         details: `Удален участок: ${site.name} объекта ${site.object.name}`
       }
     });

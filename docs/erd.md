@@ -5,6 +5,7 @@ erDiagram
             ADMIN ADMIN
 DEPUTY DEPUTY
 MANAGER MANAGER
+SENIOR_MANAGER SENIOR_MANAGER
 CLIENT CLIENT
 DEPUTY_ADMIN DEPUTY_ADMIN
 ACCOUNTANT ACCOUNTANT
@@ -437,6 +438,7 @@ ANNUAL ANNUAL
     "User" o{--}o "ReportingTask" : "createdReportingTasks"
     "User" o{--}o "Request" : "createdRequests"
     "User" o{--}o "Site" : "managedSites"
+    "User" o{--}o "Site" : "seniorManagedSites"
     "User" o{--}o "Task" : "completedTasks"
     "User" o{--}o "TaskExecution" : "taskExecutions"
     "User" o{--}o "notifications" : "notifications"
@@ -468,6 +470,7 @@ ANNUAL ANNUAL
     "Room" o{--}o "Task" : "tasks"
     "Room" o{--}o "TechCard" : "techCards"
     "Site" o|--|o "User" : "manager"
+    "Site" o|--|o "User" : "seniorManager"
     "Site" o|--|| "CleaningObject" : "object"
     "Site" o{--}o "Zone" : "zones"
     "Zone" o{--}o "RoomGroup" : "roomGroups"

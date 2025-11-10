@@ -29,7 +29,7 @@ async function getUserFromToken(request: NextRequest) {
 // GET /api/objects/[id]/expense-limits - Получить лимиты объекта
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUserFromToken(request);
@@ -38,7 +38,7 @@ export async function GET(
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id: objectId } = params;
+    const { id: objectId } = await params;
 
     // Проверяем доступ к объекту
     const object = await prisma.cleaningObject.findUnique({
@@ -85,7 +85,7 @@ export async function GET(
 // POST /api/objects/[id]/expense-limits - Создать лимит (только админ)
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUserFromToken(request);
@@ -94,8 +94,14 @@ export async function POST(
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
-    const { id: objectId } = params;
+    const { id: objectId } = await params;
     const body = await request.json();
+    
+    console.log('📥 Получен запрос на создание лимита:', {
+      objectId,
+      body
+    });
+    
     const {
       categoryId,
       amount,
@@ -109,6 +115,7 @@ export async function POST(
 
     // Валидация
     if (!categoryId || !amount || !periodType) {
+      console.log('❌ Валидация не прошла: отсутствуют обязательные поля');
       return NextResponse.json(
         { message: 'Category, amount and period type are required' },
         { status: 400 }
@@ -147,26 +154,27 @@ export async function POST(
       );
     }
 
-    if ((periodType === 'SEMI_ANNUAL' || periodType === 'ANNUAL') && !startDate) {
-      return NextResponse.json(
-        { message: 'Start date is required for SEMI_ANNUAL and ANNUAL periods' },
-        { status: 400 }
-      );
-    }
+    // Для SEMI_ANNUAL и ANNUAL startDate и endDate опциональны
+    // Если не переданы, они будут null в базе
+    // (фронтенд теперь всегда передает их)
+
+    const limitData = {
+      objectId,
+      categoryId,
+      amount,
+      periodType,
+      month: periodType === 'MONTHLY' ? month : null,
+      year: periodType === 'MONTHLY' ? year : null,
+      startDate: startDate ? new Date(startDate) : null,
+      endDate: endDate ? new Date(endDate) : null,
+      isRecurring: isRecurring || false,
+      setById: user.id
+    };
+
+    console.log('💾 Создаем лимит с данными:', limitData);
 
     const limit = await prisma.expenseCategoryLimit.create({
-      data: {
-        objectId,
-        categoryId,
-        amount,
-        periodType,
-        month: periodType === 'MONTHLY' ? month : null,
-        year: periodType === 'MONTHLY' ? year : null,
-        startDate: startDate ? new Date(startDate) : null,
-        endDate: endDate ? new Date(endDate) : null,
-        isRecurring: isRecurring || false,
-        setById: user.id
-      },
+      data: limitData,
       include: {
         category: true,
         setBy: {
@@ -174,6 +182,8 @@ export async function POST(
         }
       }
     });
+
+    console.log('✅ Лимит успешно создан:', limit);
 
     return NextResponse.json({ limit }, { status: 201 });
   } catch (error: any) {

@@ -31,13 +31,68 @@ export async function getUserAccessibleObjects(user: User): Promise<string[]> {
       return assignments.map(assignment => assignment.objectId);
     }
 
-    // Менеджер видит только свои объекты
-    if (role === 'MANAGER') {
-      const managedObjects = await prisma.cleaningObject.findMany({
+    // Старший менеджер видит:
+    // 1. Объекты, где он назначен как manager
+    // 2. Объекты, где он назначен как seniorManager на участках
+    // 3. Все объекты, где есть обычные менеджеры (для контроля)
+    if (role === 'SENIOR_MANAGER') {
+      // Объекты, где старший менеджер назначен напрямую
+      const directObjects = await prisma.cleaningObject.findMany({
         where: { managerId: userId },
         select: { id: true }
       });
-      return managedObjects.map(obj => obj.id);
+      
+      // Объекты, где старший менеджер назначен на участки
+      const sitesWithSeniorManager = await prisma.site.findMany({
+        where: { 
+          OR: [
+            { managerId: userId },
+            { seniorManagerId: userId }
+          ]
+        },
+        select: { objectId: true }
+      });
+      
+      // Все объекты с обычными менеджерами (для контроля старшим менеджером)
+      const allManagedObjects = await prisma.cleaningObject.findMany({
+        where: {
+          OR: [
+            { manager: { role: 'MANAGER' } },
+            { sites: { some: { manager: { role: 'MANAGER' } } } }
+          ]
+        },
+        select: { id: true }
+      });
+      
+      const allObjectIds = [
+        ...directObjects.map(obj => obj.id),
+        ...sitesWithSeniorManager.map(site => site.objectId),
+        ...allManagedObjects.map(obj => obj.id)
+      ];
+      
+      return [...new Set(allObjectIds)]; // Убираем дубликаты
+    }
+
+    // Обычный менеджер видит только свои объекты
+    if (role === 'MANAGER') {
+      // Объекты, где менеджер назначен напрямую
+      const directObjects = await prisma.cleaningObject.findMany({
+        where: { managerId: userId },
+        select: { id: true }
+      });
+      
+      // Объекты, где менеджер назначен на участки
+      const sitesWithManager = await prisma.site.findMany({
+        where: { managerId: userId },
+        select: { objectId: true }
+      });
+      
+      const allObjectIds = [
+        ...directObjects.map(obj => obj.id),
+        ...sitesWithManager.map(site => site.objectId)
+      ];
+      
+      return [...new Set(allObjectIds)]; // Убираем дубликаты
     }
 
     // Бухгалтер и другие роли не имеют доступа к объектам

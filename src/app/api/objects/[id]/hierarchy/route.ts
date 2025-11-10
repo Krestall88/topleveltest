@@ -39,16 +39,57 @@ export async function GET(req: NextRequest, { params }: Params) {
     // Получаем помещения с техкартами
     const directRooms = await prisma.room.findMany({
       where: { 
-        objectId: id
+        objectId: id,
+        NOT: { name: { contains: '__VIRTUAL__' } }
       },
       include: {
-        techCards: true
+        techCards: true,
+        cleaningObjects: {
+          include: {
+            techCards: true
+          }
+        }
       },
       orderBy: { name: 'asc' }
     });
 
-    // Пока возвращаем пустые массивы для участков (пока не исправим Prisma)
-    const sites: any[] = [];
+    // Получаем участки с полной иерархией (исключаем виртуальные)
+    const sites = await prisma.site.findMany({
+      where: { 
+        objectId: id,
+        NOT: { name: { contains: '__VIRTUAL__' } }
+      },
+      include: {
+        zones: {
+          where: {
+            NOT: { name: { contains: '__VIRTUAL__' } }
+          },
+          include: {
+            roomGroups: {
+              where: {
+                NOT: { name: { contains: '__VIRTUAL__' } }
+              },
+              include: {
+                rooms: {
+                  where: {
+                    NOT: { name: { contains: '__VIRTUAL__' } }
+                  },
+                  include: {
+                    techCards: true,
+                    cleaningObjects: {
+                      include: {
+                        techCards: true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      orderBy: { name: 'asc' }
+    });
 
     const hierarchyData = {
       ...object,

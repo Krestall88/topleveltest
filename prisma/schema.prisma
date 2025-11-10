@@ -40,6 +40,7 @@ model User {
   createdReportingTasks    ReportingTask[]         @relation("CreatedReportingTasks")
   createdRequests          Request[]
   managedSites             Site[]                  @relation("SiteManager")
+  seniorManagedSites       Site[]                  @relation("SiteSeniorManager")
   completedTasks           Task[]
   taskExecutions           TaskExecution[]         @relation("TaskExecutions")
   notifications            Notification[]
@@ -106,17 +107,19 @@ model Room {
 }
 
 model Site {
-  id          String         @id @default(cuid())
-  createdAt   DateTime       @default(now())
-  name        String
-  description String?
-  area        Float?
-  objectId    String
-  managerId   String?
-  comment     String?
-  manager     User?          @relation("SiteManager", fields: [managerId], references: [id])
-  object      CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
-  zones       Zone[]
+  id               String         @id @default(cuid())
+  createdAt        DateTime       @default(now())
+  name             String
+  description      String?
+  area             Float?
+  objectId         String
+  managerId        String?
+  seniorManagerId  String?
+  comment          String?
+  manager          User?          @relation("SiteManager", fields: [managerId], references: [id])
+  seniorManager    User?          @relation("SiteSeniorManager", fields: [seniorManagerId], references: [id])
+  object           CleaningObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  zones            Zone[]
 }
 
 model Zone {
@@ -552,6 +555,7 @@ enum Role {
   ADMIN
   DEPUTY
   MANAGER
+  SENIOR_MANAGER
   CLIENT
   DEPUTY_ADMIN
   ACCOUNTANT

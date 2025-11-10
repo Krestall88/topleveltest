@@ -100,11 +100,11 @@ export async function GET(request: NextRequest) {
             {
               periodType: 'DAILY'
             },
-            // SEMI_ANNUAL и ANNUAL лимиты (проверяем даты)
+            // SEMI_ANNUAL и ANNUAL лимиты (проверяем пересечение с месяцем)
             {
               periodType: { in: ['SEMI_ANNUAL', 'ANNUAL'] },
-              startDate: { lte: new Date(targetYear, targetMonth - 1, 1) },
-              endDate: { gte: new Date(targetYear, targetMonth - 1, 1) }
+              startDate: { lte: new Date(targetYear, targetMonth, 0, 23, 59, 59) }, // конец месяца
+              endDate: { gte: new Date(targetYear, targetMonth - 1, 1) } // начало месяца
             }
           ]
         },
@@ -114,10 +114,26 @@ export async function GET(request: NextRequest) {
         }
       });
 
-      // Суммируем лимиты по категориям (только MONTHLY для текущего месяца)
-      const limitAmount = categoryLimits
-        .filter((limit: any) => limit.periodType === 'MONTHLY')
-        .reduce((sum: number, limit: any) => sum + parseFloat(limit.amount.toString()), 0);
+      // Суммируем ВСЕ лимиты по категориям, приводя к месячному эквиваленту
+      const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
+      const limitAmount = categoryLimits.reduce((sum: number, limit: any) => {
+        const amount = parseFloat(limit.amount.toString());
+        
+        if (limit.periodType === 'MONTHLY') {
+          return sum + amount;
+        } else if (limit.periodType === 'DAILY') {
+          // Ежедневный лимит * количество дней в месяце
+          return sum + (amount * daysInMonth);
+        } else if (limit.periodType === 'SEMI_ANNUAL') {
+          // Полугодовой лимит / 6 месяцев
+          return sum + (amount / 6);
+        } else if (limit.periodType === 'ANNUAL') {
+          // Годовой лимит / 12 месяцев
+          return sum + (amount / 12);
+        }
+        
+        return sum;
+      }, 0);
 
       const totalSpent = object.inventoryExpenses.reduce((sum, expense) => 
         sum + parseFloat(expense.amount.toString()), 0

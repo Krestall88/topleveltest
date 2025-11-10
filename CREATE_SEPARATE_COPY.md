@@ -1,0 +1,435 @@
+# 📦 СОЗДАНИЕ ОТДЕЛЬНОЙ ПРЕЗЕНТАЦИОННОЙ КОПИИ ПРОЕКТА
+
+## 🎯 ЦЕЛЬ
+Создать **полностью независимую копию** проекта, которая:
+- ✅ Работает с отдельной базой данных Supabase
+- ✅ Не влияет на текущий рабочий проект
+- ✅ Может быть открыта как отдельный проект в VS Code
+- ✅ Готова к деплою на Vercel
+
+---
+
+## 📋 ШАГ 1: СОЗДАНИЕ КОПИИ ПРОЕКТА
+
+### 👉 ВЫ ДЕЛАЕТЕ:
+
+1. **Откройте терминал** в папке `C:\Users\Тайм\Documents\`
+
+2. **Создайте копию проекта:**
+   ```bash
+   # Копируем весь проект в новую папку
+   xcopy toplevel toplevel-presentation /E /I /H
+   ```
+
+3. **Дождитесь завершения копирования** (может занять 1-2 минуты)
+
+4. **Проверьте результат:**
+   - Должна появиться папка `C:\Users\Тайм\Documents\toplevel-presentation`
+   - В ней должны быть все файлы проекта
+
+---
+
+## 🧹 ШАГ 2: ОЧИСТКА КОПИИ
+
+### 👉 ВЫ ДЕЛАЕТЕ:
+
+1. **Перейдите в папку презентационной копии:**
+   ```bash
+   cd toplevel-presentation
+   ```
+
+2. **Удалите node_modules (будем переустанавливать):**
+   ```powershell
+   # Для PowerShell используйте:
+   Remove-Item -Recurse -Force node_modules
+   ```
+
+3. **Удалите старые .env файлы:**
+   ```powershell
+   Remove-Item .env -ErrorAction SilentlyContinue
+   Remove-Item .env.local -ErrorAction SilentlyContinue
+   ```
+
+4. **Удалите папку .next (кеш):**
+   ```powershell
+   Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue
+   ```
+
+5. **Удалите лишние файлы документации:**
+   ```powershell
+   Remove-Item CHANGELOG-DEPUTY-FIXES.md -ErrorAction SilentlyContinue
+   Remove-Item BULK_LIMITS_REDESIGN.md -ErrorAction SilentlyContinue
+   Remove-Item CLEANUP_OCTOBER_DATA.md -ErrorAction SilentlyContinue
+   Remove-Item MULTIPLE_LIMITS_GUIDE.md -ErrorAction SilentlyContinue
+   Remove-Item FINAL_INSTRUCTIONS.md -ErrorAction SilentlyContinue
+   Remove-Item ADDITIONAL_TASKS_IMPLEMENTATION.md -ErrorAction SilentlyContinue
+   ```
+
+---
+
+## 🔧 ШАГ 3: СОЗДАНИЕ ПРОЕКТА В SUPABASE
+
+### 👉 ВЫ ДЕЛАЕТЕ:
+
+1. **Откройте браузер** и перейдите на [app.supabase.com](https://app.supabase.com)
+
+2. **Создайте новый проект:**
+   - Нажмите **"New Project"**
+   - Name: `toplevel-presentation`
+   - Database Password: **[ПРИДУМАЙТЕ И СОХРАНИТЕ ПАРОЛЬ]**
+   - Region: Выберите ближайший регион
+   - Нажмите **"Create new project"**
+
+3. **Дождитесь создания** (2-3 минуты)
+
+---
+
+## 🔑 ШАГ 4: ПОЛУЧЕНИЕ КЛЮЧЕЙ SUPABASE
+
+### 👉 ВЫ ДЕЛАЕТЕ:
+
+1. **Перейдите в Settings → API**
+
+2. **Скопируйте и сохраните:**
+   ```
+   Project URL: https://xxxxxxxxxx.supabase.co
+   anon public key: eyJhbGciOi...
+   service_role key: eyJhbGciOi... (нажмите Reveal)
+   ```
+
+3. **Перейдите в Settings → Database**
+
+4. **Скопируйте Connection string (URI):**
+   ```
+   postgresql://postgres:[YOUR-PASSWORD]@db.xxx.supabase.co:5432/postgres
+   ```
+
+5. **ВАЖНО:** Замените `[YOUR-PASSWORD]` на ваш реальный пароль из Шага 3
+
+---
+
+## ⚙️ ШАГ 5: НАСТРОЙКА ПЕРЕМЕННЫХ ОКРУЖЕНИЯ
+
+### 👉 ВЫ ДЕЛАЕТЕ:
+
+1. **Убедитесь что вы в папке `toplevel-presentation`:**
+   ```bash
+   cd C:\Users\Тайм\Documents\toplevel-presentation
+   ```
+
+2. **Скопируйте шаблон:**
+   ```bash
+   copy env.presentation.example .env.local
+   ```
+
+3. **Откройте `.env.local` в редакторе**
+
+4. **Вставьте ваши ключи из Supabase:**
+   ```env
+   DATABASE_URL="postgresql://postgres:ВАШ_ПАРОЛЬ@db.xxx.supabase.co:5432/postgres"
+   NEXT_PUBLIC_SUPABASE_URL="https://xxxxxxxxxx.supabase.co"
+   NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOi..."
+   SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOi..."
+   NEXTAUTH_URL="http://localhost:3000"
+   ```
+
+5. **Сгенерируйте секретные ключи:**
+   ```bash
+   openssl rand -base64 32
+   ```
+   
+6. **Вставьте результат в `.env.local`:**
+   ```env
+   NEXTAUTH_SECRET="вставьте_сгенерированный_ключ"
+   JWT_SECRET="вставьте_тот_же_ключ"
+   ```
+
+7. **Сохраните файл**
+
+---
+
+## 📦 ШАГ 6: УСТАНОВКА ЗАВИСИМОСТЕЙ
+
+### 👉 ВЫ ДЕЛАЕТЕ:
+
+1. **Убедитесь что вы в папке `toplevel-presentation`:**
+   ```bash
+   cd C:\Users\Тайм\Documents\toplevel-presentation
+   ```
+
+2. **Установите все зависимости:**
+   ```bash
+   npm install
+   ```
+
+3. **Установите faker для тестовых данных:**
+   ```bash
+   npm install @faker-js/faker --save-dev
+   ```
+
+4. **Дождитесь завершения** (может занять 2-3 минуты)
+
+---
+
+## 🗄️ ШАГ 7: СОЗДАНИЕ СТРУКТУРЫ БД
+
+### 👉 ВЫ ДЕЛАЕТЕ:
+
+1. **Сгенерируйте Prisma Client:**
+   ```bash
+   npx prisma generate
+   ```
+
+2. **Примените схему к Supabase:**
+   ```bash
+   npx prisma db push
+   ```
+
+3. **Дождитесь сообщения:**
+   ```
+   Your database is now in sync with your Prisma schema.
+   ```
+
+---
+
+## 🧪 ШАГ 8: ЗАПОЛНЕНИЕ ТЕСТОВЫМИ ДАННЫМИ
+
+### 👉 ВЫ ДЕЛАЕТЕ:
+
+1. **Запустите скрипт генерации данных:**
+   ```bash
+   npx tsx scripts/seed-presentation.ts
+   ```
+
+2. **Дождитесь завершения** (30-60 секунд)
+
+3. **Проверьте результат:**
+   - Должна появиться статистика созданных данных
+   - Список учетных записей
+
+---
+
+## 🚀 ШАГ 9: ЗАПУСК ПРЕЗЕНТАЦИОННОЙ КОПИИ
+
+### 👉 ВЫ ДЕЛАЕТЕ:
+
+1. **Запустите dev сервер:**
+   ```bash
+   npm run dev
+   ```
+
+2. **Откройте браузер:**
+   ```
+   http://localhost:3000
+   ```
+
+3. **Войдите в систему:**
+   ```
+   Email: admin@example.com
+   Пароль: password123
+   ```
+
+---
+
+## 💻 ШАГ 10: ОТКРЫТИЕ КАК ОТДЕЛЬНЫЙ ПРОЕКТ В VS CODE
+
+### 👉 ВЫ ДЕЛАЕТЕ:
+
+### Вариант 1: Открыть в новом окне VS Code
+
+1. **Откройте новое окно VS Code** (File → New Window)
+
+2. **Откройте папку:**
+   - File → Open Folder
+   - Выберите `C:\Users\Тайм\Documents\toplevel-presentation`
+
+3. **Готово!** Теперь у вас два независимых окна:
+   - Окно 1: `toplevel` (рабочий проект)
+   - Окно 2: `toplevel-presentation` (презентационная копия)
+
+### Вариант 2: Добавить в workspace
+
+1. **В текущем VS Code:**
+   - File → Add Folder to Workspace
+   - Выберите `C:\Users\Тайм\Documents\toplevel-presentation`
+
+2. **Сохраните workspace:**
+   - File → Save Workspace As
+   - Имя: `toplevel-both.code-workspace`
+
+---
+
+## 📤 ШАГ 11: ДЕПЛОЙ НА VERCEL (ОПЦИОНАЛЬНО)
+
+### 👉 ВЫ ДЕЛАЕТЕ:
+
+1. **Убедитесь что вы в папке `toplevel-presentation`:**
+   ```bash
+   cd C:\Users\Тайм\Documents\toplevel-presentation
+   ```
+
+2. **Инициализируйте git (если нужно):**
+   ```bash
+   git init
+   git add .
+   git commit -m "Initial commit - presentation copy"
+   ```
+
+3. **Установите Vercel CLI:**
+   ```bash
+   npm install -g vercel
+   ```
+
+4. **Войдите в Vercel:**
+   ```bash
+   vercel login
+   ```
+
+5. **Разверните проект:**
+   ```bash
+   vercel
+   ```
+
+6. **Следуйте инструкциям в терминале**
+
+7. **Добавьте переменные окружения в Vercel:**
+   - Перейдите на [vercel.com](https://vercel.com)
+   - Откройте ваш проект
+   - Settings → Environment Variables
+   - Добавьте все переменные из `.env.local`
+
+8. **Обновите URL в Supabase:**
+   - Вернитесь в Supabase
+   - Authentication → URL Configuration
+   - Site URL: `https://ваш-проект.vercel.app`
+   - Redirect URLs: `https://ваш-проект.vercel.app/**`
+
+---
+
+## 📊 ИТОГОВАЯ СТРУКТУРА
+
+После выполнения всех шагов у вас будет:
+
+```
+C:\Users\Тайм\Documents\
+├── toplevel\                          ← Рабочий проект
+│   ├── .env.local                     ← Подключен к ТЕКУЩЕЙ БД
+│   ├── node_modules\
+│   └── ...
+│
+└── toplevel-presentation\             ← Презентационная копия
+    ├── .env.local                     ← Подключен к НОВОЙ БД Supabase
+    ├── node_modules\
+    └── ...
+```
+
+### Два независимых проекта:
+- ✅ **toplevel** - работаете для заказчика
+- ✅ **toplevel-presentation** - презентация, можно деплоить
+
+---
+
+## 🎓 УЧЕТНЫЕ ЗАПИСИ ПРЕЗЕНТАЦИОННОЙ КОПИИ
+
+```
+АДМИНИСТРАТОР:
+Email: admin@example.com
+Пароль: password123
+
+ЗАМЕСТИТЕЛЬ:
+Email: deputy@example.com
+Пароль: password123
+
+БУХГАЛТЕР:
+Email: accountant@example.com
+Пароль: password123
+
+МЕНЕДЖЕРЫ:
+Email: manager1@example.com (до manager4)
+Пароль: password123
+```
+
+---
+
+## ✅ ПРОВЕРКА ЧТО ВСЁ РАБОТАЕТ
+
+### Рабочий проект (toplevel):
+```bash
+cd C:\Users\Тайм\Documents\toplevel
+npm run dev
+# Откроется на http://localhost:3000
+# Подключен к вашей рабочей БД
+```
+
+### Презентационная копия (toplevel-presentation):
+```bash
+cd C:\Users\Тайм\Documents\toplevel-presentation
+npm run dev
+# Откроется на http://localhost:3000
+# Подключен к Supabase (тестовые данные)
+```
+
+**ВАЖНО:** Запускайте только один проект одновременно (оба используют порт 3000)!
+
+Или измените порт для презентационной копии:
+```bash
+# В toplevel-presentation
+npm run dev -- -p 3001
+# Откроется на http://localhost:3001
+```
+
+---
+
+## 🆘 ЧАСТЫЕ ВОПРОСЫ
+
+### Как переключаться между проектами?
+```bash
+# Остановите текущий сервер (Ctrl+C)
+# Перейдите в нужную папку
+cd C:\Users\Тайм\Documents\toplevel              # Рабочий
+cd C:\Users\Тайм\Documents\toplevel-presentation # Презентация
+# Запустите
+npm run dev
+```
+
+### Можно ли запустить оба проекта одновременно?
+Да! Используйте разные порты:
+```bash
+# Терминал 1 - Рабочий проект
+cd toplevel
+npm run dev
+
+# Терминал 2 - Презентация
+cd toplevel-presentation
+npm run dev -- -p 3001
+```
+
+### Как обновить презентационную копию если изменился код?
+```bash
+# В папке toplevel-presentation
+git pull origin main  # Если используете git
+# Или скопируйте измененные файлы вручную
+# Потом:
+npm install
+npx prisma generate
+npx prisma db push
+```
+
+### Как очистить и пересоздать тестовые данные?
+```bash
+cd toplevel-presentation
+npx tsx scripts/seed-presentation.ts
+# Скрипт сам очистит старые данные и создаст новые
+```
+
+---
+
+## 🎉 ГОТОВО!
+
+Теперь у вас есть:
+- ✅ Рабочий проект для заказчика
+- ✅ Независимая презентационная копия
+- ✅ Возможность работать с обоими проектами
+- ✅ Готовность к деплою на Vercel
+
+**Удачи с презентацией!** 🚀

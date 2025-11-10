@@ -261,7 +261,7 @@ export default function SimpleExcelUpload({ onImportComplete }: SimpleExcelUploa
               </div>
 
               {/* Дополнительная статистика */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3 pt-3 border-t">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-3 pt-3 border-t">
                 <div className="text-center">
                   <div className="text-lg font-bold text-indigo-600">
                     {result.data?.summary?.totalStructures?.sites || 0}
@@ -278,7 +278,13 @@ export default function SimpleExcelUpload({ onImportComplete }: SimpleExcelUploa
                   <div className="text-lg font-bold text-teal-600">
                     {result.data?.summary?.totalStructures?.roomGroups || 0}
                   </div>
-                  <div className="text-xs text-gray-500">Групп помещений</div>
+                  <div className="text-xs text-gray-500">Групп</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-amber-600">
+                    {result.data?.summary?.totalStructures?.cleaningItems || 0}
+                  </div>
+                  <div className="text-xs text-gray-500">Объектов уборки</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-red-600">
@@ -318,8 +324,8 @@ export default function SimpleExcelUpload({ onImportComplete }: SimpleExcelUploa
                               <div>🏢 Зон: {obj.structure.zones}</div>
                               <div>🏠 Групп: {obj.structure.roomGroups}</div>
                               <div>🚪 Помещений: {obj.structure.rooms}</div>
+                              <div>🧹 Объектов уборки: {obj.structure.cleaningItems || 0}</div>
                               <div>📋 Техкарт: {obj.structure.techCards}</div>
-                              <div>🔗 Привязок: {obj.structure.roomTechCards}</div>
                             </div>
                           </div>
                         )}

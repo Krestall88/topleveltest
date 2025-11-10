@@ -38,24 +38,8 @@ export default function DynamicObjectTree({ objectId, onSelectTechTasks }: Dynam
 
       if (result.success) {
         setTreeData(result.data);
-        // Автоматически раскрываем первые 3 уровня для лучшего отображения
-        const keysToExpand = new Set<string>();
-        
-        const expandRecursively = (nodes: TreeNode[], level: number = 0) => {
-          if (level >= 3) return; // Раскрываем только первые 3 уровня
-          
-          nodes.forEach(node => {
-            const nodeKey = `${node.type}:${node.name}`;
-            keysToExpand.add(nodeKey);
-            
-            if (node.children && node.children.length > 0) {
-              expandRecursively(node.children, level + 1);
-            }
-          });
-        };
-        
-        expandRecursively(result.data);
-        setExpandedNodes(keysToExpand);
+        // По умолчанию все свернуто - пользователь сам раскрывает нужное
+        setExpandedNodes(new Set<string>());
       } else {
         setError(result.error || 'Failed to load tree data');
       }
@@ -137,6 +121,11 @@ export default function DynamicObjectTree({ objectId, onSelectTechTasks }: Dynam
     return techTasks;
   };
 
+  // Проверяем, содержит ли узел техкарты НЕПОСРЕДСТВЕННО (не вложенные глубже)
+  const hasDirectTechCards = (node: TreeNode): boolean => {
+    return node.children?.some(child => child.type === 'techCard') || false;
+  };
+
   // Обработка клика по узлу
   const handleNodeClick = (node: TreeNode, event: React.MouseEvent) => {
     event.stopPropagation();
@@ -155,13 +144,26 @@ export default function DynamicObjectTree({ objectId, onSelectTechTasks }: Dynam
         period: node.period
       };
       onSelectTechTasks([techTask], `Техзадание: ${node.name}`);
-    } else {
-      // Клик по группе - показываем все техзадания из этой группы
-      const techTasks = collectTechTasks(node);
-      if (techTasks.length > 0) {
+    } else if (hasDirectTechCards(node)) {
+      // Клик по уровню, который НЕПОСРЕДСТВЕННО содержит техкарты
+      const directTechTasks = node.children?.filter(child => child.type === 'techCard').map(tc => ({
+        id: tc.id,
+        name: tc.name,
+        frequency: tc.frequency,
+        workType: tc.workType,
+        description: tc.description,
+        notes: tc.notes,
+        period: tc.period
+      })) || [];
+      
+      if (directTechTasks.length > 0) {
         const contextName = getNodeLabel(node.type);
-        onSelectTechTasks(techTasks, `${contextName}: ${node.name} (${techTasks.length} техзаданий)`);
+        onSelectTechTasks(directTechTasks, `${contextName}: ${node.name} (${directTechTasks.length} техзаданий)`);
       }
+    } else {
+      // Клик по промежуточному уровню - НЕ показываем техзадания
+      // Правая панель остается пустой или показывает предыдущий выбор
+      onSelectTechTasks([], '');
     }
   };
 

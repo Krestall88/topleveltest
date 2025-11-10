@@ -17,6 +17,19 @@ interface CleaningObject {
     name: string;
     email: string;
   };
+  sites?: Array<{
+    id: string;
+    name: string;
+    comment?: string;
+    manager?: {
+      id: string;
+      name: string;
+    };
+    seniorManager?: {
+      id: string;
+      name: string;
+    };
+  }>;
 }
 
 interface Manager {
@@ -35,6 +48,7 @@ export default function ManagerAssignmentModal({ isOpen, onClose, onAssignmentCo
   const [objects, setObjects] = useState<CleaningObject[]>([]);
   const [managers, setManagers] = useState<Manager[]>([]);
   const [selectedObjectId, setSelectedObjectId] = useState<string>('');
+  const [selectedSiteId, setSelectedSiteId] = useState<string>('');
   const [selectedManagerId, setSelectedManagerId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
@@ -82,8 +96,13 @@ export default function ManagerAssignmentModal({ isOpen, onClose, onAssignmentCo
     setError('');
 
     try {
-      const response = await fetch(`/api/objects/${selectedObjectId}/assign-manager`, {
-        method: 'POST',
+      // Если выбран участок - назначаем на участок, иначе на объект
+      const url = selectedSiteId 
+        ? `/api/sites/${selectedSiteId}`
+        : `/api/objects/${selectedObjectId}/assign-manager`;
+      
+      const response = await fetch(url, {
+        method: selectedSiteId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ managerId: selectedManagerId })
       });
@@ -105,6 +124,7 @@ export default function ManagerAssignmentModal({ isOpen, onClose, onAssignmentCo
 
       // Сбрасываем форму
       setSelectedObjectId('');
+      setSelectedSiteId('');
       setSelectedManagerId('');
       
       onAssignmentComplete();
@@ -117,7 +137,11 @@ export default function ManagerAssignmentModal({ isOpen, onClose, onAssignmentCo
   };
 
   const selectedObject = objects.find(obj => obj.id === selectedObjectId);
+  const selectedSite = selectedObject?.sites?.find(site => site.id === selectedSiteId);
   const selectedManager = managers.find(mgr => mgr.id === selectedManagerId);
+  
+  // Фильтруем участки - исключаем виртуальные
+  const availableSites = selectedObject?.sites?.filter(site => !site.name.includes('__VIRTUAL__')) || [];
 
   if (!isOpen) return null;
 
@@ -169,6 +193,40 @@ export default function ManagerAssignmentModal({ isOpen, onClose, onAssignmentCo
                 </Select>
               </div>
 
+              {/* Выбор участка (если есть) */}
+              {selectedObjectId && availableSites.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Выберите участок (необязательно):
+                  </label>
+                  <Select value={selectedSiteId} onValueChange={setSelectedSiteId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Весь объект (без участка)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Весь объект (без участка)</SelectItem>
+                      {availableSites.map(site => (
+                        <SelectItem key={site.id} value={site.id}>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{site.comment || site.name}</span>
+                            {site.manager && (
+                              <span className="text-xs text-blue-600">
+                                Текущий: {site.manager.name}
+                              </span>
+                            )}
+                            {site.seniorManager && (
+                              <span className="text-xs text-purple-600">
+                                Старший: {site.seniorManager.name}
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium mb-2">Выберите менеджера:</label>
                 <Select value={selectedManagerId} onValueChange={setSelectedManagerId}>
@@ -192,12 +250,26 @@ export default function ManagerAssignmentModal({ isOpen, onClose, onAssignmentCo
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <h4 className="font-medium text-blue-900 mb-2">Подтверждение назначения:</h4>
                   <p className="text-sm text-blue-800">
-                    <strong>{selectedManager.name}</strong> будет назначен на объект{' '}
-                    <strong>{selectedObject.name}</strong>
+                    <strong>{selectedManager.name}</strong> будет назначен на{' '}
+                    {selectedSite ? (
+                      <>
+                        участок <strong>{selectedSite.comment || selectedSite.name}</strong>{' '}
+                        объекта <strong>{selectedObject.name}</strong>
+                      </>
+                    ) : (
+                      <>
+                        объект <strong>{selectedObject.name}</strong>
+                      </>
+                    )}
                   </p>
-                  {selectedObject.manager && (
+                  {selectedSite?.manager && (
                     <p className="text-xs text-blue-600 mt-1">
-                      Заменит: {selectedObject.manager.name}
+                      Заменит менеджера участка: {selectedSite.manager.name}
+                    </p>
+                  )}
+                  {!selectedSite && selectedObject.manager && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      Заменит менеджера объекта: {selectedObject.manager.name}
                     </p>
                   )}
                 </div>

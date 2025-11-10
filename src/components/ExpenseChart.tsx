@@ -51,7 +51,7 @@ export default function ExpenseChart({ objectId, objectName }: ExpenseChartProps
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [summary, setSummary] = useState<ChartSummary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [monthsCount, setMonthsCount] = useState(3);
+  const [monthsCount, setMonthsCount] = useState(1);
   const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
   const [chartLoaded, setChartLoaded] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -281,7 +281,7 @@ export default function ExpenseChart({ objectId, objectName }: ExpenseChartProps
             График расходов - {objectName}
           </h2>
           <p className="text-gray-600 text-sm mt-1">
-            Анализ лимитов и расходов за {monthsCount} месяцев
+            Анализ лимитов и расходов за {monthsCount === 1 ? 'текущий месяц' : `${monthsCount} месяцев`}
           </p>
         </div>
 
@@ -291,6 +291,7 @@ export default function ExpenseChart({ objectId, objectName }: ExpenseChartProps
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="1">Текущий</SelectItem>
               <SelectItem value="3">3 месяца</SelectItem>
               <SelectItem value="6">6 месяцев</SelectItem>
               <SelectItem value="12">12 месяцев</SelectItem>
@@ -364,8 +365,10 @@ export default function ExpenseChart({ objectId, objectName }: ExpenseChartProps
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Превышения</p>
-                  <p className="text-lg font-bold text-red-600">{summary.overBudgetMonths}</p>
+                  <p className="text-sm text-gray-600">Превышение</p>
+                  <p className="text-lg font-bold text-red-600">
+                    {summary.totalBalance < 0 ? formatCurrency(Math.abs(summary.totalBalance)) : '—'}
+                  </p>
                 </div>
                 <Calendar className="w-6 h-6 text-red-600" />
               </div>

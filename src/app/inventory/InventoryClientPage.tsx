@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, FormEvent } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 
 interface InventoryItem {
   id: string;
@@ -42,6 +45,7 @@ export default function InventoryClientPage({ session }: Props) {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Form state
   const [name, setName] = useState('');
@@ -205,9 +209,59 @@ export default function InventoryClientPage({ session }: Props) {
   if (isLoading) return <div>Загрузка...</div>;
   if (error) return <div>Ошибка: {error}</div>;
 
+  // Фильтрация товаров по поисковому запросу
+  const filteredItems = items.filter(item => {
+    const query = searchQuery.toLowerCase();
+    return (
+      item.name.toLowerCase().includes(query) ||
+      item.unit.toLowerCase().includes(query)
+    );
+  });
+
+  // Подсчет общей стоимости
+  const totalValue = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
   return (
     <div className="container mx-auto p-3 md:p-4 max-w-full overflow-x-hidden">
       <h1 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Управление инвентарем</h1>
+      
+      {/* Дашборд */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-3xl font-bold text-blue-600">{items.length}</div>
+            <div className="text-sm text-gray-600 mt-1">Всего позиций</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-3xl font-bold text-green-600">
+              {items.reduce((sum, item) => sum + item.quantity, 0)}
+            </div>
+            <div className="text-sm text-gray-600 mt-1">Всего единиц</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-3xl font-bold text-purple-600">
+              {totalValue.toLocaleString('ru-RU')} ₽
+            </div>
+            <div className="text-sm text-gray-600 mt-1">Общая стоимость</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Поиск */}
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        <Input
+          type="text"
+          placeholder="Поиск по названию или единице измерения..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 py-6 text-base"
+        />
+      </div>
       
       {isAdmin && (
         <form onSubmit={handleSubmit} className="mb-6 md:mb-8 p-3 md:p-4 border rounded shadow-sm">
@@ -233,7 +287,7 @@ export default function InventoryClientPage({ session }: Props) {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {items.map((item) => (
+            {filteredItems.map((item) => (
               <tr key={item.id}>
                 <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
                   <div className="text-xs md:text-sm font-medium text-gray-900 break-words max-w-[150px] md:max-w-none">{item.name}</div>

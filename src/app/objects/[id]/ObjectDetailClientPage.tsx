@@ -222,20 +222,32 @@ export default function ObjectDetailClientPage() {
         }
       }
 
-      // Сохраняем менеджеров участков
-      for (const [siteId, managerId] of Object.entries(siteManagers)) {
+      // Сохраняем менеджеров и старших менеджеров участков
+      for (const [key, managerId] of Object.entries(siteManagers)) {
+        // Проверяем, это старший менеджер или обычный
+        const isSenior = key.startsWith('senior_');
+        const siteId = isSenior ? key.replace('senior_', '') : key;
+        
         const currentSite = object?.sites?.find(s => s.id === siteId);
-        if (currentSite && managerId !== (currentSite.manager?.id || '')) {
-          const response = await fetch(`/api/sites/${siteId}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ managerId: managerId || null }),
-          });
+        if (currentSite) {
+          const currentValue = isSenior ? currentSite.seniorManager?.id : currentSite.manager?.id;
           
-          if (!response.ok) {
-            throw new Error(`Ошибка обновления менеджера участка ${currentSite.name}`);
+          if (managerId !== (currentValue || '')) {
+            const body = isSenior 
+              ? { seniorManagerId: managerId || null }
+              : { managerId: managerId || null };
+            
+            const response = await fetch(`/api/sites/${siteId}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(body),
+            });
+            
+            if (!response.ok) {
+              throw new Error(`Ошибка обновления ${isSenior ? 'старшего менеджера' : 'менеджера'} участка ${currentSite.name}`);
+            }
           }
         }
       }
@@ -255,11 +267,14 @@ export default function ObjectDetailClientPage() {
     setIsEditingManagers(true);
     setSelectedManagerId(object?.manager?.id || '');
     
-    // Инициализируем только менеджеров участков, которые уже назначены
+    // Инициализируем менеджеров и старших менеджеров участков
     const initialSiteManagers: {[key: string]: string} = {};
     object?.sites?.forEach(site => {
       if (site.manager) {
         initialSiteManagers[site.id] = site.manager.id;
+      }
+      if (site.seniorManager) {
+        initialSiteManagers[`senior_${site.id}`] = site.seniorManager.id;
       }
     });
     setSiteManagers(initialSiteManagers);
@@ -521,97 +536,133 @@ export default function ObjectDetailClientPage() {
               </div>
 
               <div className="space-y-1">
-                {/* Основной менеджер - показываем всегда */}
-                <div className="flex items-center justify-between p-2 bg-blue-50 rounded border-l-2 border-blue-500">
-                  <div className="flex items-center">
-                    <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center mr-2">
-                      <span className="text-white text-xs font-bold">★</span>
-                    </div>
-                    <div className="flex-1">
-                      {isEditingManagers ? (
-                        <div className="space-y-1">
-                          <label className="text-xs font-medium text-blue-700">Основной менеджер:</label>
-                          <select
-                            value={selectedManagerId}
-                            onChange={(e) => setSelectedManagerId(e.target.value)}
-                            className="w-full p-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                          >
-                            <option value="">-- Выберите менеджера --</option>
-                            {managers.map((manager) => (
-                              <option key={manager.id} value={manager.id}>
-                                {manager.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      ) : (
-                        <div>
-                          {object.manager ? (
-                            <>
-                              <span className="text-sm font-medium text-blue-900">{object.manager.name}</span>
-                              <span className="text-xs text-blue-600 block">Основной менеджер</span>
-                            </>
-                          ) : (
-                            <>
-                              <span className="text-sm font-medium text-gray-500">Менеджер не назначен</span>
-                              <span className="text-xs text-gray-400 block">Основной менеджер</span>
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Менеджеры участков - показываем только назначенных */}
-                {object.sites && object.sites.length > 0 && (
-                  <>
-                    {object.sites
-                      .filter(site => site.manager && site.manager.id !== object.manager?.id)
-                      .map((site) => (
-                        <div key={site.id} className="flex items-center justify-between p-2 bg-gray-50 rounded border-l-2 border-gray-300">
-                          <div className="flex items-center flex-1">
-                            <div className="w-5 h-5 bg-gray-500 rounded-full flex items-center justify-center mr-2">
-                              <span className="text-white text-xs">●</span>
-                            </div>
-                            <div className="flex-1">
-                              {isEditingManagers ? (
-                                <div className="space-y-1">
-                                  <label className="text-xs font-medium text-gray-700">
-                                    {site.comment || site.name}:
-                                  </label>
-                                  <select
-                                    value={siteManagers[site.id] || ''}
-                                    onChange={(e) => setSiteManagers(prev => ({
-                                      ...prev,
-                                      [site.id]: e.target.value
-                                    }))}
-                                    className="w-full p-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                  >
-                                    <option value="">-- Выберите менеджера --</option>
-                                    {managers.map((manager) => (
-                                      <option key={manager.id} value={manager.id}>
-                                        {manager.name}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
-                              ) : (
-                                <div>
-                                  <span className="text-sm font-medium text-gray-800">{site.manager?.name}</span>
-                                  <span className="text-xs text-gray-600 block">
-                                    {site.comment || site.name}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
+                {/* Старший менеджер - показываем если есть */}
+                {(() => {
+                  // Ищем участок со старшим менеджером
+                  const siteWithSeniorManager = object.sites?.find(site => site.seniorManager);
+                  const seniorManager = siteWithSeniorManager?.seniorManager;
+                  
+                  // В режиме редактирования показываем всегда (для возможности назначения)
+                  if (isEditingManagers || seniorManager) {
+                    return (
+                      <div className="flex items-center justify-between p-2 bg-purple-50 rounded border-l-2 border-purple-500">
+                        <div className="flex items-center flex-1">
+                          <div className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center mr-2">
+                            <span className="text-white text-xs font-bold">👔</span>
+                          </div>
+                          <div className="flex-1">
+                            {isEditingManagers ? (
+                              <div className="space-y-1">
+                                <label className="text-xs font-medium text-purple-700">
+                                  Старший менеджер:
+                                </label>
+                                <select
+                                  value={seniorManager?.id || ''}
+                                  onChange={(e) => {
+                                    const managerId = e.target.value;
+                                    // Находим виртуальный участок или первый участок для назначения старшего менеджера
+                                    const virtualSite = object.sites?.find(s => s.name.includes('__VIRTUAL__'));
+                                    const targetSite = virtualSite || object.sites?.[0];
+                                    
+                                    if (targetSite) {
+                                      setSiteManagers(prev => ({
+                                        ...prev,
+                                        [`senior_${targetSite.id}`]: managerId
+                                      }));
+                                    }
+                                  }}
+                                  className="w-full p-1 text-sm border border-purple-300 rounded focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
+                                >
+                                  <option value="">-- Выберите старшего менеджера --</option>
+                                  {managers.filter(m => m.role === 'SENIOR_MANAGER').map((manager) => (
+                                    <option key={manager.id} value={manager.id}>
+                                      {manager.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            ) : (
+                              <div>
+                                <span className="text-sm font-medium text-purple-900">{seniorManager?.name}</span>
+                                <span className="text-xs text-purple-600 block">Старший менеджер</span>
+                              </div>
+                            )}
                           </div>
                         </div>
-                      ))
-                    }
-                  </>
-                )}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
 
+                {/* Менеджеры участков - показываем всех с их участками */}
+                {(() => {
+                  // Получаем всех менеджеров с участками
+                  const managersWithSites = object.sites
+                    ?.filter(site => site.manager && !site.name.includes('__VIRTUAL__'))
+                    .map(site => ({ ...site, isVirtual: false })) || [];
+                  
+                  // Получаем менеджеров с виртуальных участков
+                  const managersFromVirtual = object.sites
+                    ?.filter(site => site.manager && site.name.includes('__VIRTUAL__'))
+                    .map(site => ({ ...site, isVirtual: true })) || [];
+                  
+                  const allManagers = [...managersWithSites, ...managersFromVirtual];
+                  
+                  // Если только один менеджер и он на виртуальном участке - не показываем участок
+                  const showSiteName = allManagers.length > 1 || (allManagers.length === 1 && !allManagers[0].isVirtual);
+                  
+                  return allManagers.map((site) => (
+                    <div key={site.id} className="flex items-center justify-between p-2 bg-gray-50 rounded border-l-2 border-gray-300">
+                      <div className="flex items-center flex-1">
+                        <div className="w-5 h-5 bg-gray-500 rounded-full flex items-center justify-center mr-2">
+                          <span className="text-white text-xs">●</span>
+                        </div>
+                        <div className="flex-1">
+                          {isEditingManagers ? (
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-gray-700">
+                                {showSiteName && !site.isVirtual && site.comment ? `${site.comment}:` : 'Менеджер:'}
+                              </label>
+                              <select
+                                value={siteManagers[site.id] || ''}
+                                onChange={(e) => setSiteManagers(prev => ({
+                                  ...prev,
+                                  [site.id]: e.target.value
+                                }))}
+                                className="w-full p-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                              >
+                                <option value="">-- Выберите менеджера --</option>
+                                {managers.map((manager) => (
+                                  <option key={manager.id} value={manager.id}>
+                                    {manager.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          ) : (
+                            <div>
+                              <span className="text-sm font-medium text-gray-800">{site.manager?.name}</span>
+                              {showSiteName && !site.isVirtual && site.comment && (
+                                <span className="text-xs text-gray-600 block">
+                                  {site.comment}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ));
+                })()}
+
+                {/* Если нет ни одного менеджера */}
+                {(!object.sites || object.sites.filter(s => s.manager).length === 0) && 
+                 !object.sites?.find(s => s.seniorManager) && (
+                  <div className="p-2 bg-gray-50 rounded border-l-2 border-gray-300 text-center">
+                    <span className="text-sm text-gray-500">Менеджеры не назначены</span>
+                  </div>
+                )}
 
               </div>
             </div>

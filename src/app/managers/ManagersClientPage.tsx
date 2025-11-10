@@ -47,7 +47,8 @@ export default function ManagersClientPage({ user }: Props) {
     name: '',
     email: '',
     phone: '',
-    password: ''
+    password: '',
+    role: 'MANAGER' as 'MANAGER' | 'SENIOR_MANAGER'
   });
   const [resetPasswordData, setResetPasswordData] = useState({
     managerId: '',
@@ -99,7 +100,7 @@ export default function ManagersClientPage({ user }: Props) {
       const newManager = await response.json();
       setManagers([newManager, ...managers]);
       setIsAddModalOpen(false);
-      setFormData({ name: '', email: '', phone: '', password: '' });
+      setFormData({ name: '', email: '', phone: '', password: '', role: 'MANAGER' });
     } catch (error: any) {
       console.error('Ошибка при создании менеджера:', error);
       setError(error.message || 'Не удалось создать менеджера');
@@ -207,7 +208,7 @@ export default function ManagersClientPage({ user }: Props) {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-6">
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
           {error}
@@ -236,18 +237,6 @@ export default function ManagersClientPage({ user }: Props) {
         </div>
       </div>
 
-      {/* Поиск */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-        <Input
-          type="text"
-          placeholder="Поиск по имени, email, телефону или объектам..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 py-6 text-base"
-        />
-      </div>
-
       {/* Статистика */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
@@ -264,6 +253,18 @@ export default function ManagersClientPage({ user }: Props) {
             <div className="text-sm text-gray-600 mt-1">Всего объектов</div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Поиск */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        <Input
+          type="text"
+          placeholder="Поиск по имени, email, телефону или объектам..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 py-6 text-base"
+        />
       </div>
 
       {/* Список менеджеров */}
@@ -318,16 +319,25 @@ export default function ManagersClientPage({ user }: Props) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
+                  {(manager as any).role && (
+                    <div className="inline-block px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium mb-2">
+                      {(manager as any).role === 'SENIOR_MANAGER' ? '👔 Старший менеджер' : '👤 Менеджер'}
+                    </div>
+                  )}
                   {manager.objectNames && (
                     <div className="mt-2 p-2 bg-blue-50 rounded text-sm">
-                      <div className="text-blue-600 mb-1">Объекты:</div>
-                      <div className="text-blue-800 font-medium">{manager.objectNames}</div>
+                      <div className="text-blue-600 mb-1 font-medium">📦 Объекты:</div>
+                      <div className="text-blue-800">{manager.objectNames}</div>
                     </div>
                   )}
                   {manager.sitesInfo && (
-                    <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
-                      <div className="text-gray-600 mb-1">Комментарии:</div>
-                      <div className="text-gray-800">{manager.sitesInfo}</div>
+                    <div className="mt-2 p-2 bg-green-50 rounded text-sm">
+                      <div className="text-green-700 mb-1 font-medium">📍 Участки:</div>
+                      <div className="text-green-900 text-xs space-y-1">
+                        {manager.sitesInfo.split('; ').map((site: string, i: number) => (
+                          <div key={i}>• {site}</div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -389,6 +399,23 @@ export default function ManagersClientPage({ user }: Props) {
                 />
               </div>
               
+              <div>
+                <Label htmlFor="role">Роль</Label>
+                <select
+                  id="role"
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'MANAGER' | 'SENIOR_MANAGER' })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="MANAGER">Менеджер</option>
+                  <option value="SENIOR_MANAGER">Старший менеджер</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Старший менеджер видит все объекты и может закрывать задачи своих подчиненных
+                </p>
+              </div>
+              
               <div className="flex gap-2 pt-4">
                 <Button type="submit" className="flex-1">
                   Создать
@@ -398,7 +425,7 @@ export default function ManagersClientPage({ user }: Props) {
                   variant="outline"
                   onClick={() => {
                     setIsAddModalOpen(false);
-                    setFormData({ name: '', email: '', phone: '', password: '' });
+                    setFormData({ name: '', email: '', phone: '', password: '', role: 'MANAGER' });
                   }}
                   className="flex-1"
                 >

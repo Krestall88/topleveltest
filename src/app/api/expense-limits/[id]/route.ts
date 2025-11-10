@@ -50,13 +50,26 @@ export async function PATCH(
     } = body;
 
     const limit = await prisma.expenseCategoryLimit.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        object: {
+          select: { id: true, managerId: true }
+        }
+      }
     });
 
     if (!limit) {
       return NextResponse.json(
         { message: 'Limit not found' },
         { status: 404 }
+      );
+    }
+
+    // DEPUTY_ADMIN может редактировать только лимиты своих объектов
+    if (user.role === 'DEPUTY_ADMIN' && limit.object.managerId !== user.id) {
+      return NextResponse.json(
+        { message: 'Forbidden: You can only edit limits for your objects' },
+        { status: 403 }
       );
     }
 
@@ -103,13 +116,26 @@ export async function DELETE(
     const { id } = params;
 
     const limit = await prisma.expenseCategoryLimit.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        object: {
+          select: { id: true, managerId: true }
+        }
+      }
     });
 
     if (!limit) {
       return NextResponse.json(
         { message: 'Limit not found' },
         { status: 404 }
+      );
+    }
+
+    // DEPUTY_ADMIN может удалять только лимиты своих объектов
+    if (user.role === 'DEPUTY_ADMIN' && limit.object.managerId !== user.id) {
+      return NextResponse.json(
+        { message: 'Forbidden: You can only delete limits for your objects' },
+        { status: 403 }
       );
     }
 

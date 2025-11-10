@@ -25,24 +25,27 @@ async function getUserFromToken(req: NextRequest) {
   }
 }
 
-// Поиск менеджера по имени
-async function findManagerByName(name: string) {
+// Поиск менеджера по имени (обычный или старший)
+async function findManagerByName(name: string, isSenior: boolean = false) {
   if (!name || name.trim() === '') return null;
   
   const searchName = name.trim();
+  const roles = isSenior ? ['SENIOR_MANAGER' as const, 'MANAGER' as const] : ['MANAGER' as const, 'SENIOR_MANAGER' as const];
   
+  // Сначала точное совпадение
   let manager = await prisma.user.findFirst({
     where: {
       name: { equals: searchName, mode: 'insensitive' },
-      role: 'MANAGER'
+      role: { in: roles }
     }
   });
   
+  // Если не найден, ищем по вхождению
   if (!manager) {
     manager = await prisma.user.findFirst({
       where: {
         name: { contains: searchName, mode: 'insensitive' },
-        role: 'MANAGER'
+        role: { in: roles }
       }
     });
   }
@@ -78,7 +81,15 @@ async function findOrCreateTechCard(name: string, objectId: string, description?
   return techCard;
 }
 
-// Создание полной структуры объекта из Excel данных
+// Умная нормализация - пробелы считаются пустыми
+function normalize(str: string | null | undefined): string | null {
+  if (!str) return null;
+  const trimmed = str.trim();
+  if (trimmed === '' || trimmed === ' ') return null;
+  return trimmed;
+}
+
+// Создание полной структуры объекта из Excel данных с умной логикой
 async function createComprehensiveStructure(objectId: string, objectName: string, excelData: any[]) {
   console.log(`🏗️ Создание полной структуры для объекта: ${objectName}`);
   console.log(`📊 Обрабатываем ${excelData.length} строк данных`);
@@ -88,136 +99,267 @@ async function createComprehensiveStructure(objectId: string, objectName: string
     zones: new Map<string, any>(),
     roomGroups: new Map<string, any>(),
     rooms: new Map<string, any>(),
-    techCards: new Map<string, any>(),
-    roomTechCards: [] as any[]
+    cleaningItems: new Map<string, any>(),
+    techCards: new Map<string, any>()
   };
   
   try {
     for (const row of excelData) {
-      const siteName = (row as any)['участок'] || 'Основной участок';
-      const zoneName = (row as any)['зона'] || 'Основная зона';
-      const roomGroupName = (row as any)['группа помещений'] || 'Основная группа';
-      const roomName = (row as any)['помещение'] || 'Основное помещение';
-      const cleaningObject = (row as any)['Объект уборки'] || '';
-      const techTask = (row as any)['тех задание'] || '';
-      const frequency = (row as any)['периодичность'] || 'Ежедневно';
-      const notes = (row as any)['примечания'] || '';
+      // Нормализуем все поля - пробелы = null
+      let siteName = normalize((row as any)['участок']);
+      let zoneName = normalize((row as any)['зона']);
+      let roomGroupName = normalize((row as any)['группа помещений']);
+      const roomName = normalize((row as any)['помещение']);
+      const cleaningObject = normalize((row as any)['Объект уборки']);
+      const techTask = normalize((row as any)['тех задание']);
+      const frequency = normalize((row as any)['периодичность']) || 'По необходимости';
+      const notes = normalize((row as any)['примечания']);
+      const period = normalize((row as any)['период']);
       
-      // 1. Создаем/находим участок
-      const siteKey = `${siteName}`;
-      if (!createdStructure.sites.has(siteKey)) {
-        const site = await prisma.site.create({
-          data: {
-            name: siteName,
-            objectId: objectId,
-            comment: `Участок объекта ${objectName}`
-          }
-        });
-        createdStructure.sites.set(siteKey, site);
-        console.log(`✅ Создан участок: ${site.name} (ID: ${site.id})`);
-      }
+      // Читаем менеджеров
+      const siteManagerName = normalize((row as any)['менеджер участка'] || (row as any)['ФИО менеджера участка'] || (row as any)['Менеджер']);
+      const seniorManager1Name = normalize((row as any)['старший менеджер 1'] || (row as any)['Старший менеджер 1']);
+      const seniorManager2Name = normalize((row as any)['старший менеджер 2'] || (row as any)['Старший менеджер 2']);
       
-      const site = createdStructure.sites.get(siteKey);
+      // Пропускаем строки без техзадания
+      if (!techTask) continue;
       
-      // 2. Создаем/находим зону
-      const zoneKey = `${siteName}-${zoneName}`;
-      if (!createdStructure.zones.has(zoneKey)) {
-        const zone = await prisma.zone.create({
-          data: {
-            name: zoneName,
-            siteId: site.id
-          }
-        });
-        createdStructure.zones.set(zoneKey, zone);
-        console.log(`✅ Создана зона: ${zone.name} (ID: ${zone.id})`);
-      }
+      let siteId: string | null = null;
+      let zoneId: string | null = null;
+      let roomGroupId: string | null = null;
+      let roomId: string | null = null;
+      let cleaningItemId: string | null = null;
       
-      const zone = createdStructure.zones.get(zoneKey);
+      // ПРАВИЛЬНАЯ ЛОГИКА ИЕРАРХИИ:
+      // Создаем минимальную необходимую структуру для БД
+      // Помечаем "виртуальные" уровни (которых нет в таблице) через description
       
-      // 3. Создаем/находим группу помещений
-      const roomGroupKey = `${siteName}-${zoneName}-${roomGroupName}`;
-      if (!createdStructure.roomGroups.has(roomGroupKey)) {
-        const roomGroup = await prisma.roomGroup.create({
-          data: {
-            name: roomGroupName,
-            zoneId: zone.id
-          }
-        });
-        createdStructure.roomGroups.set(roomGroupKey, roomGroup);
-        console.log(`✅ Создана группа помещений: ${roomGroup.name} (ID: ${roomGroup.id})`);
-      }
+      // Определяем первый непустой уровень
+      const firstLevel = siteName ? 'site' : (zoneName ? 'zone' : (roomGroupName ? 'group' : (roomName ? 'room' : (cleaningObject ? 'item' : 'techcard'))));
       
-      const roomGroup = createdStructure.roomGroups.get(roomGroupKey);
-      
-      // 4. Создаем/находим помещение
-      const roomKey = `${siteName}-${zoneName}-${roomGroupName}-${roomName}`;
-      if (!createdStructure.rooms.has(roomKey)) {
-        const room = await prisma.room.create({
-          data: {
-            name: roomName,
-            objectId: objectId,
-            roomGroupId: roomGroup.id
-          }
-        });
-        createdStructure.rooms.set(roomKey, room);
-        console.log(`✅ Создано помещение: ${room.name} (ID: ${room.id})`);
-      }
-      
-      const room = createdStructure.rooms.get(roomKey);
-      
-      // 5. Создаем техкарту если есть техническое задание
-      if (techTask && techTask.trim() !== '') {
-        const techCardName = `${cleaningObject} - ${techTask}`.trim();
-        const techCardKey = techCardName;
-        
-        if (!createdStructure.techCards.has(techCardKey)) {
-          // Определяем частоту на основе периодичности
-          let techFrequency = 'DAILY';
-          const freqLower = frequency.toLowerCase();
-          if (freqLower.includes('неделю') || freqLower.includes('week')) {
-            techFrequency = 'WEEKLY';
-          } else if (freqLower.includes('месяц') || freqLower.includes('month')) {
-            techFrequency = 'MONTHLY';
-          } else if (freqLower.includes('год') || freqLower.includes('year')) {
-            techFrequency = 'YEARLY';
+      // 1. УЧАСТОК
+      if (siteName) {
+        // Реальный участок из таблицы
+        const siteKey = `${siteName}`;
+        if (!createdStructure.sites.has(siteKey)) {
+          // Ищем менеджера участка
+          let siteManager = null;
+          if (siteManagerName) {
+            siteManager = await findManagerByName(siteManagerName, false);
+            if (siteManager) {
+              console.log(`👤 Найден менеджер участка: ${siteManager.name} для участка ${siteName}`);
+            } else {
+              console.log(`⚠️  Менеджер участка не найден: ${siteManagerName}`);
+            }
           }
           
-          const techCard = await findOrCreateTechCard(
-            techCardName,
-            objectId,
-            `${cleaningObject}: ${techTask}. ${notes}`.trim(),
-            techFrequency,
-            'CLEANING'
-          );
+          // Ищем старших менеджеров
+          let seniorManager1 = null;
+          let seniorManager2 = null;
           
-          createdStructure.techCards.set(techCardKey, techCard);
-        }
-        
-        const techCard = createdStructure.techCards.get(techCardKey);
-        
-        // 6. Привязываем техкарту к помещению
-        const roomTechCardKey = `${room.id}-${techCard.id}`;
-        if (!createdStructure.roomTechCards.some(rtc => rtc.key === roomTechCardKey)) {
-          await prisma.room.update({
-            where: { id: room.id },
+          if (seniorManager1Name) {
+            seniorManager1 = await findManagerByName(seniorManager1Name, true);
+            if (seniorManager1) {
+              console.log(`👔 Найден старший менеджер 1: ${seniorManager1.name} для участка ${siteName}`);
+            } else {
+              console.log(`⚠️  Старший менеджер 1 не найден: ${seniorManager1Name}`);
+            }
+          }
+          
+          if (seniorManager2Name) {
+            seniorManager2 = await findManagerByName(seniorManager2Name, true);
+            if (seniorManager2) {
+              console.log(`👔 Найден старший менеджер 2: ${seniorManager2.name} для участка ${siteName}`);
+            } else {
+              console.log(`⚠️  Старший менеджер 2 не найден: ${seniorManager2Name}`);
+            }
+          }
+          
+          // ВАЖНО: В Site может быть только ОДИН seniorManagerId
+          // Если указаны оба старших менеджера, берем первого, второго сохраним в комментарии
+          const seniorManagerId = seniorManager1?.id || seniorManager2?.id || null;
+          const seniorManagerNote = seniorManager1 && seniorManager2 
+            ? `Старшие менеджеры: ${seniorManager1.name}, ${seniorManager2.name}` 
+            : '';
+          
+          const site = await prisma.site.create({
             data: {
-              techCards: {
-                connect: { id: techCard.id }
-              }
+              name: siteName,
+              objectId: objectId,
+              managerId: siteManager?.id || null,
+              seniorManagerId: seniorManagerId,
+              comment: `Участок объекта ${objectName}${seniorManagerNote ? '. ' + seniorManagerNote : ''}`
             }
           });
+          createdStructure.sites.set(siteKey, site);
           
-          createdStructure.roomTechCards.push({
-            key: roomTechCardKey,
-            roomId: room.id,
-            roomName: room.name,
-            techCardId: techCard.id,
-            techCardName: techCard.name,
-            frequency: frequency
-          });
+          const managerInfo = [
+            siteManager ? `менеджер: ${siteManager.name}` : null,
+            seniorManager1 ? `ст.менеджер: ${seniorManager1.name}` : null,
+            seniorManager2 ? `ст.менеджер 2: ${seniorManager2.name}` : null
+          ].filter(Boolean).join(', ');
           
-          console.log(`🔗 Привязана техкарта "${techCard.name}" к помещению "${room.name}"`);
+          console.log(`✅ Создан участок: ${site.name}${managerInfo ? ` (${managerInfo})` : ''}`);
         }
+        siteId = createdStructure.sites.get(siteKey).id;
+      } else {
+        // Виртуальный участок (не показывать в UI) - ВСЕГДА создаем если нет реального
+        const virtualSiteKey = `__virtual__`;
+        if (!createdStructure.sites.has(virtualSiteKey)) {
+          const site = await prisma.site.create({
+            data: {
+              name: '__VIRTUAL__',
+              objectId: objectId,
+              comment: `Виртуальный участок - не показывать в UI`
+            }
+          });
+          createdStructure.sites.set(virtualSiteKey, site);
+          console.log(`🔹 Создан виртуальный участок (скрыт)`);
+        }
+        siteId = createdStructure.sites.get(virtualSiteKey).id;
+      }
+      
+      // 2. ЗОНА
+      if (siteId) {
+        if (zoneName) {
+          // Реальная зона из таблицы
+          const zoneKey = `${siteId}:${zoneName}`;
+          if (!createdStructure.zones.has(zoneKey)) {
+            const zone = await prisma.zone.create({
+              data: {
+                name: zoneName,
+                siteId: siteId
+              }
+            });
+            createdStructure.zones.set(zoneKey, zone);
+            console.log(`✅ Создана зона: ${zone.name}`);
+          }
+          zoneId = createdStructure.zones.get(zoneKey).id;
+        } else {
+          // Виртуальная зона (не показывать в UI) - ВСЕГДА создаем если нет реальной
+          const virtualZoneKey = `${siteId}:__virtual__`;
+          if (!createdStructure.zones.has(virtualZoneKey)) {
+            const zone = await prisma.zone.create({
+              data: {
+                name: '__VIRTUAL__',
+                siteId: siteId
+              }
+            });
+            createdStructure.zones.set(virtualZoneKey, zone);
+            console.log(`🔹 Создана виртуальная зона (скрыта)`);
+          }
+          zoneId = createdStructure.zones.get(virtualZoneKey).id;
+        }
+      }
+      
+      // 3. ГРУППА ПОМЕЩЕНИЙ
+      if (zoneId) {
+        if (roomGroupName) {
+          // Реальная группа из таблицы
+          const roomGroupKey = `${zoneId}:${roomGroupName}`;
+          if (!createdStructure.roomGroups.has(roomGroupKey)) {
+            const roomGroup = await prisma.roomGroup.create({
+              data: {
+                name: roomGroupName,
+                zoneId: zoneId,
+                description: firstLevel === 'group' ? 'TOP_LEVEL' : null
+              }
+            });
+            createdStructure.roomGroups.set(roomGroupKey, roomGroup);
+            console.log(`✅ Создана группа: ${roomGroup.name}${firstLevel === 'group' ? ' (верхний уровень)' : ''}`);
+          }
+          roomGroupId = createdStructure.roomGroups.get(roomGroupKey).id;
+        } else {
+          // Виртуальная группа (если есть зона, но нет группы) - ВСЕГДА создаем
+          const virtualGroupKey = `${zoneId}:__virtual__`;
+          if (!createdStructure.roomGroups.has(virtualGroupKey)) {
+            const roomGroup = await prisma.roomGroup.create({
+              data: {
+                name: '__VIRTUAL__',
+                zoneId: zoneId,
+                description: 'Виртуальная группа - не показывать в UI'
+              }
+            });
+            createdStructure.roomGroups.set(virtualGroupKey, roomGroup);
+            console.log(`🔹 Создана виртуальная группа для зоны (скрыта)`);
+          }
+          roomGroupId = createdStructure.roomGroups.get(virtualGroupKey).id;
+        }
+      }
+      
+      // 4. ПОМЕЩЕНИЕ
+      if (roomName) {
+        // Реальное помещение из таблицы
+        const roomKey = `${objectId}:${roomGroupId || 'no-group'}:${roomName}`;
+        if (!createdStructure.rooms.has(roomKey)) {
+          const room = await prisma.room.create({
+            data: {
+              name: roomName,
+              objectId: objectId,
+              roomGroupId: roomGroupId || null,
+              description: firstLevel === 'room' ? 'TOP_LEVEL' : null
+            }
+          });
+          createdStructure.rooms.set(roomKey, room);
+          console.log(`✅ Создано помещение: ${room.name}${firstLevel === 'room' ? ' (верхний уровень)' : ''}`);
+        }
+        roomId = createdStructure.rooms.get(roomKey).id;
+      } else if (roomGroupId) {
+        // Если помещения нет, но есть группа - создаем виртуальное помещение
+        // (для объектов уборки или техкарт)
+        const virtualRoomKey = `${objectId}:${roomGroupId}:__virtual__`;
+        if (!createdStructure.rooms.has(virtualRoomKey)) {
+          const room = await prisma.room.create({
+            data: {
+              name: '__VIRTUAL__',
+              objectId: objectId,
+              roomGroupId: roomGroupId,
+              description: 'Виртуальное помещение - не показывать в UI'
+            }
+          });
+          createdStructure.rooms.set(virtualRoomKey, room);
+          console.log(`🔹 Создано виртуальное помещение для группы (скрыто)`);
+        }
+        roomId = createdStructure.rooms.get(virtualRoomKey).id;
+      }
+      
+      // 5. ОБЪЕКТ УБОРКИ (создается если есть помещение И есть объект уборки в таблице)
+      if (cleaningObject && roomId) {
+        const itemKey = `${roomId}:${cleaningObject}`;
+        if (!createdStructure.cleaningItems.has(itemKey)) {
+          const item = await prisma.cleaningObjectItem.create({
+            data: {
+              name: cleaningObject,
+              roomId: roomId
+            }
+          });
+          createdStructure.cleaningItems.set(itemKey, item);
+          console.log(`✅ Создан объект уборки: ${item.name}`);
+        }
+        cleaningItemId = createdStructure.cleaningItems.get(itemKey).id;
+      }
+      
+      // 5. ТЕХКАРТА (всегда создается с привязкой к максимально доступному уровню)
+      const techCardKey = `${objectId}:${roomId || 'no-room'}:${cleaningItemId || 'no-item'}:${techTask}`;
+      
+      if (!createdStructure.techCards.has(techCardKey)) {
+        const techCard = await prisma.techCard.create({
+          data: {
+            name: techTask,
+            workType: 'Уборка',
+            frequency: frequency,
+            notes: notes,
+            period: period,
+            seasonality: period,
+            objectId: objectId,
+            roomId: roomId || null,
+            cleaningObjectItemId: cleaningItemId || null,
+            isActive: true
+          }
+        });
+        
+        createdStructure.techCards.set(techCardKey, techCard);
+        console.log(`✅ Создана техкарта: ${techCard.name}`);
       }
     }
     
@@ -226,14 +368,14 @@ async function createComprehensiveStructure(objectId: string, objectName: string
       zonesCount: createdStructure.zones.size,
       roomGroupsCount: createdStructure.roomGroups.size,
       roomsCount: createdStructure.rooms.size,
+      cleaningItemsCount: createdStructure.cleaningItems.size,
       techCardsCount: createdStructure.techCards.size,
-      roomTechCardsCount: createdStructure.roomTechCards.length,
       sites: Array.from(createdStructure.sites.values()),
       zones: Array.from(createdStructure.zones.values()),
       roomGroups: Array.from(createdStructure.roomGroups.values()),
       rooms: Array.from(createdStructure.rooms.values()),
-      techCards: Array.from(createdStructure.techCards.values()),
-      roomTechCards: createdStructure.roomTechCards
+      cleaningItems: Array.from(createdStructure.cleaningItems.values()),
+      techCards: Array.from(createdStructure.techCards.values())
     };
     
   } catch (error) {
@@ -345,8 +487,8 @@ export async function POST(req: NextRequest) {
         zones: 0,
         roomGroups: 0,
         rooms: 0,
-        techCards: 0,
-        roomTechCards: 0
+        cleaningItems: 0,
+        techCards: 0
       }
     };
 
@@ -358,28 +500,8 @@ export async function POST(req: NextRequest) {
         // Получаем данные объекта из первой строки
         const firstRow = objectRows[0] as any;
         const address = firstRow['адрес'] || firstRow['Адрес'] || 'Не указан';
-        const managerName = firstRow['ФИО менеджера'] || firstRow['менеджер'];
+        const managerName = firstRow['Менеджер объекта ФИО'] || firstRow['ФИО менеджера'] || firstRow['менеджер'];
         
-        // Проверяем, не существует ли уже такой объект
-        const existingObject = await prisma.cleaningObject.findFirst({
-          where: { name: objectName }
-        });
-
-        if (existingObject) {
-          // Очищаем существующий объект
-          console.log(`🧹 Очистка существующего объекта: ${objectName}`);
-          
-          try {
-            await fetch(`${req.url.split('/api')[0]}/api/objects/cleanup`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ objectName })
-            });
-          } catch (cleanupError) {
-            console.warn(`⚠️ Ошибка очистки объекта ${objectName}:`, cleanupError);
-          }
-        }
-
         // Ищем менеджера
         let manager = null;
         if (managerName) {
@@ -393,36 +515,57 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // Создаем объект
-        const newObject = await prisma.cleaningObject.create({
-          data: {
-            name: objectName,
-            address: address,
-            description: `Объект с ${objectRows.length} помещениями и задачами`,
-            managerId: manager?.id || null,
-            creatorId: user.id,
-            autoChecklistEnabled: true,
-            requirePhotoForCompletion: false,
-            requireCommentForCompletion: false
-          }
+        // Проверяем, не существует ли уже такой объект
+        let targetObject = await prisma.cleaningObject.findFirst({
+          where: { name: objectName }
         });
 
-        console.log(`✅ COMPREHENSIVE: Создан объект "${newObject.name}"`);
+        if (targetObject) {
+          // Обновляем существующий объект
+          console.log(`🔄 Обновление существующего объекта: ${objectName}`);
+          
+          targetObject = await prisma.cleaningObject.update({
+            where: { id: targetObject.id },
+            data: {
+              address: address,
+              managerId: manager?.id || null,
+              description: `Объект с ${objectRows.length} задачами`
+            }
+          });
+          
+          console.log(`✅ COMPREHENSIVE: Обновлен объект "${targetObject.name}"`);
+        } else {
+          // Создаем новый объект
+          targetObject = await prisma.cleaningObject.create({
+            data: {
+              name: objectName,
+              address: address,
+              description: `Объект с ${objectRows.length} задачами`,
+              managerId: manager?.id || null,
+              creatorId: user.id,
+              autoChecklistEnabled: true,
+              requirePhotoForCompletion: false,
+              requireCommentForCompletion: false
+            }
+          });
+          
+          console.log(`✅ COMPREHENSIVE: Создан объект "${targetObject.name}"`);
+        }
 
         // Создаем полную структуру на основе данных Excel
-        const structure = await createComprehensiveStructure(newObject.id, newObject.name, objectRows);
+        const structure = await createComprehensiveStructure(targetObject.id, targetObject.name, objectRows);
         
         // Обновляем общую статистику
         results.totalStructures.sites += structure.sitesCount;
         results.totalStructures.zones += structure.zonesCount;
         results.totalStructures.roomGroups += structure.roomGroupsCount;
         results.totalStructures.rooms += structure.roomsCount;
+        results.totalStructures.cleaningItems = (results.totalStructures.cleaningItems || 0) + structure.cleaningItemsCount;
         results.totalStructures.techCards += structure.techCardsCount;
-        results.totalStructures.roomTechCards += structure.roomTechCardsCount;
         
         results.created.push({
-          id: newObject.id,
-          name: newObject.name,
+          id: targetObject.id,
+          name: targetObject.name,
           manager: manager?.name || 'Не назначен',
           managerFound: !!manager,
           rowsProcessed: objectRows.length,
@@ -431,14 +574,15 @@ export async function POST(req: NextRequest) {
             zones: structure.zonesCount,
             roomGroups: structure.roomGroupsCount,
             rooms: structure.roomsCount,
-            techCards: structure.techCardsCount,
-            roomTechCards: structure.roomTechCardsCount
+            cleaningItems: structure.cleaningItemsCount,
+            techCards: structure.techCardsCount
           },
           details: {
-            sites: structure.sites.map(s => s.name),
-            zones: structure.zones.map(z => z.name),
-            rooms: structure.rooms.map(r => r.name),
-            techCards: structure.techCards.map(tc => tc.name)
+            sites: structure.sites.map((s: any) => s.name),
+            zones: structure.zones.map((z: any) => z.name),
+            rooms: structure.rooms.map((r: any) => r.name),
+            cleaningItems: structure.cleaningItems.map((ci: any) => ci.name),
+            techCards: structure.techCards.map((tc: any) => tc.name)
           }
         });
 

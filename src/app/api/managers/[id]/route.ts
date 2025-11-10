@@ -23,16 +23,16 @@ async function getUserFromToken(req: NextRequest) {
 // GET /api/managers/[id] - получить детальную информацию о менеджере
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUserFromToken(req);
     
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPERVISOR')) {
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'DEPUTY_ADMIN')) {
       return NextResponse.json({ message: 'Доступ запрещен' }, { status: 403 });
     }
 
-    const managerId = params.id;
+    const { id: managerId } = await params;
 
     // Получаем информацию о менеджере
     const manager = await prisma.user.findUnique({
@@ -200,16 +200,16 @@ export async function GET(
 // DELETE /api/managers/[id] - удалить менеджера
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUserFromToken(req);
     
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPERVISOR')) {
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'DEPUTY_ADMIN')) {
       return NextResponse.json({ message: 'Доступ запрещен' }, { status: 403 });
     }
 
-    const managerId = params.id;
+    const { id: managerId } = await params;
 
     // Проверяем, существует ли менеджер
     const manager = await prisma.user.findUnique({

@@ -326,8 +326,63 @@ export default function ObjectsClientPage() {
               <CardContent>
                 <div className="space-y-2">
                   <div className="text-sm">
-                    <span className="font-medium">Менеджер:</span>{' '}
-                    {obj.manager?.name || 'Не назначен'}
+                    <span className="font-medium">Менеджеры:</span>
+                    {(() => {
+                      const managers: Array<{name: string, site?: string, role?: string}> = [];
+                      
+                      // Менеджер объекта
+                      if (obj.manager?.name) {
+                        managers.push({ 
+                          name: obj.manager.name, 
+                          role: obj.manager.role === 'SENIOR_MANAGER' ? 'Старший' : undefined 
+                        });
+                      }
+                      
+                      // Менеджеры участков
+                      if ((obj as any).sites) {
+                        (obj as any).sites.forEach((site: any) => {
+                          if (site.manager?.name && !site.name.includes('__VIRTUAL__')) {
+                            managers.push({ 
+                              name: site.manager.name, 
+                              site: site.name,
+                              role: site.manager.role === 'SENIOR_MANAGER' ? 'Старший' : undefined
+                            });
+                          }
+                          if (site.seniorManager?.name && !site.name.includes('__VIRTUAL__')) {
+                            managers.push({ 
+                              name: site.seniorManager.name, 
+                              site: site.name,
+                              role: 'Старший'
+                            });
+                          }
+                        });
+                      }
+                      
+                      // Убираем дубликаты
+                      const uniqueManagers = managers.filter((m, i, arr) => 
+                        arr.findIndex(x => x.name === m.name && x.site === m.site) === i
+                      );
+                      
+                      if (uniqueManagers.length === 0) {
+                        return <span className="text-gray-500 ml-2">Не назначены</span>;
+                      }
+                      
+                      if (uniqueManagers.length === 1 && !uniqueManagers[0].site) {
+                        return <span className="ml-2">{uniqueManagers[0].name}</span>;
+                      }
+                      
+                      return (
+                        <div className="ml-2 space-y-1 mt-1">
+                          {uniqueManagers.map((m, i) => (
+                            <div key={i} className="text-xs">
+                              • {m.name}
+                              {m.role && <span className="text-blue-600 ml-1">({m.role})</span>}
+                              {m.site && <span className="text-gray-500 ml-1">- {m.site}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </CardContent>

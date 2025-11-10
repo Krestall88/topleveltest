@@ -22,7 +22,12 @@ export async function GET(request: NextRequest) {
                   include: {
                     rooms: {
                       include: {
-                        techCards: true
+                        techCards: true,
+                        cleaningObjects: {
+                          include: {
+                            techCards: true
+                          }
+                        }
                       }
                     }
                   }
@@ -74,95 +79,10 @@ function buildHierarchicalTree(objectData: any) {
 
   // Добавляем участки
   objectData.sites?.forEach((site: any) => {
-    const siteNode: any = {
-      type: 'site',
-      name: site.name,
-      id: site.id,
-      children: []
-    };
-
-    // Добавляем зоны участка
-    site.zones?.forEach((zone: any) => {
-      const zoneNode: any = {
-        type: 'zone',
-        name: zone.name,
-        id: zone.id,
-        children: []
-      };
-
-      // Добавляем группы помещений зоны
-      zone.roomGroups?.forEach((roomGroup: any) => {
-        const roomGroupNode: any = {
-          type: 'roomGroup',
-          name: roomGroup.name,
-          id: roomGroup.id,
-          children: []
-        };
-
-        // Добавляем помещения группы
-        roomGroup.rooms?.forEach((room: any) => {
-          const roomNode: any = {
-            type: 'room',
-            name: room.name,
-            id: room.id,
-            children: []
-          };
-
-          // Добавляем техкарты помещения
-          room.techCards?.forEach((techCard: any) => {
-            roomNode.children.push({
-              type: 'techCard',
-              name: techCard.name,
-              id: techCard.id,
-              frequency: techCard.frequency,
-              workType: techCard.workType,
-              description: techCard.description,
-              notes: techCard.notes,
-              period: techCard.period,
-              children: []
-            });
-          });
-
-          roomGroupNode.children.push(roomNode);
-        });
-
-        zoneNode.children.push(roomGroupNode);
-      });
-
-      siteNode.children.push(zoneNode);
-    });
-
-    tree.push(siteNode);
+    processSite(site, tree);
   });
 
-  // Добавляем помещения без группы (старая структура)
-  objectData.rooms?.forEach((room: any) => {
-    const roomNode: any = {
-      type: 'room',
-      name: room.name,
-      id: room.id,
-      children: []
-    };
-
-    // Добавляем техкарты помещения
-    room.techCards?.forEach((techCard: any) => {
-      roomNode.children.push({
-        type: 'techCard',
-        name: techCard.name,
-        id: techCard.id,
-        frequency: techCard.frequency,
-        workType: techCard.workType,
-        description: techCard.description,
-        notes: techCard.notes,
-        period: techCard.period,
-        children: []
-      });
-    });
-
-    tree.push(roomNode);
-  });
-
-  // Добавляем техкарты без привязки к структуре
+  // Добавляем техкарты без помещений (привязаны напрямую к объекту)
   objectData.techCards?.forEach((techCard: any) => {
     tree.push({
       type: 'techCard',
@@ -178,4 +98,185 @@ function buildHierarchicalTree(objectData: any) {
   });
 
   return tree;
+}
+
+// Вспомогательная функция для обработки участка
+function processSite(site: any, parentChildren: any[]) {
+  // Пропускаем виртуальные участки - показываем их зоны напрямую
+  if (site.name === '__VIRTUAL__') {
+    site.zones?.forEach((zone: any) => {
+      processZone(zone, parentChildren);
+    });
+    return;
+  }
+
+  const siteNode: any = {
+    type: 'site',
+    name: site.name,
+    id: site.id,
+    children: []
+  };
+
+  // Добавляем зоны участка
+  site.zones?.forEach((zone: any) => {
+    processZone(zone, siteNode.children);
+  });
+
+  parentChildren.push(siteNode);
+}
+
+// Вспомогательная функция для обработки зоны
+function processZone(zone: any, parentChildren: any[]) {
+  // Пропускаем виртуальные зоны
+  if (zone.name === '__VIRTUAL__') {
+    // Для виртуальной зоны показываем её детей напрямую
+    zone.roomGroups?.forEach((roomGroup: any) => {
+      processRoomGroup(roomGroup, parentChildren);
+    });
+    return;
+  }
+
+  const zoneNode: any = {
+    type: 'zone',
+    name: zone.name,
+    id: zone.id,
+    children: []
+  };
+
+  // Добавляем группы помещений зоны
+  zone.roomGroups?.forEach((roomGroup: any) => {
+    processRoomGroup(roomGroup, zoneNode.children);
+  });
+
+  parentChildren.push(zoneNode);
+}
+
+// Вспомогательная функция для обработки группы помещений
+function processRoomGroup(roomGroup: any, parentChildren: any[]) {
+  // Пропускаем виртуальные группы - показываем их помещения напрямую
+  if (roomGroup.name === '__VIRTUAL__') {
+    roomGroup.rooms?.forEach((room: any) => {
+      processRoom(room, parentChildren);
+    });
+    return;
+  }
+
+  const roomGroupNode: any = {
+    type: 'roomGroup',
+    name: roomGroup.name,
+    id: roomGroup.id,
+    children: []
+  };
+
+  // Обрабатываем помещения группы
+  roomGroup.rooms?.forEach((room: any) => {
+    processRoom(room, roomGroupNode.children);
+  });
+
+  parentChildren.push(roomGroupNode);
+}
+
+// Вспомогательная функция для обработки помещения
+function processRoom(room: any, parentChildren: any[]) {
+  // Если помещение виртуальное - показываем его содержимое напрямую
+  if (room.name === '__VIRTUAL__') {
+    // Показываем объекты уборки
+    room.cleaningObjects?.forEach((cleaningObj: any) => {
+      const cleaningObjNode: any = {
+        type: 'cleaningObject',
+        name: cleaningObj.name,
+        id: cleaningObj.id,
+        children: []
+      };
+      
+      // Добавляем техкарты объекта уборки
+      cleaningObj.techCards?.forEach((techCard: any) => {
+        cleaningObjNode.children.push({
+          type: 'techCard',
+          name: techCard.name,
+          id: techCard.id,
+          frequency: techCard.frequency,
+          workType: techCard.workType,
+          description: techCard.description,
+          notes: techCard.notes,
+          period: techCard.period,
+          children: []
+        });
+      });
+      
+      parentChildren.push(cleaningObjNode);
+    });
+    
+    // Показываем ТОЛЬКО техкарты БЕЗ объектов уборки (cleaningObjectItemId === null)
+    room.techCards?.forEach((techCard: any) => {
+      if (!techCard.cleaningObjectItemId) {
+        parentChildren.push({
+          type: 'techCard',
+          name: techCard.name,
+          id: techCard.id,
+          frequency: techCard.frequency,
+          workType: techCard.workType,
+          description: techCard.description,
+          notes: techCard.notes,
+          period: techCard.period,
+          children: []
+        });
+      }
+    });
+    return;
+  }
+
+  // Реальное помещение - показываем его
+  const roomNode: any = {
+    type: 'room',
+    name: room.name,
+    id: room.id,
+    children: []
+  };
+
+  // Добавляем объекты уборки помещения
+  room.cleaningObjects?.forEach((cleaningObj: any) => {
+    const cleaningObjNode: any = {
+      type: 'cleaningObject',
+      name: cleaningObj.name,
+      id: cleaningObj.id,
+      children: []
+    };
+    
+    // Добавляем техкарты объекта уборки
+    cleaningObj.techCards?.forEach((techCard: any) => {
+      cleaningObjNode.children.push({
+        type: 'techCard',
+        name: techCard.name,
+        id: techCard.id,
+        frequency: techCard.frequency,
+        workType: techCard.workType,
+        description: techCard.description,
+        notes: techCard.notes,
+        period: techCard.period,
+        children: []
+      });
+    });
+    
+    roomNode.children.push(cleaningObjNode);
+  });
+
+  // Добавляем ТОЛЬКО техкарты БЕЗ объектов уборки (cleaningObjectItemId === null)
+  room.techCards?.forEach((techCard: any) => {
+    if (!techCard.cleaningObjectItemId) {
+      roomNode.children.push({
+        type: 'techCard',
+        name: techCard.name,
+        id: techCard.id,
+        frequency: techCard.frequency,
+        workType: techCard.workType,
+        description: techCard.description,
+        notes: techCard.notes,
+        period: techCard.period,
+        children: []
+      });
+    }
+  });
+
+  parentChildren.push(roomNode);
 }
