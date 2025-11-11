@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { jwtVerify } from 'jose';
 import { z } from 'zod';
+import { jwtVerify } from 'jose';
+import { notifyObjectAssignment } from '@/lib/telegram-notifications';
 
 async function getUserFromToken(req: NextRequest) {
   const token = req.cookies.get('token')?.value;
@@ -102,6 +103,15 @@ export async function POST(
         }
       }
     });
+
+    // Отправляем уведомление менеджеру в Telegram (если привязан)
+    if (manager.telegramId) {
+      await notifyObjectAssignment(manager.telegramId, {
+        objectName: object.name,
+        address: object.address || 'Адрес не указан'
+      });
+      console.log('📱 Уведомление о назначении отправлено менеджеру:', manager.name);
+    }
 
     return NextResponse.json({
       message: 'Менеджер успешно назначен на объект',

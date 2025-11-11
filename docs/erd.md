@@ -94,6 +94,10 @@ ANNUAL ANNUAL
     String password 
     Role role 
     String phone "❓"
+    String telegramId "❓"
+    String telegramUsername "❓"
+    String telegramFirstName "❓"
+    String telegramLastName "❓"
     }
   
 
@@ -324,6 +328,14 @@ ANNUAL ANNUAL
     }
   
 
+  "TelegramBindingCode" {
+    String id "🗝️"
+    DateTime createdAt 
+    String code 
+    DateTime expiresAt 
+    }
+  
+
   "DeputyAdminAssignment" {
     String id "🗝️"
     DateTime createdAt 
@@ -445,6 +457,7 @@ ANNUAL ANNUAL
     "User" o{--}o "task_admin_comments" : "adminComments"
     "User" o{--}o "ReportingTaskAttachment" : "reportingTaskAttachments"
     "User" o{--}o "AdditionalTaskComment" : "additionalTaskComments"
+    "User" o{--}o "TelegramBindingCode" : "telegramBindingCode"
     "CleaningObject" o{--}o "AdditionalTask" : "additionalTasks"
     "CleaningObject" o{--}o "Checklist" : "checklists"
     "CleaningObject" o|--|| "User" : "creator"
@@ -527,6 +540,7 @@ ANNUAL ANNUAL
     "AdditionalTask" o{--}o "AdditionalTaskComment" : "comments"
     "AdditionalTaskComment" o|--|| "AdditionalTask" : "task"
     "AdditionalTaskComment" o|--|| "User" : "user"
+    "TelegramBindingCode" o|--|| "User" : "user"
     "DeputyAdminAssignment" o|--|| "User" : "assignedBy"
     "DeputyAdminAssignment" o|--|| "User" : "deputyAdmin"
     "DeputyAdminAssignment" o|--|| "CleaningObject" : "object"

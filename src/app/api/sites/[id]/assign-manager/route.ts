@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { jwtVerify } from 'jose';
 import { z } from 'zod';
+import { jwtVerify } from 'jose';
+import { notifySiteAssignment } from '@/lib/telegram-notifications';
 
 async function getUserFromToken(req: NextRequest) {
   const token = req.cookies.get('token')?.value;
@@ -142,6 +143,16 @@ export async function POST(
         }
       }
     });
+
+    // Отправляем уведомление менеджеру в Telegram (если привязан)
+    if (newManager?.telegramId) {
+      await notifySiteAssignment(newManager.telegramId, {
+        siteName: site.name,
+        objectName: site.object.name,
+        isSeniorManager: validatedData.isSeniorManager
+      });
+      console.log('📱 Уведомление о назначении на участок отправлено:', newManager.name);
+    }
 
     return NextResponse.json({
       message: `${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} успешно назначен на участок`,

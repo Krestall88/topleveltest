@@ -22,6 +22,10 @@ model User {
   password                 String
   role                     Role                    @default(MANAGER)
   phone                    String?
+  telegramId               String?                 @unique
+  telegramUsername         String?
+  telegramFirstName        String?
+  telegramLastName         String?
   assignedAdditionalTasks  AdditionalTask[]        @relation("AssignedAdditionalTasks")
   completedAdditionalTasks AdditionalTask[]        @relation("CompletedAdditionalTasks")
   auditLogs                AuditLog[]
@@ -47,6 +51,7 @@ model User {
   adminComments            TaskAdminComment[]      @relation("AdminComments")
   reportingTaskAttachments ReportingTaskAttachment[] @relation("ReportingTaskAttachments")
   additionalTaskComments   AdditionalTaskComment[] @relation("AdditionalTaskComments")
+  telegramBindingCode      TelegramBindingCode?    @relation("TelegramBindingCodes")
 }
 
 model CleaningObject {
@@ -396,6 +401,15 @@ model AdditionalTaskComment {
   isAdmin   Boolean        @default(false)
   task      AdditionalTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
   user      User           @relation("AdditionalTaskComments", fields: [userId], references: [id])
+}
+
+model TelegramBindingCode {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  code      String   @unique
+  userId    String   @unique
+  expiresAt DateTime
+  user      User     @relation("TelegramBindingCodes", fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model DeputyAdminAssignment {

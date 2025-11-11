@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { notifyNewTask } from '@/lib/telegram-notifications';
 
 interface TelegramUpdate {
   update_id: number;
@@ -119,6 +120,13 @@ export async function POST(req: NextRequest) {
       
       // Если не привязан - запрашиваем название организации
       await sendOrganizationNameRequest(telegramId, userName);
+      return NextResponse.json({ ok: true });
+    }
+
+    // Проверяем команду /bind для привязки менеджера
+    if (message.text?.startsWith('/bind ')) {
+      const bindingCode = message.text.replace('/bind ', '').trim().toUpperCase();
+      await handleManagerBinding(telegramId, userName, message.from, bindingCode);
       return NextResponse.json({ ok: true });
     }
 
@@ -529,7 +537,16 @@ async function processAdditionalTask(
     // Отправляем подтверждение клиенту
     await sendConfirmationMessage(telegramId, binding.object.name, task.id);
 
-    // Здесь можно добавить уведомление менеджера
+    // Отправляем уведомление менеджеру в Telegram (если привязан)
+    if (binding.object.manager?.telegramId) {
+      await notifyNewTask(binding.object.manager.telegramId, {
+        title,
+        objectName: binding.object.name,
+        description: content.substring(0, 200),
+        taskId: task.id
+      });
+      console.log('📱 Уведомление отправлено менеджеру:', binding.object.manager.name);
+    }
 
   } catch (error) {
     console.error('❌ Ошибка создания дополнительного задания:', error);
@@ -576,5 +593,150 @@ async function sendConfirmationMessage(telegramId: string, objectName: string, t
     });
   } catch (error) {
     console.error('❌ Ошибка отправки подтверждения:', error);
+  }
+}
+
+// Обработка привязки менеджера к Telegram
+async function handleManagerBinding(
+  telegramId: string,
+  userName: string,
+  from: { id: number; first_name: string; last_name?: string; username?: string },
+  bindingCode: string
+) {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) {
+    console.error('❌ TELEGRAM_BOT_TOKEN не настроен');
+    return;
+  }
+
+  try {
+    // Ищем код привязки в базе данных
+    const bindingRecord = await prisma.telegramBindingCode.findUnique({
+      where: { code: bindingCode },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            telegramId: true
+          }
+        }
+      }
+    });
+
+    // Проверяем, существует ли код
+    if (!bindingRecord) {
+      const errorMessage = `❌ Код привязки не найден!
+
+Код: <code>${bindingCode}</code>
+
+Возможные причины:
+• Код введен неправильно
+• Код уже был использован
+• Срок действия кода истек
+
+Получите новый код в личном кабинете системы.`;
+
+      await sendTelegramMessage(telegramId, errorMessage);
+      return;
+    }
+
+    // Проверяем срок действия кода
+    if (new Date() > bindingRecord.expiresAt) {
+      const errorMessage = `⏰ Срок действия кода истек!
+
+Код: <code>${bindingCode}</code>
+
+Получите новый код в личном кабинете системы.`;
+
+      await sendTelegramMessage(telegramId, errorMessage);
+      
+      // Удаляем просроченный код
+      await prisma.telegramBindingCode.delete({
+        where: { code: bindingCode }
+      });
+      
+      return;
+    }
+
+    // Проверяем, не привязан ли уже этот Telegram к другому пользователю
+    if (bindingRecord.user.telegramId && bindingRecord.user.telegramId !== telegramId) {
+      const errorMessage = `⚠️ Этот аккаунт уже привязан к другому Telegram!
+
+Сначала отвяжите старый аккаунт в личном кабинете.`;
+
+      await sendTelegramMessage(telegramId, errorMessage);
+      return;
+    }
+
+    // Проверяем, не привязан ли этот Telegram ID к другому пользователю
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        telegramId: telegramId,
+        NOT: { id: bindingRecord.userId }
+      }
+    });
+
+    if (existingUser) {
+      const errorMessage = `⚠️ Этот Telegram уже привязан к другому аккаунту!
+
+Если это ваш аккаунт, отвяжите его сначала.`;
+
+      await sendTelegramMessage(telegramId, errorMessage);
+      return;
+    }
+
+    // Привязываем Telegram к пользователю
+    await prisma.user.update({
+      where: { id: bindingRecord.userId },
+      data: {
+        telegramId: telegramId,
+        telegramUsername: from.username || null,
+        telegramFirstName: from.first_name,
+        telegramLastName: from.last_name || null
+      }
+    });
+
+    // Удаляем использованный код
+    await prisma.telegramBindingCode.delete({
+      where: { code: bindingCode }
+    });
+
+    const roleNames: Record<string, string> = {
+      MANAGER: 'Менеджер',
+      SENIOR_MANAGER: 'Старший менеджер',
+      ACCOUNTANT: 'Бухгалтер',
+      ADMIN: 'Администратор',
+      DEPUTY_ADMIN: 'Заместитель администратора'
+    };
+
+    const successMessage = `✅ <b>Telegram успешно привязан!</b>
+
+👤 <b>Имя:</b> ${bindingRecord.user.name || 'Не указано'}
+📧 <b>Email:</b> ${bindingRecord.user.email}
+🎭 <b>Роль:</b> ${roleNames[bindingRecord.user.role] || bindingRecord.user.role}
+
+Теперь вы будете получать уведомления о:
+• Новых задачах
+• Назначении на объекты и участки
+• Комментариях к задачам
+• Просроченных задачах
+
+Вы можете отвязать Telegram в любое время через личный кабинет.`;
+
+    await sendTelegramMessage(telegramId, successMessage);
+
+    console.log(`✅ Telegram привязан: ${bindingRecord.user.email} -> ${telegramId}`);
+
+  } catch (error) {
+    console.error('❌ Ошибка привязки Telegram:', error);
+    
+    const errorMessage = `❌ Произошла ошибка при привязке.
+
+Попробуйте позже или обратитесь к администратору.`;
+
+    await sendTelegramMessage(telegramId, errorMessage);
   }
 }
