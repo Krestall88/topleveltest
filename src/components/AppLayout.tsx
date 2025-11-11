@@ -275,6 +275,18 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </>
       )}
       
+      {/* Настройки - доступны всем пользователям */}
+      {user && (
+        <Link
+          href="/user-settings"
+          className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/user-settings')}`}
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <span className="mr-3">👤</span>
+          Профиль и уведомления
+        </Link>
+      )}
+      
       {/* Кнопка выхода для всех пользователей */}
       <div className="mt-4 pt-4 border-t border-slate-700">
         <button
