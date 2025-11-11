@@ -21,7 +21,6 @@ import {
 import AdditionalTaskCard from '@/components/AdditionalTaskCard';
 import type { AdditionalTask, CleaningObject, User as UserType } from '@/types';
 import CreateTaskModal from '@/components/CreateTaskModal';
-import TelegramBindingsManager from '@/components/TelegramBindingsManager';
 import { useTaskPolling } from '@/hooks/useTaskPolling';
 
 export default function AdditionalTasksClientPage() {
@@ -39,8 +38,6 @@ export default function AdditionalTasksClientPage() {
   // Модальное окно создания
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
-  // Модальное окно управления Telegram
-  const [isTelegramManagerOpen, setIsTelegramManagerOpen] = useState(false);
   
   // Режим отображения: на исполнение или выполнено
   const [viewMode, setViewMode] = useState<'pending' | 'completed'>('pending');
@@ -351,18 +348,9 @@ export default function AdditionalTasksClientPage() {
               </div>
             )}
 
-            {/* Кнопки управления */}
+            {/* Кнопка создания задания */}
             {['ADMIN', 'DEPUTY', 'DEPUTY_ADMIN'].includes(currentUser?.role) && (
-              <div className="w-full sm:w-auto sm:ml-auto flex flex-col sm:flex-row gap-2">
-                <Button 
-                  onClick={() => setIsTelegramManagerOpen(true)}
-                  variant="outline"
-                  className="w-full sm:w-auto"
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Telegram аккаунты</span>
-                  <span className="sm:hidden">Telegram</span>
-                </Button>
+              <div className="w-full sm:w-auto sm:ml-auto">
                 <Button 
                   onClick={() => setIsCreateModalOpen(true)}
                   className="w-full sm:w-auto"
@@ -526,11 +514,6 @@ export default function AdditionalTasksClientPage() {
         objects={objects}
       />
 
-      {/* Модальное окно управления Telegram аккаунтами */}
-      <TelegramBindingsManager
-        isOpen={isTelegramManagerOpen}
-        onClose={() => setIsTelegramManagerOpen(false)}
-      />
 
       {/* Уведомление о новых заданиях */}
       {showNotification && newTasksCount > 0 && (

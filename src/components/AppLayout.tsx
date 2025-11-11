@@ -275,15 +275,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </>
       )}
       
-      {/* Настройки - доступны всем пользователям */}
+      {/* Telegram - доступен всем пользователям */}
       {user && (
         <Link
-          href="/user-settings"
-          className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/user-settings')}`}
+          href="/telegram"
+          className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/telegram')}`}
           onClick={() => setIsMobileMenuOpen(false)}
         >
-          <span className="mr-3">👤</span>
-          Профиль и уведомления
+          <span className="mr-3">📱</span>
+          Telegram
         </Link>
       )}
       
