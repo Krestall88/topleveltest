@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { jwtVerify } from 'jose';
+import { notifyNewTask } from '@/lib/telegram-notifications';
 
 async function getUserFromToken(req: NextRequest) {
   try {
@@ -166,7 +167,7 @@ export async function POST(req: NextRequest) {
           select: { id: true, name: true, address: true }
         },
         assignedTo: {
-          select: { id: true, name: true, email: true }
+          select: { id: true, name: true, email: true, telegramId: true }
         }
       }
     });
@@ -186,6 +187,23 @@ export async function POST(req: NextRequest) {
         userId: user.userId as string
       }
     });
+
+    // Отправляем уведомление менеджеру в Telegram (если привязан)
+    if (task.assignedTo.telegramId) {
+      try {
+        await notifyNewTask(task.assignedTo.telegramId, {
+          title: task.title,
+          objectName: task.object.name,
+          description: content.substring(0, 200),
+          taskId: task.id
+        });
+        console.log('📱 Уведомление отправлено менеджеру:', task.assignedTo.name);
+      } catch (error) {
+        console.error('❌ Ошибка отправки уведомления:', error);
+      }
+    } else {
+      console.log('ℹ️ Менеджер не привязал Telegram, уведомление не отправлено');
+    }
 
     console.log('✅ Дополнительное задание создано:', task.id);
 
