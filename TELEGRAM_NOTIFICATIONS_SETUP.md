@@ -80,14 +80,25 @@ npx prisma generate
 npm run dev
 ```
 
-### Шаг 4: Проверить переменные окружения
+### Шаг 4: Добавить переменные окружения
 
-Убедитесь, что в файле `.env` установлены:
+**Добавьте в файл `.env` следующие строки:**
+
 ```env
-TELEGRAM_BOT_TOKEN=your_bot_token
+# Username вашего бота (БЕЗ символа @)
+# Чтобы узнать: откройте бота в Telegram и посмотрите username
 TELEGRAM_BOT_USERNAME=your_bot_username
+
+# URL вашего приложения (для ссылок в уведомлениях)
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
+
+**Как узнать username бота:**
+1. Откройте вашего бота в Telegram
+2. Посмотрите username в шапке чата (например: `@my_cleaning_bot`)
+3. Укажите БЕЗ символа `@` (например: `my_cleaning_bot`)
+
+**Важно:** Токен `TELEGRAM_BOT_TOKEN` у вас уже есть - используйте тот же самый бот!
 
 ---
 
