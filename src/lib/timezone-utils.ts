@@ -2,6 +2,33 @@
  * Утилиты для работы с часовыми поясами
  */
 
+// Определение часового пояса по городу
+export function getTimezoneByCity(city: string): string {
+  const timezones: Record<string, string> = {
+    'Москва': 'Europe/Moscow',
+    'Санкт-Петербург': 'Europe/Moscow',
+    'Екатеринбург': 'Asia/Yekaterinburg',
+    'Новосибирск': 'Asia/Novosibirsk',
+    'Красноярск': 'Asia/Krasnoyarsk',
+    'Иркутск': 'Asia/Irkutsk',
+    'Якутск': 'Asia/Yakutsk',
+    'Владивосток': 'Asia/Vladivostok',
+    'Магадан': 'Asia/Magadan',
+    'Камчатка': 'Asia/Kamchatka',
+    'Калининград': 'Europe/Kaliningrad',
+    'Самара': 'Europe/Samara',
+    'Омск': 'Asia/Omsk',
+    'Томск': 'Asia/Tomsk',
+    'Барнаул': 'Asia/Barnaul',
+    'Чита': 'Asia/Chita',
+    'Хабаровск': 'Asia/Vladivostok',
+    'Южно-Сахалинск': 'Asia/Sakhalin',
+    'Петропавловск-Камчатский': 'Asia/Kamchatka',
+  };
+
+  return timezones[city] || 'Europe/Moscow';
+}
+
 // Конвертация времени в часовой пояс объекта
 export function convertToTimezone(date: Date, timezone: string): Date {
   try {

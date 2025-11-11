@@ -61,9 +61,12 @@ model CleaningObject {
   name                        String
   address                     String
   documents                   Json?
-  timezone                    String?
+  timezone                    String?                 @default("Europe/Moscow")
   workingHours                Json?
+  workStartTime               String?                 @default("09:00")
+  workEndTime                 String?                 @default("18:00")
   workingDays                 String[]
+  city                        String?
   autoChecklistEnabled        Boolean                 @default(true)
   lastChecklistDate           DateTime?
   creatorId                   String

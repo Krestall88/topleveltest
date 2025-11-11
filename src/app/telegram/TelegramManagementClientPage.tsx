@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import TelegramBindingWidget from '@/components/TelegramBindingWidget';
 import TelegramClientBindings from '@/components/TelegramClientBindings';
+import { useBrowserNotifications } from '@/hooks/useBrowserNotifications';
 
 interface User {
   id: string;
@@ -20,6 +21,21 @@ export default function TelegramManagementClientPage({ user }: TelegramManagemen
   
   // Проверяем, может ли пользователь управлять клиентами
   const canManageClients = user.role === 'ADMIN' || user.role === 'DEPUTY_ADMIN';
+
+  // Browser Notifications
+  const { permission, isSupported, requestPermission, showNotification } = useBrowserNotifications();
+
+  const handleRequestPermission = async () => {
+    const result = await requestPermission();
+    if (result === 'granted') {
+      // Показываем тестовое уведомление
+      showNotification({
+        title: '✅ Уведомления включены!',
+        body: 'Теперь вы будете получать уведомления даже когда браузер свернут',
+        tag: 'test-notification'
+      });
+    }
+  };
 
   return (
     <div className="p-6">
@@ -88,6 +104,72 @@ export default function TelegramManagementClientPage({ user }: TelegramManagemen
 
               {/* Виджет привязки */}
               <TelegramBindingWidget />
+
+              {/* Browser Notifications */}
+              {isSupported && (
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    🌐 Уведомления в браузере
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Получайте уведомления прямо в браузере, даже когда вкладка свернута или открыта другая страница.
+                  </p>
+                  
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      {permission === 'granted' ? (
+                        <>
+                          <span className="text-2xl">✅</span>
+                          <div>
+                            <p className="font-medium text-green-700">Уведомления включены</p>
+                            <p className="text-sm text-gray-600">
+                              Вы будете получать уведомления в браузере
+                            </p>
+                          </div>
+                        </>
+                      ) : permission === 'denied' ? (
+                        <>
+                          <span className="text-2xl">❌</span>
+                          <div>
+                            <p className="font-medium text-red-700">Уведомления заблокированы</p>
+                            <p className="text-sm text-gray-600">
+                              Разрешите уведомления в настройках браузера
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-2xl">🔔</span>
+                          <div>
+                            <p className="font-medium text-gray-900">Уведомления не включены</p>
+                            <p className="text-sm text-gray-600">
+                              Нажмите кнопку чтобы включить
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    
+                    {permission === 'default' && (
+                      <button
+                        onClick={handleRequestPermission}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Включить уведомления
+                      </button>
+                    )}
+                  </div>
+
+                  {permission === 'granted' && (
+                    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm text-green-800">
+                        <strong>💡 Совет:</strong> Уведомления будут показываться автоматически каждые 30 секунд при появлении новых событий.
+                        Когда вкладка в фоне, проверка происходит реже (каждые 60 секунд) для экономии ресурсов.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Информация о типах уведомлений */}
               <div className="bg-white rounded-lg shadow p-6">

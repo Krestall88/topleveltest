@@ -110,7 +110,10 @@ ANNUAL ANNUAL
     Json documents "❓"
     String timezone "❓"
     Json workingHours "❓"
+    String workStartTime "❓"
+    String workEndTime "❓"
     String workingDays 
+    String city "❓"
     Boolean autoChecklistEnabled 
     DateTime lastChecklistDate "❓"
     Boolean requirePhotoForCompletion 

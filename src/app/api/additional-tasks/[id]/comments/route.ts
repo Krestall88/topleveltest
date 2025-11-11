@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
+import { notifyTaskComment } from '@/lib/telegram-notifications';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -68,6 +69,26 @@ export async function POST(
     // Проверяем, является ли пользователь администратором
     const isAdmin = ['ADMIN', 'DEPUTY_ADMIN'].includes(user.role);
 
+    // Получаем информацию о задании и менеджере
+    const task = await prisma.additionalTask.findUnique({
+      where: { id },
+      include: {
+        assignedTo: {
+          select: { id: true, name: true, telegramId: true }
+        },
+        object: {
+          select: { name: true }
+        }
+      }
+    });
+
+    if (!task) {
+      return NextResponse.json(
+        { error: 'Task not found' },
+        { status: 404 }
+      );
+    }
+
     const comment = await prisma.additionalTaskComment.create({
       data: {
         taskId: id,
@@ -86,6 +107,20 @@ export async function POST(
         }
       }
     });
+
+    // Отправляем уведомление менеджеру (если комментарий оставил не он сам)
+    if (task.assignedTo.telegramId && task.assignedTo.id !== user.id) {
+      try {
+        await notifyTaskComment(task.assignedTo.telegramId, {
+          taskTitle: task.title,
+          authorName: user.name || user.email,
+          comment: content.trim().substring(0, 200)
+        });
+        console.log('📱 Уведомление о комментарии отправлено менеджеру:', task.assignedTo.name);
+      } catch (error) {
+        console.error('❌ Ошибка отправки уведомления о комментарии:', error);
+      }
+    }
 
     return NextResponse.json(comment);
   } catch (error) {
