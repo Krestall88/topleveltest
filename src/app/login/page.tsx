@@ -25,11 +25,16 @@ export default function LoginPage() {
         throw new Error(data.message || 'Ошибка аутентификации');
       }
 
-      const { token } = await res.json();
+      const { token, user } = await res.json();
       // Store token in cookie
       document.cookie = `token=${token}; path=/; max-age=86400;`; // Expires in 1 day
 
-      router.push('/'); // Redirect to dashboard
+      // Редирект в зависимости от роли
+      if (user.role === 'ACCOUNTANT') {
+        router.push('/inventory'); // Бухгалтер → Инвентарь
+      } else {
+        router.push('/'); // Остальные → Дашборд
+      }
     } catch (err: any) {
       setError(err.message);
     }

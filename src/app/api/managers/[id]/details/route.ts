@@ -3,22 +3,22 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const managerId = params.id;
+    const { id: managerId } = await params;
 
     // Получаем детальную информацию о менеджере
     const manager = await prisma.user.findUnique({
       where: { 
-        id: managerId,
-        role: 'MANAGER'
+        id: managerId
       },
       select: {
         id: true,
         name: true,
         email: true,
         phone: true,
+        role: true,
         createdAt: true,
         // Объекты, которыми управляет менеджер
         managedObjects: {

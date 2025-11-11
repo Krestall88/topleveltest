@@ -23,7 +23,7 @@ async function getUserFromToken(req: NextRequest) {
 // POST /api/objects/[id]/remove-manager - удалить менеджера с объекта
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUserFromToken(req);
@@ -32,7 +32,7 @@ export async function POST(
       return NextResponse.json({ message: 'Доступ запрещен' }, { status: 403 });
     }
 
-    const objectId = params.id;
+    const { id: objectId } = await params;
 
     // Проверяем, существует ли объект
     const object = await prisma.cleaningObject.findUnique({

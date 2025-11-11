@@ -43,3 +43,7 @@ next-env.d.ts
 
 # data files
 /data/
+
+# sensitive user data
+USERS_LIST.md
+USERS_LIST_NEW.txt

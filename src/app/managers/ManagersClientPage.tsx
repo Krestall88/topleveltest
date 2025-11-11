@@ -48,7 +48,7 @@ export default function ManagersClientPage({ user }: Props) {
     email: '',
     phone: '',
     password: '',
-    role: 'MANAGER' as 'MANAGER' | 'SENIOR_MANAGER'
+    role: 'MANAGER' as 'MANAGER' | 'SENIOR_MANAGER' | 'ACCOUNTANT'
   });
   const [resetPasswordData, setResetPasswordData] = useState({
     managerId: '',
@@ -217,7 +217,7 @@ export default function ManagersClientPage({ user }: Props) {
 
       {/* Заголовок и кнопки управления */}
       <div className="flex justify-between items-center mt-6">
-        <h2 className="text-2xl font-bold text-gray-900">👥 Управление менеджерами</h2>
+        <h2 className="text-2xl font-bold text-gray-900">👥 Управление сотрудниками</h2>
         <div className="flex gap-2">
           <Button 
             variant="outline" 
@@ -232,7 +232,7 @@ export default function ManagersClientPage({ user }: Props) {
             className="flex items-center gap-2"
           >
             <UserPlus className="h-4 w-4" />
-            Добавить менеджера
+            Добавить сотрудника
           </Button>
         </div>
       </div>
@@ -320,8 +320,16 @@ export default function ManagersClientPage({ user }: Props) {
               <CardContent>
                 <div className="space-y-2">
                   {(manager as any).role && (
-                    <div className="inline-block px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium mb-2">
-                      {(manager as any).role === 'SENIOR_MANAGER' ? '👔 Старший менеджер' : '👤 Менеджер'}
+                    <div className={`inline-block px-2 py-1 rounded text-xs font-medium mb-2 ${
+                      (manager as any).role === 'ACCOUNTANT' 
+                        ? 'bg-green-100 text-green-700' 
+                        : (manager as any).role === 'SENIOR_MANAGER' 
+                        ? 'bg-purple-100 text-purple-700' 
+                        : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {(manager as any).role === 'ACCOUNTANT' && '💰 Бухгалтер'}
+                      {(manager as any).role === 'SENIOR_MANAGER' && '👔 Старший менеджер'}
+                      {(manager as any).role === 'MANAGER' && '👤 Менеджер'}
                     </div>
                   )}
                   {manager.objectNames && (
@@ -351,7 +359,7 @@ export default function ManagersClientPage({ user }: Props) {
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Добавить нового менеджера</h3>
+            <h3 className="text-lg font-semibold mb-4">Добавить нового сотрудника</h3>
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -404,15 +412,18 @@ export default function ManagersClientPage({ user }: Props) {
                 <select
                   id="role"
                   value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'MANAGER' | 'SENIOR_MANAGER' })}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'MANAGER' | 'SENIOR_MANAGER' | 'ACCOUNTANT' })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 >
                   <option value="MANAGER">Менеджер</option>
                   <option value="SENIOR_MANAGER">Старший менеджер</option>
+                  <option value="ACCOUNTANT">💰 Бухгалтер</option>
                 </select>
                 <p className="text-xs text-gray-500 mt-1">
-                  Старший менеджер видит все объекты и может закрывать задачи своих подчиненных
+                  {formData.role === 'SENIOR_MANAGER' && 'Старший менеджер видит все объекты и может закрывать задачи своих подчиненных'}
+                  {formData.role === 'ACCOUNTANT' && 'Бухгалтер имеет доступ только к вкладке "Инвентарь" с полным функционалом'}
+                  {formData.role === 'MANAGER' && 'Менеджер работает с назначенными ему объектами и участками'}
                 </p>
               </div>
               

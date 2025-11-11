@@ -79,7 +79,13 @@ export default function ManagerObjectsEditor({
         throw new Error('Не удалось загрузить список объектов');
       }
       const objectsData = await objectsResponse.json();
-      setAvailableObjects(objectsData.objects || []);
+      console.log('📦 Все объекты из API:', objectsData);
+      console.log('📦 Тип данных:', Array.isArray(objectsData) ? 'массив' : 'объект');
+      
+      // API возвращает массив напрямую, а не { objects: [...] }
+      const objectsList = Array.isArray(objectsData) ? objectsData : (objectsData.objects || []);
+      console.log('📦 Количество объектов:', objectsList.length);
+      setAvailableObjects(objectsList);
       
     } catch (error: any) {
       console.error('Ошибка при загрузке данных:', error);
@@ -152,6 +158,13 @@ export default function ManagerObjectsEditor({
     const notAssigned = !managerObjects.some(mo => mo.id === obj.id);
     return matchesSearch && notAssigned;
   });
+
+  // Логирование для отладки
+  console.log('🔍 Статистика фильтрации:');
+  console.log('   Всего объектов:', availableObjects.length);
+  console.log('   Назначенных объектов:', managerObjects.length);
+  console.log('   Отфильтрованных объектов:', filteredAvailableObjects.length);
+  console.log('   Поисковый запрос:', searchTerm);
 
   if (!isOpen) return null;
 

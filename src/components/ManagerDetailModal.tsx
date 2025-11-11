@@ -3,14 +3,16 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { X, User, Phone, Mail, Calendar, Building, MapPin, FileText, Settings } from 'lucide-react';
+import { X, User, Phone, Mail, Calendar, Building, MapPin, FileText, Settings, Map } from 'lucide-react';
 import ManagerObjectsEditor from './ManagerObjectsEditor';
+import ManagerSitesEditor from './ManagerSitesEditor';
 
 interface ManagerDetails {
   id: string;
   name: string;
   email: string;
   phone?: string;
+  role: string;
   createdAt: string;
   managedObjects: Array<{
     id: string;
@@ -54,6 +56,7 @@ export default function ManagerDetailModal({ managerId, isOpen, onClose }: Props
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isObjectsEditorOpen, setIsObjectsEditorOpen] = useState(false);
+  const [isSitesEditorOpen, setIsSitesEditorOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen && managerId) {
@@ -178,6 +181,43 @@ export default function ManagerDetailModal({ managerId, isOpen, onClose }: Props
                       <div className="font-medium">{formatDate(manager.createdAt)}</div>
                     </div>
                   </div>
+                  
+                  {/* Смена роли */}
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="text-sm text-gray-600 mb-2">Роль</div>
+                    <select
+                      value={manager.role}
+                      onChange={async (e) => {
+                        const newRole = e.target.value;
+                        try {
+                          const response = await fetch(`/api/managers/${manager.id}/change-role`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ role: newRole })
+                          });
+                          
+                          if (response.ok) {
+                            await fetchManagerDetails();
+                          } else {
+                            alert('Ошибка при изменении роли');
+                          }
+                        } catch (error) {
+                          console.error('Ошибка:', error);
+                          alert('Ошибка при изменении роли');
+                        }
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="MANAGER">👤 Менеджер</option>
+                      <option value="SENIOR_MANAGER">👔 Старший менеджер</option>
+                      <option value="ACCOUNTANT">💰 Бухгалтер</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {manager.role === 'SENIOR_MANAGER' && 'Старший менеджер видит все объекты и может закрывать задачи своих подчиненных'}
+                      {manager.role === 'ACCOUNTANT' && 'Бухгалтер имеет доступ только к вкладке "Инвентарь" с полным функционалом'}
+                      {manager.role === 'MANAGER' && 'Менеджер работает с назначенными ему объектами и участками'}
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -235,28 +275,34 @@ export default function ManagerDetailModal({ managerId, isOpen, onClose }: Props
                         </div>
                         
                         {/* Участки в этом объекте */}
-                        {object.sites.length > 0 && (
-                          <div className="mt-3 pt-3 border-t">
-                            <div className="text-sm font-medium text-gray-700 mb-2">
-                              Участки в этом объекте ({object.sites.length}):
+                        {(() => {
+                          const realSites = object.sites.filter(site => 
+                            !site.name.includes('__VIRTUAL__') && 
+                            !site.name.includes('_VIRTUAL_')
+                          );
+                          return realSites.length > 0 && (
+                            <div className="mt-3 pt-3 border-t">
+                              <div className="text-sm font-medium text-gray-700 mb-2">
+                                Участки в этом объекте ({realSites.length}):
+                              </div>
+                              <div className="space-y-2">
+                                {realSites.map((site) => (
+                                  <div key={site.id} className="bg-gray-50 rounded p-3">
+                                    <div className="font-medium text-sm">{site.name}</div>
+                                    {site.description && (
+                                      <div className="text-xs text-gray-600 mt-1">{site.description}</div>
+                                    )}
+                                    {site.area && (
+                                      <div className="text-xs text-gray-500 mt-1">
+                                        Площадь: {site.area} м²
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                            <div className="space-y-2">
-                              {object.sites.map((site) => (
-                                <div key={site.id} className="bg-gray-50 rounded p-3">
-                                  <div className="font-medium text-sm">{site.name}</div>
-                                  {site.description && (
-                                    <div className="text-xs text-gray-600 mt-1">{site.description}</div>
-                                  )}
-                                  {site.area && (
-                                    <div className="text-xs text-gray-500 mt-1">
-                                      Площадь: {site.area} м²
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                          );
+                        })()}
                       </div>
                     ))}
                   </CardContent>
@@ -276,47 +322,82 @@ export default function ManagerDetailModal({ managerId, isOpen, onClose }: Props
                 )}
               </Card>
 
-              {/* Участки в других объектах */}
-              {manager.managedSites.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="h-5 w-5" />
-                      Участки в других объектах ({manager.managedSites.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {manager.managedSites.map((site) => (
-                      <div key={site.id} className="border rounded-lg p-4">
-                        <div className="font-medium">{site.name}</div>
-                        {site.description && (
-                          <div className="text-sm text-gray-600 mt-1">{site.description}</div>
-                        )}
-                        {site.comment && (
-                          <div className="text-sm text-blue-600 mt-1 font-medium">
-                            Комментарий: {site.comment}
-                          </div>
-                        )}
-                        <div className="text-sm text-gray-500 mt-2">
-                          <div>Объект: {site.object.name}</div>
-                          <div className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {site.object.address}
-                          </div>
-                          {site.object.manager && (
-                            <div>Основной менеджер объекта: {site.object.manager.name}</div>
-                          )}
+              {/* Участки */}
+              {(() => {
+                const realManagedSites = manager.managedSites.filter(site => 
+                  !site.name.includes('__VIRTUAL__') && 
+                  !site.name.includes('_VIRTUAL_')
+                );
+                return (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Map className="h-5 w-5" />
+                          Участки ({realManagedSites.length})
                         </div>
-                        {site.area && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            Площадь: {site.area} м²
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsSitesEditorOpen(true)}
+                          className="flex items-center gap-2"
+                        >
+                          <Settings className="h-4 w-4" />
+                          Управление участками
+                        </Button>
+                      </CardTitle>
+                    </CardHeader>
+                    {realManagedSites.length > 0 ? (
+                      <CardContent className="space-y-4">
+                        {realManagedSites.map((site) => (
+                          <div key={site.id} className="border rounded-lg p-4">
+                            <div className="font-medium">{site.name}</div>
+                            {site.description && (
+                              <div className="text-sm text-gray-600 mt-1">{site.description}</div>
+                            )}
+                            {site.comment && (
+                              <div className="text-sm text-blue-600 mt-1 font-medium">
+                                💬 {site.comment}
+                              </div>
+                            )}
+                            <div className="text-sm text-gray-500 mt-2">
+                              <div className="flex items-center gap-1">
+                                <Building className="h-3 w-3" />
+                                {site.object.name}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {site.object.address}
+                              </div>
+                              {site.object.manager && (
+                                <div className="text-xs mt-1">Основной менеджер объекта: {site.object.manager.name}</div>
+                              )}
+                            </div>
+                            {site.area && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                Площадь: {site.area} м²
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
+                        ))}
+                      </CardContent>
+                    ) : (
+                      <CardContent className="p-8 text-center text-gray-500">
+                        <Map className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                        <p className="mb-4">У этого менеджера пока нет назначенных участков</p>
+                        <Button
+                          variant="outline"
+                          onClick={() => setIsSitesEditorOpen(true)}
+                          className="flex items-center gap-2"
+                        >
+                          <Settings className="h-4 w-4" />
+                          Добавить участки
+                        </Button>
+                      </CardContent>
+                    )}
+                  </Card>
+                );
+              })()}
 
               {/* Если нет объектов и участков */}
               {manager.managedObjects.length === 0 && manager.managedSites.length === 0 && (
@@ -346,6 +427,17 @@ export default function ManagerDetailModal({ managerId, isOpen, onClose }: Props
           managerName={manager.name}
           isOpen={isObjectsEditorOpen}
           onClose={() => setIsObjectsEditorOpen(false)}
+          onUpdate={fetchManagerDetails}
+        />
+      )}
+
+      {/* Редактор участков менеджера */}
+      {manager && (
+        <ManagerSitesEditor
+          managerId={manager.id}
+          managerRole={manager.role}
+          isOpen={isSitesEditorOpen}
+          onClose={() => setIsSitesEditorOpen(false)}
           onUpdate={fetchManagerDetails}
         />
       )}

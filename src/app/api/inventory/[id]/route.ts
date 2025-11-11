@@ -91,7 +91,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 export async function PATCH(req: NextRequest, { params }: Params) {
   const session = await getAuthSession();
 
-  if (!session?.user || !['ADMIN', 'DEPUTY', 'MANAGER'].includes(session.user.role)) {
+  if (!session?.user || !['ADMIN', 'DEPUTY', 'MANAGER', 'ACCOUNTANT', 'DEPUTY_ADMIN'].includes(session.user.role)) {
     return new NextResponse('Недостаточно прав', { status: 403 });
   }
 
@@ -157,7 +157,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 export async function DELETE(req: NextRequest, { params }: Params) {
   const session = await getAuthSession();
 
-  if (!session?.user || !['ADMIN', 'DEPUTY', 'MANAGER'].includes(session.user.role)) {
+  if (!session?.user || !['ADMIN', 'DEPUTY', 'MANAGER', 'ACCOUNTANT', 'DEPUTY_ADMIN'].includes(session.user.role)) {
     return new NextResponse('Недостаточно прав', { status: 403 });
   }
 
@@ -196,7 +196,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
 export async function POST(req: NextRequest, { params }: Params) {
   const session = await getAuthSession();
 
-  if (!session?.user || !['ADMIN', 'DEPUTY', 'MANAGER'].includes(session.user.role)) {
+  if (!session?.user || !['ADMIN', 'DEPUTY', 'MANAGER', 'ACCOUNTANT', 'DEPUTY_ADMIN'].includes(session.user.role)) {
     return new NextResponse('Недостаточно прав', { status: 403 });
   }
 

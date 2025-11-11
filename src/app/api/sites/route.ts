@@ -1,15 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import { getAuthSession } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { jwtVerify } from 'jose';
 
-const prisma = new PrismaClient();
+async function getUserFromToken(req: NextRequest) {
+  const token = req.cookies.get('token')?.value;
+  if (!token) return null;
+
+  try {
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+    const { payload } = await jwtVerify(token, secret);
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId as string },
+      select: { id: true, role: true, name: true, email: true }
+    });
+    return user;
+  } catch (error) {
+    console.error('Failed to verify token', error);
+    return null;
+  }
+}
 
 // GET /api/sites - получить все участки
 export async function GET(request: NextRequest) {
   try {
-    const user = await getAuthSession();
+    const user = await getUserFromToken(request);
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ message: 'Доступ запрещен' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -32,7 +48,17 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             phone: true,
-            email: true
+            email: true,
+            role: true
+          }
+        },
+        seniorManager: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+            role: true
           }
         },
         zones: {

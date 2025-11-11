@@ -12,7 +12,7 @@ const createManagerSchema = z.object({
   email: z.string().email('Некорректный email'),
   phone: z.string().optional(),
   password: z.string().min(6, 'Пароль должен содержать минимум 6 символов'),
-  role: z.enum(['MANAGER', 'SENIOR_MANAGER']).optional().default('MANAGER'),
+  role: z.enum(['MANAGER', 'SENIOR_MANAGER', 'ACCOUNTANT']).optional().default('MANAGER'),
 });
 
 // GET /api/managers - получить список менеджеров
@@ -27,11 +27,11 @@ export async function GET(req: NextRequest) {
     // Получаем доступные объекты для пользователя
     const accessibleObjectIds = await getUserAccessibleObjects(user);
     
-    // Фильтруем менеджеров и старших менеджеров по доступным объектам
+    // Фильтруем менеджеров, старших менеджеров и бухгалтеров по доступным объектам
     const managersFilter = user.role === 'ADMIN' 
-      ? { role: { in: ['MANAGER', 'SENIOR_MANAGER'] } }
+      ? { role: { in: ['MANAGER', 'SENIOR_MANAGER', 'ACCOUNTANT'] } }
       : { 
-          role: { in: ['MANAGER', 'SENIOR_MANAGER'] },
+          role: { in: ['MANAGER', 'SENIOR_MANAGER', 'ACCOUNTANT'] },
           managedObjects: {
             some: {
               id: { in: accessibleObjectIds }
@@ -103,7 +103,17 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    return NextResponse.json(managersWithSites);
+    // Сортируем: бухгалтеры в начале, затем остальные по дате создания
+    const sortedManagers = managersWithSites.sort((a, b) => {
+      // Бухгалтеры всегда в начале
+      if (a.role === 'ACCOUNTANT' && b.role !== 'ACCOUNTANT') return -1;
+      if (a.role !== 'ACCOUNTANT' && b.role === 'ACCOUNTANT') return 1;
+      
+      // Внутри каждой группы сортируем по дате создания (новые первыми)
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    return NextResponse.json(sortedManagers);
   } catch (error) {
     console.error('Error fetching managers:', error);
     return NextResponse.json(

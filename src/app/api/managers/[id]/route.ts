@@ -211,41 +211,108 @@ export async function DELETE(
 
     const { id: managerId } = await params;
 
-    // Проверяем, существует ли менеджер
+    // Проверяем, существует ли пользователь
     const manager = await prisma.user.findUnique({
       where: { 
-        id: managerId,
-        role: 'MANAGER'
+        id: managerId
       }
     });
+
+    // Проверяем, что это менеджер, старший менеджер или бухгалтер
+    if (manager && !['MANAGER', 'SENIOR_MANAGER', 'ACCOUNTANT'].includes(manager.role)) {
+      return NextResponse.json({ message: 'Можно удалять только менеджеров, старших менеджеров и бухгалтеров' }, { status: 400 });
+    }
 
     if (!manager) {
       return NextResponse.json({ message: 'Менеджер не найден' }, { status: 404 });
     }
 
-    // Проверяем, есть ли у менеджера объекты
+    // Проверяем все связи пользователя
+    console.log('🔍 Проверка связей пользователя:', managerId);
+    
+    // Проверяем, есть ли у менеджера объекты (прямые назначения)
     const objectsCount = await prisma.cleaningObject.count({
       where: { managerId: managerId }
     });
+    console.log('  Объектов:', objectsCount);
 
-    if (objectsCount > 0) {
+    // Проверяем, есть ли у менеджера участки
+    const sitesCount = await prisma.site.count({
+      where: {
+        OR: [
+          { managerId: managerId },
+          { seniorManagerId: managerId }
+        ]
+      }
+    });
+    console.log('  Участков:', sitesCount);
+
+    // Проверяем созданные объекты
+    const createdObjectsCount = await prisma.cleaningObject.count({
+      where: { creatorId: managerId }
+    });
+    console.log('  Созданных объектов:', createdObjectsCount);
+
+    if (objectsCount > 0 || sitesCount > 0) {
       return NextResponse.json(
-        { message: 'Нельзя удалить менеджера, у которого есть объекты' },
+        { message: `Нельзя удалить сотрудника, у которого есть назначения (объектов: ${objectsCount}, участков: ${sitesCount})` },
         { status: 400 }
       );
     }
+
+    if (createdObjectsCount > 0) {
+      return NextResponse.json(
+        { message: `Нельзя удалить сотрудника, который создал объекты (${createdObjectsCount}). Сначала переназначьте объекты другому пользователю.` },
+        { status: 400 }
+      );
+    }
+
+    // Удаляем связанные данные перед удалением пользователя
+    console.log('🗑️ Удаление связанных данных...');
+    
+    // Удаляем audit logs пользователя
+    await prisma.auditLog.deleteMany({
+      where: { userId: managerId }
+    });
+    console.log('  ✅ Audit logs удалены');
+
+    // Удаляем уведомления
+    await prisma.notification.deleteMany({
+      where: { userId: managerId }
+    });
+    console.log('  ✅ Уведомления удалены');
+
+    // Удаляем AdditionalTask где пользователь назначен или выполнил
+    const deletedTasksCount = await prisma.additionalTask.deleteMany({
+      where: { 
+        OR: [
+          { assignedToId: managerId },
+          { completedById: managerId }
+        ]
+      }
+    });
+    console.log(`  ✅ AdditionalTask удалены (${deletedTasksCount.count} шт.)`);
 
     // Удаляем менеджера
     await prisma.user.delete({
       where: { id: managerId }
     });
+    console.log('  ✅ Пользователь удален');
 
-    return NextResponse.json({ message: 'Менеджер успешно удален' });
+    return NextResponse.json({ message: 'Сотрудник успешно удален' });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting manager:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     return NextResponse.json(
-      { message: 'Ошибка при удалении менеджера' },
+      { 
+        message: 'Ошибка при удалении менеджера',
+        error: error.message || 'Неизвестная ошибка'
+      },
       { status: 500 }
     );
   }

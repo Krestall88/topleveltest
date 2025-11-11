@@ -21,7 +21,7 @@ export async function PATCH(
     const { amount, description, categoryId } = body;
 
     // Проверяем права доступа
-    if (user.role !== 'ADMIN' && user.role !== 'DEPUTY_ADMIN') {
+    if (!['ADMIN', 'DEPUTY_ADMIN', 'ACCOUNTANT'].includes(user.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -113,7 +113,7 @@ export async function DELETE(
     const { id } = params;
 
     // Проверяем права доступа
-    if (user.role !== 'ADMIN' && user.role !== 'DEPUTY_ADMIN') {
+    if (!['ADMIN', 'DEPUTY_ADMIN', 'ACCOUNTANT'].includes(user.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

@@ -28,7 +28,7 @@ const assignManagerSchema = z.object({
 // POST /api/objects/[id]/assign-manager - назначить менеджера на объект
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUserFromToken(req);
@@ -37,7 +37,7 @@ export async function POST(
       return NextResponse.json({ message: 'Доступ запрещен' }, { status: 403 });
     }
 
-    const objectId = params.id;
+    const { id: objectId } = await params;
     const body = await req.json();
     const validatedData = assignManagerSchema.parse(body);
 
@@ -53,17 +53,21 @@ export async function POST(
       return NextResponse.json({ message: 'Объект не найден' }, { status: 404 });
     }
 
-    // Проверяем, существует ли менеджер
+    // Проверяем, существует ли пользователь
     const manager = await prisma.user.findUnique({
       where: { 
-        id: validatedData.managerId,
-        role: 'MANAGER'
+        id: validatedData.managerId
       },
-      select: { id: true, name: true, email: true }
+      select: { id: true, name: true, email: true, role: true }
     });
 
     if (!manager) {
-      return NextResponse.json({ message: 'Менеджер не найден' }, { status: 404 });
+      return NextResponse.json({ message: 'Пользователь не найден' }, { status: 404 });
+    }
+
+    // Проверяем, что это менеджер, старший менеджер или бухгалтер
+    if (!['MANAGER', 'SENIOR_MANAGER', 'ACCOUNTANT'].includes(manager.role)) {
+      return NextResponse.json({ message: 'Можно назначать только менеджеров, старших менеджеров и бухгалтеров' }, { status: 400 });
     }
 
     // Обновляем объект
@@ -81,7 +85,7 @@ export async function POST(
       data: {
         userId: user.id,
         action: 'ASSIGN_MANAGER',
-        entityType: 'OBJECT',
+        entity: 'OBJECT',
         entityId: objectId,
         details: {
           objectName: object.name,
