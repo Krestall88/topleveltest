@@ -19,7 +19,8 @@ import {
   Calendar,
   Trash2,
   Upload,
-  X
+  X,
+  Download
 } from 'lucide-react';
 import type { AdditionalTask } from '@/types';
 import AdditionalTaskComments from './AdditionalTaskComments';
@@ -74,6 +75,8 @@ export default function AdditionalTaskCard({
   const [showCompleteForm, setShowCompleteForm] = useState(false);
   const [completionPhotos, setCompletionPhotos] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number>(0);
 
   const statusInfo = statusConfig[task.status];
   const sourceInfo = sourceConfig[task.source as keyof typeof sourceConfig] || sourceConfig.MANUAL;
@@ -143,6 +146,36 @@ export default function AdditionalTaskCard({
     if (url.includes('voice') || url.includes('audio')) return Mic;
     if (url.includes('photo') || url.includes('image')) return Image;
     return FileText;
+  };
+
+  const downloadPhoto = (url: string, filename: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handlePhotoClick = (photo: string, index: number) => {
+    setSelectedPhoto(photo);
+    setSelectedPhotoIndex(index);
+  };
+
+  const handleNextPhoto = () => {
+    if (task.completionPhotos && selectedPhotoIndex < task.completionPhotos.length - 1) {
+      const nextIndex = selectedPhotoIndex + 1;
+      setSelectedPhotoIndex(nextIndex);
+      setSelectedPhoto(task.completionPhotos[nextIndex]);
+    }
+  };
+
+  const handlePrevPhoto = () => {
+    if (task.completionPhotos && selectedPhotoIndex > 0) {
+      const prevIndex = selectedPhotoIndex - 1;
+      setSelectedPhotoIndex(prevIndex);
+      setSelectedPhoto(task.completionPhotos[prevIndex]);
+    }
   };
 
   return (
@@ -260,19 +293,22 @@ export default function AdditionalTaskCard({
                     <p className="text-xs md:text-sm font-medium text-gray-700 mb-2">Фотографии:</p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {task.completionPhotos.map((photo, index) => (
-                        <a
+                        <div
                           key={index}
-                          href={photo}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block"
+                          onClick={() => handlePhotoClick(photo, index)}
+                          className="relative group rounded-lg overflow-hidden bg-gray-100 aspect-square cursor-pointer"
                         >
                           <img 
                             src={photo} 
                             alt={`Фото ${index + 1}`}
-                            className="w-full h-20 sm:h-24 object-cover rounded-lg border border-gray-300 hover:border-blue-500 transition-colors cursor-pointer"
+                            className="w-full h-full object-cover transition-transform group-hover:scale-105"
                           />
-                        </a>
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Image className="h-8 w-8 text-white" />
+                            </div>
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -433,6 +469,105 @@ export default function AdditionalTaskCard({
           </div>
         )}
       </CardContent>
+
+      {/* Модальное окно для просмотра фото */}
+      {selectedPhoto && task.completionPhotos && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" onClick={() => setSelectedPhoto(null)}>
+          <div className="bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="text-lg font-semibold">Фото {selectedPhotoIndex + 1} из {task.completionPhotos.length}</h3>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => downloadPhoto(selectedPhoto, `task-${task.id}-photo-${selectedPhotoIndex + 1}.jpg`)}
+                  className="p-2 text-gray-500 hover:text-gray-700"
+                  title="Скачать"
+                >
+                  <Download className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => setSelectedPhoto(null)}
+                  className="p-2 text-gray-500 hover:text-gray-700"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex flex-col lg:flex-row">
+              {/* Изображение */}
+              <div className="flex-1 p-4 relative">
+                <img
+                  src={selectedPhoto}
+                  alt={`Фото ${selectedPhotoIndex + 1}`}
+                  className="w-full h-auto max-h-[60vh] object-contain rounded"
+                />
+                
+                {/* Кнопки навигации */}
+                {task.completionPhotos.length > 1 && (
+                  <>
+                    {selectedPhotoIndex > 0 && (
+                      <button
+                        onClick={handlePrevPhoto}
+                        className="absolute left-6 top-1/2 -translate-y-1/2 bg-white bg-opacity-75 hover:bg-opacity-100 rounded-full p-3 shadow-lg transition-all"
+                      >
+                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                    )}
+                    {selectedPhotoIndex < task.completionPhotos.length - 1 && (
+                      <button
+                        onClick={handleNextPhoto}
+                        className="absolute right-6 top-1/2 -translate-y-1/2 bg-white bg-opacity-75 hover:bg-opacity-100 rounded-full p-3 shadow-lg transition-all"
+                      >
+                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+              
+              {/* Информация */}
+              <div className="lg:w-80 p-4 border-l bg-gray-50">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Задание</label>
+                    <p className="text-sm font-medium">{task.title}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Объект</label>
+                    <p className="text-sm">{task.object?.name || 'Неизвестный объект'}</p>
+                  </div>
+                  
+                  {task.completedAt && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Дата выполнения</label>
+                      <p className="text-sm">{formatDate(task.completedAt)}</p>
+                    </div>
+                  )}
+                  
+                  {task.completedBy && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Исполнитель</label>
+                      <p className="text-sm">{task.completedBy.name}</p>
+                    </div>
+                  )}
+                  
+                  {task.completionNote && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Комментарий</label>
+                      <p className="text-sm">{task.completionNote}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }
