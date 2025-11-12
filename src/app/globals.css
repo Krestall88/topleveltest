@@ -89,3 +89,212 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ========================================
+   МОБИЛЬНАЯ АДАПТАЦИЯ
+   ======================================== */
+
+@layer utilities {
+  /* Предотвращение горизонтального скролла */
+  .mobile-container {
+    @apply w-full max-w-full overflow-x-hidden;
+  }
+
+  /* Адаптивные отступы */
+  .mobile-padding {
+    @apply px-3 sm:px-4 md:px-6;
+  }
+
+  /* Адаптивные размеры текста */
+  .mobile-text-xs {
+    @apply text-xs sm:text-sm;
+  }
+  
+  .mobile-text-sm {
+    @apply text-sm sm:text-base;
+  }
+  
+  .mobile-text-base {
+    @apply text-base sm:text-lg;
+  }
+  
+  .mobile-text-lg {
+    @apply text-lg sm:text-xl;
+  }
+  
+  .mobile-text-xl {
+    @apply text-xl sm:text-2xl;
+  }
+  
+  .mobile-text-2xl {
+    @apply text-2xl sm:text-3xl;
+  }
+
+  /* Адаптивные кнопки */
+  .mobile-button {
+    @apply px-3 py-2 text-sm sm:px-4 sm:py-2.5 sm:text-base;
+    @apply min-h-[44px] sm:min-h-[40px]; /* Минимальная высота для touch */
+  }
+
+  .mobile-button-sm {
+    @apply px-2 py-1.5 text-xs sm:px-3 sm:py-2 sm:text-sm;
+    @apply min-h-[36px] sm:min-h-[32px];
+  }
+
+  .mobile-button-lg {
+    @apply px-4 py-3 text-base sm:px-6 sm:py-3.5 sm:text-lg;
+    @apply min-h-[48px] sm:min-h-[44px];
+  }
+
+  /* Адаптивные карточки */
+  .mobile-card {
+    @apply p-3 sm:p-4 md:p-6;
+    @apply rounded-lg sm:rounded-xl;
+  }
+
+  /* Адаптивные гриды */
+  .mobile-grid-1 {
+    @apply grid grid-cols-1;
+  }
+
+  .mobile-grid-2 {
+    @apply grid grid-cols-1 sm:grid-cols-2;
+  }
+
+  .mobile-grid-3 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+  }
+
+  .mobile-grid-4 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4;
+  }
+
+  .mobile-grid-6 {
+    @apply grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6;
+  }
+
+  /* Адаптивные gap */
+  .mobile-gap {
+    @apply gap-3 sm:gap-4 md:gap-6;
+  }
+
+  .mobile-gap-sm {
+    @apply gap-2 sm:gap-3 md:gap-4;
+  }
+
+  /* Скрытие на мобильных */
+  .hide-mobile {
+    @apply hidden sm:block;
+  }
+
+  /* Показ только на мобильных */
+  .show-mobile {
+    @apply block sm:hidden;
+  }
+
+  /* Адаптивная ширина контейнера */
+  .responsive-container {
+    @apply w-full max-w-full px-3 sm:px-4 md:px-6 lg:max-w-7xl lg:mx-auto;
+  }
+
+  /* Адаптивные модальные окна */
+  .mobile-modal {
+    @apply w-[95vw] max-w-full sm:w-full sm:max-w-lg md:max-w-2xl lg:max-w-4xl;
+  }
+
+  /* Адаптивные input */
+  .mobile-input {
+    @apply px-3 py-2.5 text-base sm:px-4 sm:py-2 sm:text-sm;
+    @apply min-h-[44px] sm:min-h-[40px];
+  }
+
+  /* Адаптивные Badge */
+  .mobile-badge {
+    @apply px-2 py-1 text-xs sm:px-2.5 sm:py-1 sm:text-xs;
+  }
+
+  /* Адаптивные иконки */
+  .mobile-icon-sm {
+    @apply w-4 h-4 sm:w-3.5 sm:h-3.5;
+  }
+
+  .mobile-icon {
+    @apply w-5 h-5 sm:w-4 sm:h-4;
+  }
+
+  .mobile-icon-lg {
+    @apply w-6 h-6 sm:w-5 sm:h-5;
+  }
+}
+
+/* Глобальные правила для предотвращения overflow */
+html {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+body {
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+}
+
+/* Исправление для всех контейнеров */
+* {
+  box-sizing: border-box;
+}
+
+/* Адаптивные таблицы */
+@media (max-width: 640px) {
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Увеличение размера touch targets */
+  button, a, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Улучшение читаемости на мобильных */
+  body {
+    font-size: 16px; /* Предотвращает zoom на iOS */
+    -webkit-text-size-adjust: 100%;
+  }
+  
+  /* Отступы для контента под фиксированным header */
+  main {
+    padding-top: 60px;
+  }
+}
+
+/* Адаптивные модальные окна */
+@media (max-width: 640px) {
+  [role="dialog"], .modal {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    margin: 2.5vw;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+/* Улучшение скролла на iOS */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+}
+
+/* Адаптивные flex контейнеры */
+@media (max-width: 640px) {
+  .flex-wrap-mobile {
+    flex-wrap: wrap;
+  }
+  
+  .flex-col-mobile {
+    flex-direction: column;
+  }
+}

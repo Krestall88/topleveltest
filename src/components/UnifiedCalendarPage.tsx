@@ -395,17 +395,17 @@ export default function UnifiedCalendarPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="responsive-container space-y-4 sm:space-y-6 py-4 sm:py-6">
       {/* Заголовок и навигация */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold">📅 Единый календарь задач</h1>
-          <p className="text-gray-600">Новая система управления задачами</p>
+          <h1 className="mobile-text-xl font-bold">📅 Единый календарь задач</h1>
+          <p className="mobile-text-xs text-gray-600">Новая система управления задачами</p>
         </div>
         
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Select value={selectedObject || "all"} onValueChange={(value) => setSelectedObject(value === "all" ? "" : value)}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="mobile-input flex-1 sm:w-48">
               <SelectValue placeholder="Все объекты" />
             </SelectTrigger>
             <SelectContent>
@@ -419,7 +419,7 @@ export default function UnifiedCalendarPage() {
           </Select>
           
           <Select value={view} onValueChange={(value: 'day' | 'week' | 'month') => setView(value)}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="mobile-input w-full sm:w-32">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -432,107 +432,110 @@ export default function UnifiedCalendarPage() {
       </div>
 
       {/* Навигация по датам */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-lg border">
+      <div className="flex flex-col sm:flex-row items-center justify-between bg-white mobile-card rounded-lg border gap-3">
         <Button 
           variant="outline" 
           onClick={() => handleDateChange('prev')}
-          className="flex items-center gap-2"
+          className="mobile-button-sm w-full sm:w-auto"
         >
-          ← Назад
+          <span className="hide-mobile">← Назад</span>
+          <span className="show-mobile">←</span>
         </Button>
         
-        <div className="text-center">
-          <h2 className="text-lg font-semibold">{getDateRangeText()}</h2>
-          <p className="text-sm text-gray-500 capitalize">
-            {view === 'day' ? 'Дневной вид' : view === 'week' ? 'Недельный вид' : 'Месячный вид'}
+        <div className="text-center flex-1">
+          <h2 className="mobile-text-base font-semibold">{getDateRangeText()}</h2>
+          <p className="mobile-text-xs text-gray-500 capitalize">
+            {view === 'day' ? 'День' : view === 'week' ? 'Неделя' : 'Месяц'}
           </p>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           <Button 
             variant="outline" 
             onClick={() => setCurrentDate(new Date())}
             size="sm"
+            className="mobile-button-sm flex-1 sm:flex-none"
           >
             Сегодня
           </Button>
           <Button 
             variant="outline" 
             onClick={() => handleDateChange('next')}
-            className="flex items-center gap-2"
+            className="mobile-button-sm flex-1 sm:flex-none"
           >
-            Вперед →
+            <span className="hide-mobile">Вперед →</span>
+            <span className="show-mobile">→</span>
           </Button>
         </div>
       </div>
 
       {/* Статистика */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 mobile-gap-sm">
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
+          <CardContent className="mobile-card">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
-                <Calendar className="h-5 w-5 text-blue-600" />
+                <Calendar className="mobile-icon text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Всего задач</p>
-                <p className="text-xl font-bold">{stats.totalTasks}</p>
+                <p className="mobile-text-xs text-gray-600">Всего</p>
+                <p className="mobile-text-lg font-bold">{stats.totalTasks}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
+          <CardContent className="mobile-card">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-2 bg-red-100 rounded-lg">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <AlertTriangle className="mobile-icon text-red-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Просрочено</p>
-                <p className="text-xl font-bold text-red-600">{stats.overdueTasks}</p>
+                <p className="mobile-text-xs text-gray-600">Просрочено</p>
+                <p className="mobile-text-lg font-bold text-red-600">{stats.overdueTasks}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
+          <CardContent className="mobile-card">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-2 bg-orange-100 rounded-lg">
-                <Clock className="h-5 w-5 text-orange-600" />
+                <Clock className="mobile-icon text-orange-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">На сегодня</p>
-                <p className="text-xl font-bold text-orange-600">{stats.todayTasks}</p>
+                <p className="mobile-text-xs text-gray-600">Сегодня</p>
+                <p className="mobile-text-lg font-bold text-orange-600">{stats.todayTasks}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
+          <CardContent className="mobile-card">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-600" />
+                <CheckCircle className="mobile-icon text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Выполнено</p>
-                <p className="text-xl font-bold text-green-600">{stats.completedToday}</p>
+                <p className="mobile-text-xs text-gray-600">Готово</p>
+                <p className="mobile-text-lg font-bold text-green-600">{stats.completedToday}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
+          <CardContent className="mobile-card">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-2 bg-purple-100 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-purple-600" />
+                <TrendingUp className="mobile-icon text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Выполнение</p>
-                <p className="text-xl font-bold text-purple-600">{stats.completionRate}%</p>
+                <p className="mobile-text-xs text-gray-600">%</p>
+                <p className="mobile-text-lg font-bold text-purple-600">{stats.completionRate}%</p>
               </div>
             </div>
           </CardContent>

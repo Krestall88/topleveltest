@@ -388,13 +388,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
   );
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100 mobile-container">
       {/* Мобильная шапка */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 bg-slate-800 text-white z-50 px-4 py-3 flex items-center justify-between">
-        <h2 className="text-sm font-medium">Клининг-Контроль</h2>
+      <div className="lg:hidden fixed top-0 left-0 right-0 bg-slate-800 text-white z-50 px-4 py-3 flex items-center justify-between shadow-lg">
+        <h2 className="mobile-text-sm font-medium truncate">Клининг-Контроль</h2>
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 hover:bg-slate-700 rounded"
+          className="p-2 hover:bg-slate-700 rounded min-w-[44px] min-h-[44px] flex items-center justify-center"
+          aria-label={isMobileMenuOpen ? "Закрыть меню" : "Открыть меню"}
         >
           {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>

@@ -176,35 +176,35 @@ const PhotosClientPage = ({ initialPhotos, objects }: PhotosClientPageProps) => 
   };
 
   return (
-    <div className="space-y-6">
+    <div className="responsive-container space-y-4 sm:space-y-6 py-4 sm:py-6">
       {/* Заголовок и кнопка добавления */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div className="flex items-center space-x-4">
-          <h2 className="text-xl font-semibold">
+          <h2 className="mobile-text-xl font-semibold">
             Фотоотчёты ({filteredPhotos.length})
           </h2>
           {(filters.search || filters.objectId || filters.dateFrom || filters.dateTo || filters.type) && (
             <button
               onClick={clearFilters}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="mobile-text-xs text-blue-600 hover:text-blue-800"
             >
-              Сбросить фильтры
+              Сбросить
             </button>
           )}
         </div>
         <button
           onClick={() => setShowUpload(!showUpload)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+          className="mobile-button bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 w-full sm:w-auto"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="mobile-icon" />
           <span>Загрузить фото</span>
         </button>
       </div>
 
       {/* Форма загрузки */}
       {showUpload && (
-        <div className="bg-white border rounded-lg p-6">
-          <h3 className="text-lg font-medium mb-4">Загрузка фотографии</h3>
+        <div className="bg-white border rounded-lg mobile-card">
+          <h3 className="mobile-text-base font-medium mb-4">Загрузка фотографии</h3>
           <PhotoUpload
             onPhotoUploaded={handlePhotoUploaded}
             objectId={filters.objectId || undefined}
@@ -221,27 +221,27 @@ const PhotosClientPage = ({ initialPhotos, objects }: PhotosClientPageProps) => 
       )}
 
       {/* Фильтры */}
-      <div className="bg-white border rounded-lg p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="bg-white border rounded-lg mobile-card">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 mobile-gap-sm">
           {/* Поиск */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 mobile-icon" />
             <input
               type="text"
-              placeholder="Поиск по комментарию..."
+              placeholder="Поиск..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mobile-input pl-10"
             />
           </div>
 
           {/* Объект */}
           <div className="relative">
-            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 mobile-icon" />
             <select
               value={filters.objectId}
               onChange={(e) => setFilters({ ...filters, objectId: e.target.value })}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+              className="mobile-input pl-10"
             >
               <option value="">Все объекты</option>
               {objects.map((object) => (

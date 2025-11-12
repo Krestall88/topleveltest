@@ -134,17 +134,17 @@ export default function AdminTaskDashboard() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="responsive-container space-y-4 sm:space-y-6 py-4 sm:py-6">
       {/* Заголовок */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold">🔧 Административная панель</h1>
-          <p className="text-gray-600">Контроль календаря задач и отчетности</p>
+          <h1 className="mobile-text-xl font-bold">🔧 Административная панель</h1>
+          <p className="mobile-text-xs text-gray-600">Контроль календаря задач и отчетности</p>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40 mobile-input">
               <SelectValue placeholder="Период" />
             </SelectTrigger>
             <SelectContent>
@@ -154,28 +154,29 @@ export default function AdminTaskDashboard() {
             </SelectContent>
           </Select>
           
-          <Button onClick={handleAutoGenerate} className="flex items-center gap-2">
-            <Play className="h-4 w-4" />
-            Автогенерация
+          <Button onClick={handleAutoGenerate} className="flex items-center gap-2 mobile-button-sm flex-1 sm:flex-none">
+            <Play className="mobile-icon" />
+            <span className="hide-mobile">Автогенерация</span>
+            <span className="show-mobile">Авто</span>
           </Button>
           
-          <Button variant="outline" onClick={loadDashboardData}>
+          <Button variant="outline" onClick={loadDashboardData} className="mobile-button-sm flex-1 sm:flex-none">
             Обновить
           </Button>
         </div>
       </div>
 
       {/* Общая статистика */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="mobile-grid-6 mobile-gap-sm">
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
+          <CardContent className="mobile-card">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
-                <Building2 className="h-5 w-5 text-blue-600" />
+                <Building2 className="mobile-icon text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Объекты</p>
-                <p className="text-xl font-bold text-blue-600">{stats.totalObjects}</p>
+                <p className="mobile-text-xs text-gray-600">Объекты</p>
+                <p className="mobile-text-lg font-bold text-blue-600">{stats.totalObjects}</p>
               </div>
             </div>
           </CardContent>

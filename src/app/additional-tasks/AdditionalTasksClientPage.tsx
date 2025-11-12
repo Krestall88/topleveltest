@@ -260,23 +260,23 @@ export default function AdditionalTasksClientPage() {
   }
 
   return (
-    <div className="space-y-4 md:space-y-6 p-4 md:p-6">
+    <div className="responsive-container space-y-4 sm:space-y-6 py-4 sm:py-6">
       {/* Статистика */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+      <div className="mobile-grid-3 mobile-gap-sm">
         {Object.entries(statusStats).map(([status, stats]) => {
           const Icon = stats.icon;
           return (
             <Card key={status}>
-              <CardContent className="p-4">
+              <CardContent className="mobile-card">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">
+                    <p className="mobile-text-xs font-medium text-gray-600">
                       {status === 'NEW' ? 'Новые' : 
                        status === 'IN_PROGRESS' ? 'В работе' : 'Выполнено'}
                     </p>
-                    <p className="text-2xl font-bold">{stats.count}</p>
+                    <p className="mobile-text-2xl font-bold">{stats.count}</p>
                   </div>
-                  <Icon className={`h-8 w-8 ${stats.color}`} />
+                  <Icon className={`mobile-icon-lg ${stats.color}`} />
                 </div>
               </CardContent>
             </Card>
@@ -286,15 +286,15 @@ export default function AdditionalTasksClientPage() {
 
       {/* Фильтры и действия */}
       <Card>
-        <CardContent className="p-3 md:p-4">
-          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 md:gap-4">
+        <CardContent className="mobile-card">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-3">
             {/* Фильтр по статусу */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium">Статус:</label>
+            <div className="flex items-center gap-2 flex-1 sm:flex-none">
+              <label className="mobile-text-xs font-medium whitespace-nowrap">Статус:</label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                className="mobile-input flex-1 sm:w-auto"
               >
                 <option value="all">Все</option>
                 <option value="NEW">Новые</option>

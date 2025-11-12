@@ -208,7 +208,7 @@ export default function ManagersClientPage({ user }: Props) {
   });
 
   return (
-    <div className="space-y-6 px-6">
+    <div className="space-y-4 sm:space-y-6 mobile-padding">
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
           {error}
@@ -216,54 +216,56 @@ export default function ManagersClientPage({ user }: Props) {
       )}
 
       {/* Заголовок и кнопки управления */}
-      <div className="flex justify-between items-center mt-6">
-        <h2 className="text-2xl font-bold text-gray-900">👥 Управление сотрудниками</h2>
-        <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mt-4 sm:mt-6">
+        <h2 className="mobile-text-xl font-bold text-gray-900">👥 Управление сотрудниками</h2>
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Button 
             variant="outline" 
             onClick={() => setIsAssignModalOpen(true)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 mobile-button-sm flex-1 sm:flex-none"
           >
-            <Users className="h-4 w-4" />
-            Назначить на объекты
+            <Users className="mobile-icon" />
+            <span className="hide-mobile">Назначить на объекты</span>
+            <span className="show-mobile">Назначить</span>
           </Button>
           <Button 
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 mobile-button-sm flex-1 sm:flex-none"
           >
-            <UserPlus className="h-4 w-4" />
-            Добавить сотрудника
+            <UserPlus className="mobile-icon" />
+            <span className="hide-mobile">Добавить сотрудника</span>
+            <span className="show-mobile">Добавить</span>
           </Button>
         </div>
       </div>
 
       {/* Статистика */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="mobile-grid-2 mobile-gap-sm">
         <Card>
-          <CardContent className="p-6">
-            <div className="text-3xl font-bold text-blue-600">{managers.length}</div>
-            <div className="text-sm text-gray-600 mt-1">Всего менеджеров</div>
+          <CardContent className="mobile-card">
+            <div className="mobile-text-2xl font-bold text-blue-600">{managers.length}</div>
+            <div className="mobile-text-xs text-gray-600 mt-1">Всего менеджеров</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6">
-            <div className="text-3xl font-bold text-green-600">
+          <CardContent className="mobile-card">
+            <div className="mobile-text-2xl font-bold text-green-600">
               {managers.reduce((sum, m) => sum + m.objectsCount, 0)}
             </div>
-            <div className="text-sm text-gray-600 mt-1">Всего объектов</div>
+            <div className="mobile-text-xs text-gray-600 mt-1">Всего объектов</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Поиск */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 mobile-icon text-gray-400" />
         <Input
           type="text"
-          placeholder="Поиск по имени, email, телефону или объектам..."
+          placeholder="Поиск..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 py-6 text-base"
+          className="mobile-input pl-10"
         />
       </div>
 
@@ -278,33 +280,34 @@ export default function ManagersClientPage({ user }: Props) {
         ) : (
           filteredManagers.map((manager) => (
             <Card key={manager.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">{manager.name}</CardTitle>
-                    <p className="text-sm text-gray-600">{manager.email}</p>
+              <CardHeader className="mobile-card">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="mobile-text-base truncate">{manager.name}</CardTitle>
+                    <p className="mobile-text-xs text-gray-600 truncate">{manager.email}</p>
                     {manager.phone && (
-                      <p className="text-sm text-blue-600">📞 {manager.phone}</p>
+                      <p className="mobile-text-xs text-blue-600">📞 {manager.phone}</p>
                     )}
-                    <p className="text-xs text-gray-500">
+                    <p className="mobile-text-xs text-gray-500">
                       Создан: {formatDate(manager.createdAt)}
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleShowDetails(manager.id)}
+                      className="mobile-button-sm flex-1 sm:flex-none"
                     >
-                      📊 Подробно
+                      📊 <span className="hide-mobile">Подробно</span>
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleResetPassword(manager.id, manager.name)}
-                      className="text-blue-600 hover:text-blue-700"
+                      className="mobile-button-sm flex-1 sm:flex-none text-blue-600 hover:text-blue-700"
                     >
-                      🔑 Пароль
+                      🔑 <span className="hide-mobile">Пароль</span>
                     </Button>
                     <Button
                       variant="outline"
