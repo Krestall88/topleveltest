@@ -259,13 +259,13 @@ export default function ManagersClientPage({ user }: Props) {
 
       {/* Поиск */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 mobile-icon text-gray-400" />
+        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
         <Input
           type="text"
           placeholder="Поиск..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="mobile-input pl-10"
+          className="mobile-input pl-8"
         />
       </div>
 
@@ -279,43 +279,43 @@ export default function ManagersClientPage({ user }: Props) {
           </Card>
         ) : (
           filteredManagers.map((manager) => (
-            <Card key={manager.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="mobile-card">
-                <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="mobile-text-base truncate">{manager.name}</CardTitle>
+            <Card key={manager.id} className="hover:shadow-md transition-shadow overflow-hidden">
+              <CardHeader className="mobile-card-compact">
+                <div className="flex flex-col gap-2">
+                  <div className="w-full">
+                    <CardTitle className="mobile-text-sm truncate">{manager.name}</CardTitle>
                     <p className="mobile-text-xs text-gray-600 truncate">{manager.email}</p>
                     {manager.phone && (
-                      <p className="mobile-text-xs text-blue-600">📞 {manager.phone}</p>
+                      <p className="mobile-text-xs text-blue-600 truncate">📞 {manager.phone}</p>
                     )}
-                    <p className="mobile-text-xs text-gray-500">
-                      Создан: {formatDate(manager.createdAt)}
+                    <p className="mobile-text-xs text-gray-500 truncate">
+                      {formatDate(manager.createdAt)}
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                  <div className="flex flex-wrap gap-1.5 w-full">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleShowDetails(manager.id)}
-                      className="mobile-button-sm flex-1 sm:flex-none"
+                      className="mobile-button-sm flex-1 min-w-[60px]"
                     >
-                      📊 <span className="hide-mobile">Подробно</span>
+                      📊
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleResetPassword(manager.id, manager.name)}
-                      className="mobile-button-sm flex-1 sm:flex-none text-blue-600 hover:text-blue-700"
+                      className="mobile-button-sm flex-1 min-w-[60px] text-blue-600 hover:text-blue-700"
                     >
-                      🔑 <span className="hide-mobile">Пароль</span>
+                      🔑
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(manager.id)}
-                      className="text-red-600 hover:text-red-700"
+                      className="mobile-button-sm flex-1 min-w-[60px] text-red-600 hover:text-red-700"
                     >
-                      🗑️ Удалить
+                      🗑️
                     </Button>
                   </div>
                 </div>

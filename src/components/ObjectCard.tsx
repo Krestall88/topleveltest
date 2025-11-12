@@ -90,62 +90,60 @@ const ObjectCard: React.FC<ObjectCardProps> = ({
   const hasDailyTasks = byPeriodicity?.some(period => isDailyFrequency(period.frequency)) || false;
 
   return (
-    <Card className={`w-full shadow-sm hover:shadow-md transition-shadow ${
+    <Card className={`w-full shadow-sm hover:shadow-md transition-shadow overflow-hidden ${
       hasDailyTasks ? 'ring-2 ring-red-400 ring-opacity-30 border-red-200' : ''
     }`}>
-      <CardHeader className="pb-4">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`flex items-center justify-center w-12 h-12 rounded-full ${
+      <CardHeader className="mobile-card-compact">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full ${
               hasDailyTasks 
                 ? 'bg-gradient-to-br from-red-100 to-red-200' 
                 : 'bg-gradient-to-br from-blue-100 to-blue-200'
             }`}>
-              <Building2 className={`w-6 h-6 ${hasDailyTasks ? 'text-red-600' : 'text-blue-600'}`} />
+              <Building2 className={`w-4 h-4 sm:w-5 sm:h-5 ${hasDailyTasks ? 'text-red-600' : 'text-blue-600'}`} />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-lg font-semibold text-gray-900">
-                  {object.name || 'Объект не найден'}
-                </CardTitle>
-                {hasDailyTasks && (
-                  <div className="flex items-center gap-1 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold animate-pulse">
-                    <AlertTriangle className="w-3 h-3" />
-                    ЕЖЕДНЕВНЫЕ ЗАДАЧИ
-                  </div>
-                )}
-              </div>
-              
-              {/* Ответственный менеджер */}
-              <div className="mt-1">
-                <div className="flex items-center gap-1 text-sm text-gray-700">
-                  <User className="w-4 h-4" />
-                  <span className="font-medium">Ответственный:</span>
-                  <span>{manager.name}</span>
+            <div className="flex-1 min-w-0">
+              <CardTitle className="mobile-text-sm font-semibold text-gray-900 truncate">
+                {object.name || 'Объект не найден'}
+              </CardTitle>
+              {hasDailyTasks && (
+                <div className="flex items-center gap-1 bg-red-600 text-white px-1.5 py-0.5 rounded-full mobile-text-xs font-bold animate-pulse w-fit">
+                  <AlertTriangle className="w-2.5 h-2.5" />
+                  <span className="hide-mobile">ЕЖЕДНЕВНЫЕ</span>
+                  <span className="show-mobile">ЕЖЕДН.</span>
                 </div>
-                {manager.phone && (
-                  <div className="flex items-center gap-1 text-xs text-gray-600 ml-5">
-                    <Phone className="w-3 h-3" />
-                    <span>{manager.phone}</span>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           </div>
           
+          {/* Ответственный менеджер */}
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-1 mobile-text-xs text-gray-700">
+              <User className="w-3 h-3" />
+              <span className="truncate">{manager.name}</span>
+            </div>
+            {manager.phone && (
+              <div className="flex items-center gap-1 mobile-text-xs text-gray-600">
+                <Phone className="w-3 h-3" />
+                <span className="truncate">{manager.phone}</span>
+              </div>
+            )}
+          </div>
+          
           {/* Статистика и настройки */}
-          <div className="flex items-center gap-3">
-            <div className="flex gap-2">
-              <Badge variant="outline" className="flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3 text-red-600" />
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex gap-1.5">
+              <Badge variant="outline" className="flex items-center gap-0.5 px-1.5 py-0.5 mobile-text-xs">
+                <AlertTriangle className="w-2.5 h-2.5 text-red-600" />
                 {stats.overdue}
               </Badge>
-              <Badge variant="outline" className="flex items-center gap-1">
-                <Clock className="w-3 h-3 text-orange-600" />
+              <Badge variant="outline" className="flex items-center gap-0.5 px-1.5 py-0.5 mobile-text-xs">
+                <Clock className="w-2.5 h-2.5 text-orange-600" />
                 {stats.today}
               </Badge>
-              <Badge variant="outline" className="flex items-center gap-1">
-                <CheckCircle className="w-3 h-3 text-green-600" />
+              <Badge variant="outline" className="flex items-center gap-0.5 px-1.5 py-0.5 mobile-text-xs">
+                <CheckCircle className="w-2.5 h-2.5 text-green-600" />
                 {stats.completed}
               </Badge>
             </div>
@@ -154,81 +152,75 @@ const ObjectCard: React.FC<ObjectCardProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => onOpenSettings(object.id, object.name)}
-                className="flex items-center gap-1 text-xs"
+                className="mobile-button-sm flex items-center gap-1"
                 title="Настройки завершения задач"
               >
-                <Settings className="w-4 h-4" />
-                <span className="hidden sm:inline">Настройки</span>
+                <Settings className="w-3 h-3" />
               </Button>
             )}
           </div>
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="mobile-card-compact">
         {/* Разбивка по периодичности */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Calendar className="w-4 h-4 text-purple-600" />
-            <span className="text-sm font-medium text-gray-700">Разбивка по периодичности ({byPeriodicity?.length || 0}):</span>
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5">
+            <Calendar className="w-3 h-3 text-purple-600" />
+            <span className="mobile-text-xs font-medium text-gray-700">Периодичность ({byPeriodicity?.length || 0}):</span>
           </div>
           
           {byPeriodicity && byPeriodicity.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {byPeriodicity.map((period) => (
                 <div
                   key={period.frequency}
-                  className={`p-4 rounded-lg border-2 ${getFrequencyColor(period.frequency)} hover:shadow-md transition-shadow ${
-                    isDailyFrequency(period.frequency) ? 'ring-2 ring-red-300 ring-opacity-50' : ''
+                  className={`p-2 rounded-md border ${getFrequencyColor(period.frequency)} hover:shadow-md transition-shadow overflow-hidden ${
+                    isDailyFrequency(period.frequency) ? 'ring-1 ring-red-300' : ''
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center gap-1">
                       {isDailyFrequency(period.frequency) && (
-                        <div className="flex items-center justify-center w-6 h-6 bg-red-600 rounded-full animate-pulse">
-                          <AlertTriangle className="w-3 h-3 text-white" />
+                        <div className="flex items-center justify-center w-4 h-4 bg-red-600 rounded-full animate-pulse">
+                          <AlertTriangle className="w-2.5 h-2.5 text-white" />
                         </div>
                       )}
-                      <span className={`text-sm font-semibold ${
+                      <span className={`mobile-text-xs font-semibold truncate ${
                         isDailyFrequency(period.frequency) ? 'text-red-900 font-bold' : ''
                       }`}>
                         {getFrequencyLabel(period.frequency)}
-                        {isDailyFrequency(period.frequency) && (
-                          <span className="ml-2 text-xs bg-red-600 text-white px-2 py-1 rounded-full animate-pulse">
-                            СРОЧНО
-                          </span>
-                        )}
                       </span>
                     </div>
                     <div className="flex gap-1">
-                      <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200">
-                        <AlertTriangle className="w-2 h-2 mr-1" />
+                      <Badge variant="outline" className="mobile-text-xs bg-red-50 text-red-700 border-red-200 px-1 py-0">
+                        <AlertTriangle className="w-2 h-2" />
                         {period.tasks?.filter((t: any) => t.status === 'OVERDUE').length || 0}
                       </Badge>
-                      <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
-                        <Clock className="w-2 h-2 mr-1" />
+                      <Badge variant="outline" className="mobile-text-xs bg-orange-50 text-orange-700 border-orange-200 px-1 py-0">
+                        <Clock className="w-2 h-2" />
                         {period.tasks?.filter((t: any) => ['TODAY', 'AVAILABLE', 'IN_PROGRESS'].includes(t.status)).length || 0}
                       </Badge>
-                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
-                        <CheckCircle className="w-2 h-2 mr-1" />
+                      <Badge variant="outline" className="mobile-text-xs bg-green-50 text-green-700 border-green-200 px-1 py-0">
+                        <CheckCircle className="w-2 h-2" />
                         {period.tasks?.filter((t: any) => t.status === 'COMPLETED').length || 0}
                       </Badge>
                     </div>
+                    
+                    <Button
+                      variant={isDailyFrequency(period.frequency) ? "default" : "outline"}
+                      size="sm"
+                      className={`mobile-button-sm w-full ${
+                        isDailyFrequency(period.frequency) 
+                          ? 'bg-red-600 hover:bg-red-700 text-white border-red-600 animate-pulse' 
+                          : 'hover:bg-white/20'
+                      }`}
+                      onClick={() => onViewPeriodTasks(manager.id, period.frequency, period.tasks || [])}
+                    >
+                      <Eye className="w-2.5 h-2.5" />
+                      <span className="hide-mobile ml-1">{isDailyFrequency(period.frequency) ? 'СРОЧНО' : 'Подробнее'}</span>
+                    </Button>
                   </div>
-                  
-                  <Button
-                    variant={isDailyFrequency(period.frequency) ? "default" : "outline"}
-                    size="sm"
-                    className={`w-full text-xs font-medium ${
-                      isDailyFrequency(period.frequency) 
-                        ? 'bg-red-600 hover:bg-red-700 text-white border-red-600 animate-pulse' 
-                        : 'hover:bg-white/20'
-                    }`}
-                    onClick={() => onViewPeriodTasks(manager.id, period.frequency, period.tasks || [])}
-                  >
-                    <Eye className="w-3 h-3 mr-1" />
-                    {isDailyFrequency(period.frequency) ? 'СРОЧНО - Подробнее' : 'Подробнее'}
-                  </Button>
                 </div>
               ))}
             </div>

@@ -291,28 +291,28 @@ export default function ObjectsClientPage() {
               );
             })
             .map((obj) => (
-            <Card key={obj.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="mobile-card">
-                <CardTitle className="flex flex-col sm:flex-row justify-between items-start gap-3">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="mobile-text-base font-semibold truncate">{obj.name}</h3>
+            <Card key={obj.id} className="hover:shadow-lg transition-shadow overflow-hidden">
+              <CardHeader className="mobile-card-compact">
+                <CardTitle className="flex flex-col gap-2">
+                  <div className="w-full">
+                    <h3 className="mobile-text-sm font-semibold truncate">{obj.name}</h3>
                   </div>
-                  <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                  <div className="flex flex-wrap gap-1.5 w-full">
                     <Button
                       onClick={() => router.push(`/objects/${obj.id}`)}
                       size="sm"
-                      className="mobile-button-sm flex-1 sm:flex-none"
+                      className="mobile-button-sm flex-1 min-w-[70px]"
                     >
-                      📋 <span className="hide-mobile">Подробнее</span>
+                      📋
                     </Button>
                     {(userRole !== 'MANAGER' || (userRole === 'MANAGER' && obj.allowManagerEdit)) && (
                       <Button
                         onClick={() => handleEdit(obj)}
                         size="sm"
                         variant="outline"
-                        className="mobile-button-sm flex-1 sm:flex-none"
+                        className="mobile-button-sm flex-1 min-w-[70px]"
                       >
-                        ✏️ <span className="hide-mobile">Редактировать</span>
+                        ✏️
                       </Button>
                     )}
                     {userRole !== 'MANAGER' && (
@@ -320,15 +320,15 @@ export default function ObjectsClientPage() {
                         onClick={() => handleDelete(obj.id)}
                         size="sm"
                         variant="destructive"
-                        className="mobile-button-sm flex-1 sm:flex-none"
+                        className="mobile-button-sm flex-1 min-w-[70px]"
                       >
-                        🗑️ <span className="hide-mobile">Удалить</span>
+                        🗑️
                       </Button>
                     )}
                   </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="mobile-card">
+              <CardContent className="mobile-card-compact">
                 <div className="space-y-2">
                   <div className="mobile-text-sm">
                     <span className="font-medium">Менеджеры:</span>
