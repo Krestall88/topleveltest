@@ -1,31 +1,11 @@
-import { Suspense } from 'react';
-import { prisma } from '@/lib/prisma';
 import AppLayout from '@/components/AppLayout';
 import AuditClientPage from './AuditClientPage';
 
-async function getUsers() {
-  try {
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-      },
-      orderBy: {
-        name: 'asc',
-      },
-    });
+// Отключаем статическую генерацию для этой страницы
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-    return users;
-  } catch (error) {
-    console.error('Ошибка при загрузке пользователей:', error);
-    return [];
-  }
-}
-
-export default async function AuditPage() {
-  const users = await getUsers();
-
+export default function AuditPage() {
   return (
     <AppLayout>
       <div className="container mx-auto px-4 py-8">
@@ -36,9 +16,7 @@ export default async function AuditPage() {
           </p>
         </div>
 
-        <Suspense fallback={<div>Загрузка истории действий...</div>}>
-          <AuditClientPage users={users} />
-        </Suspense>
+        <AuditClientPage users={[]} />
       </div>
     </AppLayout>
   );

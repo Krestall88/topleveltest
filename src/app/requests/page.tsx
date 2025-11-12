@@ -1,29 +1,11 @@
-import { Suspense } from 'react';
-import { prisma } from '@/lib/prisma';
 import AppLayout from '@/components/AppLayout';
 import RequestsClientPage from './RequestsClientPage';
 
-async function getRequests() {
-  const requests = await prisma.request.findMany({
-    include: {
-      object: {
-        select: { name: true, address: true }
-      },
-      creator: {
-        select: { name: true, email: true }
-      },
-      photoReports: {
-        select: { id: true, url: true, comment: true }
-      }
-    },
-    orderBy: { createdAt: 'desc' },
-  });
-  return requests;
-}
+// Отключаем статическую генерацию для этой страницы
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-export default async function RequestsPage() {
-  const initialRequests = await getRequests();
-
+export default function RequestsPage() {
   return (
     <AppLayout>
       <div className="container mx-auto px-4 py-8">
@@ -34,9 +16,7 @@ export default async function RequestsPage() {
           </p>
         </div>
 
-        <Suspense fallback={<div>Загрузка заявок...</div>}>
-          <RequestsClientPage initialRequests={initialRequests} />
-        </Suspense>
+        <RequestsClientPage initialRequests={[]} />
       </div>
     </AppLayout>
   );
