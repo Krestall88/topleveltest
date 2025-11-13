@@ -409,92 +409,92 @@ export default function ObjectDetailClientPage() {
 
       {/* Заголовок объекта */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold mb-2">{object.name}</h1>
-              <div className="flex items-center text-gray-600">
-                <div className="flex items-center">
-                  <MapPin className="w-4 h-4 mr-1" />
-                  {object.address}
+        <CardHeader className="p-3 sm:p-6">
+          <CardTitle className="flex flex-col gap-3">
+            <div className="w-full">
+              <h1 className="text-base sm:text-2xl font-bold mb-2 break-words">{object.name}</h1>
+              <div className="flex items-start text-gray-600">
+                <div className="flex items-start gap-1">
+                  <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mt-0.5 flex-shrink-0" />
+                  <span className="text-xs sm:text-base break-words">{object.address}</span>
                 </div>
               </div>
             </div>
-            <div className="flex flex-col space-y-2">
-              <div className="flex space-x-2 flex-wrap gap-2">
-                {/* Кнопка редактирования - для админов/заместителей или менеджеров с разрешением */}
-                {(userRole !== 'MANAGER' || (userRole === 'MANAGER' && object?.allowManagerEdit)) && (
+            <div className="flex flex-wrap gap-2 w-full">
+              {/* Кнопка редактирования - для админов/заместителей или менеджеров с разрешением */}
+              {(userRole !== 'MANAGER' || (userRole === 'MANAGER' && object?.allowManagerEdit)) && (
+                <Button
+                  onClick={() => setShowEditModal(true)}
+                  size="sm"
+                  variant="default"
+                  className="px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm flex items-center gap-1 bg-blue-600 hover:bg-blue-700 flex-1 sm:flex-none"
+                >
+                  <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="truncate">Редактировать</span>
+                </Button>
+              )}
+              
+              {/* Настройки завершения и расписание - только для админов/заместителей */}
+              {userRole !== 'MANAGER' && (
+                <>
                   <Button
-                    onClick={() => setShowEditModal(true)}
+                    onClick={() => setShowRequirementsManager(true)}
                     size="sm"
-                    variant="default"
-                    className="mobile-button flex items-center bg-blue-600 hover:bg-blue-700"
+                    variant="outline"
+                    className="px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm flex items-center gap-1 flex-1 sm:flex-none"
                   >
-                    <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span className="ml-1 truncate">Редактировать</span>
+                    <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="truncate hidden sm:inline">Настройки</span>
+                    <span className="truncate sm:hidden">Настр.</span>
                   </Button>
-                )}
+                  <Button
+                    onClick={() => setShowScheduleManager(true)}
+                    size="sm"
+                    variant="outline"
+                    className="px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm flex items-center gap-1 flex-1 sm:flex-none"
+                  >
+                    <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="truncate">Расписание</span>
+                  </Button>
+                </>
+              )}
                 
-                {/* Настройки завершения и расписание - только для админов/заместителей */}
-                {userRole !== 'MANAGER' && (
-                  <>
-                    <Button
-                      onClick={() => setShowRequirementsManager(true)}
-                      size="sm"
-                      variant="outline"
-                      className="mobile-button flex items-center"
-                    >
-                      <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="ml-1 truncate hide-mobile">Настройки</span>
-                      <span className="ml-1 truncate show-mobile">Настр.</span>
-                    </Button>
-                    <Button
-                      onClick={() => setShowScheduleManager(true)}
-                      size="sm"
-                      variant="outline"
-                      className="mobile-button flex items-center"
-                    >
-                      <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="ml-1 truncate">Расписание</span>
-                    </Button>
-                  </>
-                )}
-                
-                {/* Ползунок разрешения редактирования для менеджера - только для админов */}
-                {userRole === 'ADMIN' && object?.manager && (
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 bg-gray-50 p-3 sm:p-4 rounded-lg border">
-                    <div className="flex items-center gap-2">
-                      <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-                      <span className="text-xs sm:text-sm font-medium text-gray-700">
-                        Разрешить менеджеру редактировать объект:
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs sm:text-sm ${!object.allowManagerEdit ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
-                        Нет
-                      </span>
-                      <button
-                        onClick={toggleManagerEditPermission}
-                        className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                          object.allowManagerEdit ? 'bg-green-600' : 'bg-gray-300'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-3.5 w-3.5 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform ${
-                            object.allowManagerEdit ? 'translate-x-4 sm:translate-x-6' : 'translate-x-0.5 sm:translate-x-1'
-                          }`}
-                        />
-                      </button>
-                      <span className={`text-xs sm:text-sm ${object.allowManagerEdit ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
-                        Да
-                      </span>
-                    </div>
-                  </div>
-                )}
+            </div>
+              
+            {/* Ползунок разрешения редактирования для менеджера - только для админов */}
+            {userRole === 'ADMIN' && object?.manager && (
+              <div className="flex flex-col gap-2 bg-gray-50 p-2 sm:p-3 rounded-lg border w-full">
+                <div className="flex items-center gap-1">
+                  <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 flex-shrink-0" />
+                  <span className="text-[10px] sm:text-sm font-medium text-gray-700">
+                    Разрешить менеджеру редактировать:
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] sm:text-sm ${!object.allowManagerEdit ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                    Нет
+                  </span>
+                  <button
+                    onClick={toggleManagerEditPermission}
+                    className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                      object.allowManagerEdit ? 'bg-green-600' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform ${
+                        object.allowManagerEdit ? 'translate-x-4 sm:translate-x-6' : 'translate-x-0.5 sm:translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  <span className={`text-[10px] sm:text-sm ${object.allowManagerEdit ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                    Да
+                  </span>
+                </div>
               </div>
-              <div className="text-sm text-gray-500 text-right">
-                Создан: {new Date(object.createdAt).toLocaleDateString('ru-RU')}
-              </div>
+            )}
+            
+            <div className="text-xs sm:text-sm text-gray-500 text-right">
+              Создан: {new Date(object.createdAt).toLocaleDateString('ru-RU')}
             </div>
           </CardTitle>
         </CardHeader>

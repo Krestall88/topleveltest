@@ -296,18 +296,18 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>Редактирование объекта: {object.name}</span>
-            <div className="flex gap-2">
+          <DialogTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <span className="text-sm sm:text-base break-words pr-2">Редактирование объекта: {object.name}</span>
+            <div className="flex gap-2 w-full sm:w-auto">
               <Button
                 onClick={saveBasicInfo}
                 disabled={saving}
                 size="sm"
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm"
               >
-                <Save className="h-4 w-4 mr-1" />
+                <Save className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                 Сохранить
               </Button>
               <Button
@@ -315,24 +315,26 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
                 disabled={saving}
                 size="sm"
                 variant="destructive"
+                className="flex-1 sm:flex-none px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm"
               >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Удалить объект
+                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                <span className="hidden sm:inline">Удалить объект</span>
+                <span className="sm:hidden">Удалить</span>
               </Button>
             </div>
           </DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="basic">Основная информация</TabsTrigger>
-            <TabsTrigger value="structure">Структура</TabsTrigger>
-            <TabsTrigger value="techcards">Техзадания</TabsTrigger>
-            <TabsTrigger value="stats">Статистика</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1">
+            <TabsTrigger value="basic" className="text-[10px] sm:text-sm px-2 py-1.5">Основная информация</TabsTrigger>
+            <TabsTrigger value="structure" className="text-[10px] sm:text-sm px-2 py-1.5">Структура</TabsTrigger>
+            <TabsTrigger value="techcards" className="text-[10px] sm:text-sm px-2 py-1.5">Техзадания</TabsTrigger>
+            <TabsTrigger value="stats" className="text-[10px] sm:text-sm px-2 py-1.5">Статистика</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="basic" className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <TabsContent value="basic" className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <Label htmlFor="name">Название объекта</Label>
                 <Input

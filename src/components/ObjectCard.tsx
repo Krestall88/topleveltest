@@ -104,14 +104,14 @@ const ObjectCard: React.FC<ObjectCardProps> = ({
               <Building2 className={`w-4 h-4 sm:w-5 sm:h-5 ${hasDailyTasks ? 'text-red-600' : 'text-blue-600'}`} />
             </div>
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-sm sm:text-lg font-semibold text-gray-900 line-clamp-1">
+              <CardTitle className="text-xs sm:text-lg font-semibold text-gray-900 line-clamp-1">
                 {object.name || 'Объект не найден'}
               </CardTitle>
               {hasDailyTasks && (
-                <div className="flex items-center gap-1 bg-red-600 text-white px-1.5 py-0.5 rounded-full text-[9px] sm:text-xs font-bold animate-pulse w-fit">
-                  <AlertTriangle className="w-2.5 h-2.5" />
+                <div className="flex items-center gap-0.5 bg-red-600 text-white px-1 py-0.5 rounded text-[8px] sm:text-xs font-bold animate-pulse w-fit max-w-[90px] sm:max-w-none">
+                  <AlertTriangle className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
                   <span className="hidden sm:inline">ЕЖЕДНЕВНЫЕ</span>
-                  <span className="sm:hidden">ЕЖЕДН.</span>
+                  <span className="sm:hidden truncate">ЕЖЕДН.</span>
                 </div>
               )}
             </div>
@@ -119,13 +119,13 @@ const ObjectCard: React.FC<ObjectCardProps> = ({
           
           {/* Ответственный менеджер */}
           <div className="space-y-0.5">
-            <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-700">
-              <User className="w-3 h-3 sm:w-4 sm:h-4" />
+            <div className="flex items-center gap-1 text-[10px] sm:text-sm text-gray-700">
+              <User className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="truncate">{manager.name}</span>
             </div>
             {manager.phone && (
-              <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-600">
-                <Phone className="w-3 h-3 sm:w-4 sm:h-4" />
+              <div className="flex items-center gap-1 text-[10px] sm:text-sm text-gray-600">
+                <Phone className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span className="truncate">{manager.phone}</span>
               </div>
             )}
