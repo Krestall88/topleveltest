@@ -29,22 +29,29 @@ export async function GET(req: NextRequest) {
     // Создаем фильтр доступа к объектам
     const accessFilter = await createObjectAccessFilter(user, 'id');
 
+    // 🚀 ОПТИМИЗАЦИЯ: Загружаем только необходимые данные для списка
     const objects = await prisma.cleaningObject.findMany({
       where: accessFilter,
-      include: {
-        manager: { select: { id: true, name: true, role: true } },
-        sites: {
-          include: {
-            manager: { select: { id: true, name: true, role: true } },
-            seniorManager: { select: { id: true, name: true, role: true } }
+      select: {
+        id: true,
+        name: true,
+        address: true,
+        createdAt: true,
+        allowManagerEdit: true,
+        manager: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            role: true
           }
         },
-        rooms: true,
-        techCards: true,
         _count: {
           select: {
             rooms: true,
-            techCards: true
+            techCards: true,
+            checklists: true,
+            requests: true
           }
         }
       },
@@ -53,21 +60,7 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // Получаем allowManagerEdit для всех объектов через raw SQL (пока Prisma не обновился)
-    const objectIds = objects.map(obj => obj.id);
-    const allowManagerEditData = objectIds.length > 0 ? await prisma.$queryRaw`
-      SELECT id, "allowManagerEdit" FROM "CleaningObject" 
-      WHERE id = ANY(${objectIds})
-    ` : [];
-
-    // Добавляем allowManagerEdit к каждому объекту
-    const objectsWithPermissions = objects.map(obj => {
-      const permissionData = (allowManagerEditData as any[]).find(p => p.id === obj.id);
-      return {
-        ...obj,
-        allowManagerEdit: permissionData?.allowManagerEdit || false
-      };
-    });
+    const objectsWithPermissions = objects;
     
     return NextResponse.json(objectsWithPermissions);
   } catch (error) {

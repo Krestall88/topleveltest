@@ -61,21 +61,21 @@ export async function GET(req: NextRequest) {
     // Определяем базовую дату
     const baseDate = new Date(dateStr);
 
-    // Получаем все задачи (виртуальные + материализованные)
-    const allTasks = await getUnifiedTasks(
-      baseDate,
-      user.role,
-      user.id,
-      objectId || undefined
-    );
-
-    // Получаем реальные просроченные задачи из БД
-    const actualOverdueTasks = await getActualOverdueTasks(
-      baseDate,
-      user.role,
-      user.id,
-      objectId || undefined
-    );
+    // 🚀 ОПТИМИЗАЦИЯ: Получаем все задачи параллельно
+    const [allTasks, actualOverdueTasks] = await Promise.all([
+      getUnifiedTasks(
+        baseDate,
+        user.role,
+        user.id,
+        objectId || undefined
+      ),
+      getActualOverdueTasks(
+        baseDate,
+        user.role,
+        user.id,
+        objectId || undefined
+      )
+    ]);
 
     console.log('🔍 UNIFIED API: Получено задач:', {
       total: allTasks.length,

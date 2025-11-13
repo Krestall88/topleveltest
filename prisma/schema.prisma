@@ -96,6 +96,10 @@ model CleaningObject {
   sites                       Site[]
   taskExecutions              TaskExecution[]
   techCards                   TechCard[]
+
+  @@index([managerId])
+  @@index([name])
+  @@index([createdAt])
 }
 
 model Room {
@@ -186,6 +190,11 @@ model TechCard {
   cleaningObjectItem   CleaningObjectItem? @relation(fields: [cleaningObjectItemId], references: [id])
   object               CleaningObject      @relation(fields: [objectId], references: [id], onDelete: Cascade)
   room                 Room?               @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([objectId])
+  @@index([isActive])
+  @@index([objectId, isActive])
+  @@index([frequency])
 }
 
 model Checklist {
@@ -206,6 +215,11 @@ model Checklist {
   room              Room?          @relation(fields: [roomId], references: [id])
   photoReports      PhotoReport[]
   tasks             Task[]
+
+  @@index([objectId])
+  @@index([date])
+  @@index([objectId, date])
+  @@index([completedAt])
 }
 
 model Task {
@@ -233,6 +247,15 @@ model Task {
   room              Room?              @relation(fields: [roomId], references: [id])
   notifications     Notification[]
   adminComments     TaskAdminComment[]
+
+  @@index([status])
+  @@index([objectName])
+  @@index([completedAt])
+  @@index([completedById])
+  @@index([checklistId])
+  @@index([status, completedAt])
+  @@index([objectName, status])
+  @@index([scheduledStart])
 }
 
 model Request {

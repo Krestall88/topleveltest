@@ -10,23 +10,41 @@ interface Params {
 export async function GET(req: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
+    
+    // 🚀 ОПТИМИЗАЦИЯ: Загружаем основную информацию без глубокой вложенности
     const object = await prisma.cleaningObject.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        address: true,
+        createdAt: true,
+        updatedAt: true,
+        description: true,
+        notes: true,
+        totalArea: true,
+        timezone: true,
+        workingHours: true,
+        workingDays: true,
+        allowManagerEdit: true,
+        autoChecklistEnabled: true,
+        requirePhotoForCompletion: true,
+        requireCommentForCompletion: true,
+        completionRequirements: true,
         manager: { 
-          select: { id: true, name: true, email: true } 
+          select: { id: true, name: true, email: true, phone: true } 
         },
         creator: { 
           select: { id: true, name: true } 
         },
-        rooms: {
-          include: {
-            techCards: true
-          },
-          orderBy: { name: 'asc' }
-        },
+        // Загружаем только структуру без вложенных данных
         sites: {
-          include: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            area: true,
+            comment: true,
             manager: {
               select: { id: true, name: true, email: true, role: true }
             },
@@ -34,10 +52,25 @@ export async function GET(req: NextRequest, { params }: Params) {
               select: { id: true, name: true, email: true, role: true }
             },
             zones: {
-              include: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                area: true,
                 roomGroups: {
-                  include: {
-                    rooms: true
+                  select: {
+                    id: true,
+                    name: true,
+                    description: true,
+                    area: true,
+                    rooms: {
+                      select: {
+                        id: true,
+                        name: true,
+                        description: true,
+                        area: true
+                      }
+                    }
                   }
                 }
               }
@@ -45,7 +78,18 @@ export async function GET(req: NextRequest, { params }: Params) {
           },
           orderBy: { name: 'asc' }
         },
-        techCards: {
+        // Помещения без структуры
+        rooms: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            area: true,
+            roomGroupId: true
+          },
+          where: {
+            roomGroupId: null  // Только помещения без группы
+          },
           orderBy: { name: 'asc' }
         },
         _count: {
@@ -63,22 +107,7 @@ export async function GET(req: NextRequest, { params }: Params) {
       return NextResponse.json({ message: 'Объект не найден' }, { status: 404 });
     }
 
-    // Получаем allowManagerEdit через raw SQL (пока Prisma не обновился)
-    const allowManagerEditRaw = await prisma.$queryRaw`
-      SELECT "allowManagerEdit" FROM "CleaningObject" WHERE id = ${id}
-    `;
-
-    const allowManagerEdit = allowManagerEditRaw && (allowManagerEditRaw as any[]).length > 0 
-      ? (allowManagerEditRaw as any[])[0].allowManagerEdit 
-      : false;
-
-    // Добавляем поле к результату
-    const result = {
-      ...object,
-      allowManagerEdit
-    };
-
-    return NextResponse.json(result);
+    return NextResponse.json(object);
   } catch (error) {
     console.error('Ошибка получения объекта:', error);
     return NextResponse.json({ message: 'Ошибка сервера' }, { status: 500 });
