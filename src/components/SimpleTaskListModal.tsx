@@ -85,32 +85,34 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
         </DialogHeader>
 
         <Tabs defaultValue="overdue" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1">
-            <TabsTrigger value="overdue" className="text-red-600 text-xs sm:text-sm px-2">
-              <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Просроч.</span>
-              <span className="sm:hidden">({overdueTasks.length})</span>
-              <span className="hidden sm:inline"> ({overdueTasks.length})</span>
-            </TabsTrigger>
-            <TabsTrigger value="today" className="text-blue-600 text-xs sm:text-sm px-2">
-              <Clock className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Текущ.</span>
-              <span className="sm:hidden">({todayTasks.length})</span>
-              <span className="hidden sm:inline"> ({todayTasks.length})</span>
-            </TabsTrigger>
-            <TabsTrigger value="completed" className="text-green-600 text-xs sm:text-sm px-2">
-              <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Выполн.</span>
-              <span className="sm:hidden">({completedTasks.length})</span>
-              <span className="hidden sm:inline"> ({completedTasks.length})</span>
-            </TabsTrigger>
-            <TabsTrigger value="pending" className="text-gray-600 text-xs sm:text-sm px-2">
-              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Предст.</span>
-              <span className="sm:hidden">({pendingTasks.length})</span>
-              <span className="hidden sm:inline"> ({pendingTasks.length})</span>
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto scrollbar-hide -mx-2 px-2">
+            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-4 gap-1">
+              <TabsTrigger value="overdue" className="text-red-600 text-xs sm:text-sm px-2 whitespace-nowrap flex-shrink-0">
+                <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Просроч.</span>
+                <span className="sm:hidden">🔺</span>
+                <span>({overdueTasks.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="today" className="text-blue-600 text-xs sm:text-sm px-2 whitespace-nowrap flex-shrink-0">
+                <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Текущ.</span>
+                <span className="sm:hidden">⏱</span>
+                <span>({todayTasks.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="completed" className="text-green-600 text-xs sm:text-sm px-2 whitespace-nowrap flex-shrink-0">
+                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Выполн.</span>
+                <span className="sm:hidden">✓</span>
+                <span>({completedTasks.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="pending" className="text-gray-600 text-xs sm:text-sm px-2 whitespace-nowrap flex-shrink-0">
+                <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Предст.</span>
+                <span className="sm:hidden">📅</span>
+              <span>({pendingTasks.length})</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="overdue" className="space-y-3 md:space-y-4 mt-3 md:mt-4">
             {overdueTasks.length > 0 ? (
