@@ -292,27 +292,27 @@ export default function ObjectsClientPage() {
             })
             .map((obj) => (
             <Card key={obj.id} className="hover:shadow-lg transition-shadow overflow-hidden">
-              <CardHeader className="mobile-card-compact">
+              <CardHeader className="p-3 sm:p-4">
                 <CardTitle className="flex flex-col gap-2">
                   <div className="w-full">
-                    <h3 className="mobile-text-sm font-semibold truncate">{obj.name}</h3>
+                    <h3 className="text-sm sm:text-base font-semibold line-clamp-2">{obj.name}</h3>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 w-full">
+                  <div className="flex gap-2 w-full">
                     <Button
                       onClick={() => router.push(`/objects/${obj.id}`)}
                       size="sm"
-                      className="mobile-button-sm flex-1 min-w-[70px]"
+                      className="flex-1 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2 min-h-[36px]"
                     >
-                      📋
+                      📋 <span className="hidden sm:inline ml-1">Подробно</span>
                     </Button>
                     {(userRole !== 'MANAGER' || (userRole === 'MANAGER' && obj.allowManagerEdit)) && (
                       <Button
                         onClick={() => handleEdit(obj)}
                         size="sm"
                         variant="outline"
-                        className="mobile-button-sm flex-1 min-w-[70px]"
+                        className="flex-1 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2 min-h-[36px]"
                       >
-                        ✏️
+                        ✏️ <span className="hidden sm:inline ml-1">Изменить</span>
                       </Button>
                     )}
                     {userRole !== 'MANAGER' && (
@@ -320,9 +320,9 @@ export default function ObjectsClientPage() {
                         onClick={() => handleDelete(obj.id)}
                         size="sm"
                         variant="destructive"
-                        className="mobile-button-sm flex-1 min-w-[70px]"
+                        className="flex-1 text-xs sm:text-sm px-2 py-1.5 sm:px-3 sm:py-2 min-h-[36px]"
                       >
-                        🗑️
+                        🗑️ <span className="hidden sm:inline ml-1">Удалить</span>
                       </Button>
                     )}
                   </div>
