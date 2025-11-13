@@ -107,59 +107,69 @@
 
   /* Адаптивные размеры текста - УМЕНЬШЕНЫ для мобильных */
   .mobile-text-xs {
-    @apply text-[10px] leading-tight sm:text-xs;
+    @apply text-[9px] leading-[1.2] sm:text-xs;
   }
   
   .mobile-text-sm {
-    @apply text-[11px] leading-tight sm:text-sm;
+    @apply text-[10px] leading-[1.2] sm:text-sm;
   }
   
   .mobile-text-base {
-    @apply text-xs leading-tight sm:text-base;
+    @apply text-[11px] leading-[1.2] sm:text-base;
   }
   
   .mobile-text-lg {
-    @apply text-sm leading-tight sm:text-lg;
+    @apply text-xs leading-[1.2] sm:text-lg;
   }
   
   .mobile-text-xl {
-    @apply text-base leading-tight sm:text-xl;
+    @apply text-sm leading-[1.2] sm:text-xl;
   }
   
   .mobile-text-2xl {
-    @apply text-lg leading-tight sm:text-2xl;
+    @apply text-base leading-[1.2] sm:text-2xl;
   }
 
-  /* Адаптивные кнопки - УМЕНЬШЕНЫ для мобильных */
+  /* Адаптивные кнопки - МАКСИМАЛЬНО УМЕНЬШЕНЫ для мобильных */
   .mobile-button {
-    @apply px-2 py-1.5 text-[11px] leading-tight sm:px-4 sm:py-2.5 sm:text-base;
-    @apply min-h-[36px] sm:min-h-[40px];
+    @apply px-2 py-1 text-[10px] leading-[1.2] sm:px-4 sm:py-2.5 sm:text-base;
+    @apply min-h-[32px] sm:min-h-[40px];
+    @apply max-w-full;
     @apply whitespace-nowrap overflow-hidden text-ellipsis;
   }
 
   .mobile-button-sm {
-    @apply px-1.5 py-1 text-[10px] leading-tight sm:px-3 sm:py-2 sm:text-sm;
-    @apply min-h-[32px] sm:min-h-[32px];
+    @apply px-1.5 py-0.5 text-[9px] leading-[1.2] sm:px-3 sm:py-2 sm:text-sm;
+    @apply min-h-[28px] sm:min-h-[32px];
+    @apply max-w-full;
     @apply whitespace-nowrap overflow-hidden text-ellipsis;
   }
 
   .mobile-button-lg {
-    @apply px-3 py-2 text-xs sm:px-6 sm:py-3.5 sm:text-lg;
-    @apply min-h-[40px] sm:min-h-[44px];
+    @apply px-2.5 py-1.5 text-[11px] leading-[1.2] sm:px-6 sm:py-3.5 sm:text-lg;
+    @apply min-h-[36px] sm:min-h-[44px];
+    @apply max-w-full;
     @apply whitespace-nowrap overflow-hidden text-ellipsis;
   }
 
   /* Адаптивные карточки */
   .mobile-card {
-    @apply p-2 sm:p-4 md:p-6;
-    @apply rounded-lg sm:rounded-xl;
+    @apply p-1.5 sm:p-4 md:p-6;
+    @apply rounded-md sm:rounded-xl;
     @apply overflow-hidden;
   }
 
   /* Карточка с компактным содержимым */
   .mobile-card-compact {
-    @apply p-2 sm:p-3;
+    @apply p-1.5 sm:p-3;
     @apply rounded-md sm:rounded-lg;
+    @apply overflow-hidden;
+  }
+
+  /* Супер компактная карточка */
+  .mobile-card-tiny {
+    @apply p-1 sm:p-2;
+    @apply rounded-sm sm:rounded-md;
     @apply overflow-hidden;
   }
 

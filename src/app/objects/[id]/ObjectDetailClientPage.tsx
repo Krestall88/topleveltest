@@ -428,10 +428,10 @@ export default function ObjectDetailClientPage() {
                     onClick={() => setShowEditModal(true)}
                     size="sm"
                     variant="default"
-                    className="flex items-center bg-blue-600 hover:bg-blue-700"
+                    className="mobile-button flex items-center bg-blue-600 hover:bg-blue-700"
                   >
-                    <Edit className="w-4 h-4 mr-1" />
-                    Редактировать объект
+                    <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="ml-1 truncate">Редактировать</span>
                   </Button>
                 )}
                 
@@ -442,32 +442,35 @@ export default function ObjectDetailClientPage() {
                       onClick={() => setShowRequirementsManager(true)}
                       size="sm"
                       variant="outline"
-                      className="flex items-center"
+                      className="mobile-button flex items-center"
                     >
-                      <CheckSquare className="w-4 h-4 mr-1" />
-                      Настройки завершения
+                      <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="ml-1 truncate hide-mobile">Настройки</span>
+                      <span className="ml-1 truncate show-mobile">Настр.</span>
                     </Button>
                     <Button
                       onClick={() => setShowScheduleManager(true)}
                       size="sm"
                       variant="outline"
-                      className="flex items-center"
+                      className="mobile-button flex items-center"
                     >
-                      <Clock className="w-4 h-4 mr-1" />
-                      Расписание
+                      <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="ml-1 truncate">Расписание</span>
                     </Button>
                   </>
                 )}
                 
                 {/* Ползунок разрешения редактирования для менеджера - только для админов */}
                 {userRole === 'ADMIN' && object?.manager && (
-                  <div className="flex items-center space-x-3 bg-gray-50 px-3 py-2 rounded-lg border">
-                    <Shield className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm font-medium text-gray-700">
-                      Разрешить менеджеру редактировать объект:
-                    </span>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:space-x-3 bg-gray-50 mobile-card-compact rounded-lg border">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600" />
+                      <span className="mobile-text-sm font-medium text-gray-700">
+                        Разрешить менеджеру редактировать объект:
+                      </span>
+                    </div>
                     <div className="flex items-center space-x-2">
-                      <span className={`text-xs ${!object.allowManagerEdit ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                      <span className={`mobile-text-xs ${!object.allowManagerEdit ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
                         Нет
                       </span>
                       <button

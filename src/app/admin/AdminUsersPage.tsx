@@ -160,68 +160,70 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <Users className="w-8 h-8 text-blue-600" />
+    <div className="mobile-container mobile-padding space-y-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Users className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
           <div>
-            <h1 className="text-2xl font-bold">Управление администраторами</h1>
-            <p className="text-gray-600">Создание заместителей администратора с назначением объектов</p>
+            <h1 className="mobile-text-xl font-bold">Управление администраторами</h1>
+            <p className="mobile-text-xs text-gray-600">Создание заместителей администратора с назначением объектов</p>
           </div>
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)}>
-          <UserPlus className="w-4 h-4 mr-2" />
-          Добавить пользователя
+        <Button onClick={() => setIsCreateModalOpen(true)} className="mobile-button w-full sm:w-auto">
+          <UserPlus className="w-3 h-3 sm:w-4 sm:h-4" />
+          <span className="ml-1 hide-mobile">Добавить</span>
+          <span className="ml-1 show-mobile">Добавить</span>
         </Button>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         {users.filter(user => user.role === 'ADMIN' || user.role === 'DEPUTY_ADMIN').map((user) => (
-          <Card key={user.id}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <Shield className="w-5 h-5 text-gray-500" />
-                  <div>
-                    <CardTitle className="text-lg">{user.name}</CardTitle>
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
-                      <Mail className="w-4 h-4" />
-                      <span>{user.email}</span>
-                      {user.phone && (
-                        <>
-                          <Phone className="w-4 h-4 ml-2" />
-                          <span>{user.phone}</span>
-                        </>
-                      )}
-                    </div>
+          <Card key={user.id} className="overflow-hidden">
+            <CardHeader className="mobile-card-compact">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" />
+                    <CardTitle className="mobile-text-sm truncate">{user.name}</CardTitle>
                   </div>
-                </div>
-                <div className="flex items-center space-x-2">
                   {getRoleBadge(user.role)}
+                </div>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-1">
+                    <Mail className="w-3 h-3 flex-shrink-0" />
+                    <span className="mobile-text-xs text-gray-600 truncate">{user.email}</span>
+                  </div>
+                  {user.phone && (
+                    <div className="flex items-center gap-1">
+                      <Phone className="w-3 h-3 flex-shrink-0" />
+                      <span className="mobile-text-xs text-gray-600 truncate">{user.phone}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-start space-x-2">
-                  <Building className="w-4 h-4 text-gray-500 mt-1" />
-                  <div>
-                    <div className="text-sm font-medium">Доступные объекты:</div>
-                    <div className="text-sm text-gray-600">{getObjectsInfo(user)}</div>
+            <CardContent className="mobile-card-compact">
+              <div className="space-y-2">
+                <div className="flex items-start gap-1.5">
+                  <Building className="w-3 h-3 text-gray-500 mt-0.5 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <div className="mobile-text-xs font-medium">Доступные объекты:</div>
+                    <div className="mobile-text-xs text-gray-600">{getObjectsInfo(user)}</div>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2 pt-2 border-t">
-                  <div className="flex space-x-2">
+                <div className="flex items-center gap-1.5 pt-2 border-t">
+                  <div className="flex gap-1.5 flex-wrap w-full">
                     {user.role === 'ADMIN' ? (
                       // Для главного администратора только смена пароля
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleChangePassword(user)}
+                        className="mobile-button-sm flex-1 min-w-[100px]"
                       >
-                        <Key className="w-4 h-4 mr-1" />
-                        Сменить пароль
+                        <Key className="w-3 h-3" />
+                        <span className="ml-1 truncate">Сменить пароль</span>
                       </Button>
                     ) : (
                       // Для заместителей полный функционал
@@ -230,17 +232,20 @@ export default function AdminUsersPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleEditUser(user)}
+                          className="mobile-button-sm flex-1 min-w-[80px]"
                         >
-                          <Settings className="w-4 h-4 mr-1" />
-                          Редактировать
+                          <Settings className="w-3 h-3" />
+                          <span className="ml-1 truncate hide-mobile">Редактировать</span>
+                          <span className="ml-1 truncate show-mobile">Ред.</span>
                         </Button>
                         <Button
                           variant="destructive"
                           size="sm"
                           onClick={() => handleDeleteUser(user)}
+                          className="mobile-button-sm flex-1 min-w-[80px]"
                         >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Удалить
+                          <Trash2 className="w-3 h-3" />
+                          <span className="ml-1 truncate">Удалить</span>
                         </Button>
                       </>
                     )}
