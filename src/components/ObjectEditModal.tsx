@@ -326,11 +326,11 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1">
-            <TabsTrigger value="basic" className="text-[10px] sm:text-sm px-2 py-1.5">Основная информация</TabsTrigger>
-            <TabsTrigger value="structure" className="text-[10px] sm:text-sm px-2 py-1.5">Структура</TabsTrigger>
-            <TabsTrigger value="techcards" className="text-[10px] sm:text-sm px-2 py-1.5">Техзадания</TabsTrigger>
-            <TabsTrigger value="stats" className="text-[10px] sm:text-sm px-2 py-1.5">Статистика</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-0.5 sm:gap-1">
+            <TabsTrigger value="basic" className="text-[9px] sm:text-sm px-1 sm:px-2 py-1 sm:py-1.5">Основная</TabsTrigger>
+            <TabsTrigger value="structure" className="text-[9px] sm:text-sm px-1 sm:px-2 py-1 sm:py-1.5">Структура</TabsTrigger>
+            <TabsTrigger value="techcards" className="text-[9px] sm:text-sm px-1 sm:px-2 py-1 sm:py-1.5">Техзадания</TabsTrigger>
+            <TabsTrigger value="stats" className="text-[9px] sm:text-sm px-1 sm:px-2 py-1 sm:py-1.5">Статистика</TabsTrigger>
           </TabsList>
 
           <TabsContent value="basic" className="space-y-3 sm:space-y-4">
@@ -407,103 +407,122 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
             </div>
           </TabsContent>
 
-          <TabsContent value="structure" className="space-y-4">
+          <TabsContent value="structure" className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Структура объекта</h3>
-              <Button onClick={() => openStructureModal('site', objectId)} size="sm">
-                <Plus className="h-4 w-4 mr-1" />
-                Добавить участок
+              <h3 className="text-sm sm:text-lg font-semibold">Структура объекта</h3>
+              <Button onClick={() => openStructureModal('site', objectId)} size="sm" className="text-xs sm:text-sm px-2 py-1 sm:px-3 sm:py-2">
+                <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                <span className="hidden sm:inline">Добавить участок</span>
+                <span className="sm:hidden">+</span>
               </Button>
             </div>
 
-            <div className="space-y-4 max-h-[500px] overflow-y-auto">
+            <div className="space-y-2 sm:space-y-3 max-h-[500px] overflow-y-auto">
               {/* Участки */}
               {!object.sites || object.sites.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <p>Структура объекта пуста</p>
-                  <p className="text-sm mt-2">Нажмите "Добавить участок" для начала</p>
+                <div className="text-center py-6 sm:py-8 text-gray-500">
+                  <p className="text-sm">Структура объекта пуста</p>
+                  <p className="text-xs sm:text-sm mt-2">Нажмите "+" для начала</p>
                 </div>
               ) : (
-                object.sites.map((site) => (
-                <div key={site.id} className="border rounded-lg p-4 bg-white">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-blue-700">🏭 {site.name}</h4>
-                    <div className="flex gap-1">
+                object.sites.map((site) => {
+                  // Скрываем технические элементы
+                  if (site.name.includes('__VIRTUAL__') || site.name.includes('_VIRTUAL_')) return null;
+                  
+                  return (
+                <div key={site.id} className="border rounded-lg p-2 sm:p-3 bg-white">
+                  <div className="flex items-center justify-between mb-1 sm:mb-2">
+                    <h4 className="font-medium text-blue-700 text-xs sm:text-sm truncate">🏭 {site.name}</h4>
+                    <div className="flex gap-0.5 sm:gap-1">
                       <Button
                         onClick={() => openStructureModal('site', objectId, site)}
                         size="sm"
                         variant="ghost"
+                        className="h-6 w-6 sm:h-8 sm:w-8 p-0"
                       >
-                        <Edit className="h-4 w-4" />
+                        <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
                       <Button
                         onClick={() => openStructureModal('zone', site.id)}
                         size="sm"
                         variant="ghost"
                         title="Добавить зону"
+                        className="h-6 w-6 sm:h-8 sm:w-8 p-0"
                       >
-                        <Plus className="h-4 w-4" />
+                        <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
                       <Button
                         onClick={() => deleteStructureItem('site', site.id, site.name)}
                         size="sm"
                         variant="ghost"
+                        className="h-6 w-6 sm:h-8 sm:w-8 p-0"
                       >
-                        <Trash2 className="h-4 w-4 text-red-500" />
+                        <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
                       </Button>
                     </div>
                   </div>
                   
                   {site.description && (
-                    <p className="text-sm text-gray-600 mb-2">{site.description}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2 truncate">{site.description}</p>
                   )}
                   
-                  <div className="flex gap-4 text-sm text-gray-500 mb-3">
-                    {site.area && <span>📏 {site.area} м²</span>}
-                    {site.comment && <span>📝 {site.comment}</span>}
+                  <div className="flex gap-2 sm:gap-4 text-[10px] sm:text-sm text-gray-500 mb-2 sm:mb-3">
+                    {site.area && <span className="truncate">📏 {site.area} м²</span>}
+                    {site.comment && <span className="truncate">📝 {site.comment}</span>}
                   </div>
 
                   {/* Зоны */}
                   {site.zones && site.zones.length > 0 && (
-                    <div className="mt-3 pl-4 border-l-2 border-blue-200 space-y-3">
-                      {site.zones.map((zone) => (
-                        <div key={zone.id} className="bg-blue-50 rounded p-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-medium text-sm text-blue-800">🗺️ {zone.name}</span>
-                            <div className="flex gap-1">
+                    <div className="mt-2 sm:mt-3 pl-2 sm:pl-4 border-l-2 border-blue-200 space-y-2">
+                      {site.zones.map((zone) => {
+                        // Скрываем технические элементы
+                        if (zone.name.includes('__VIRTUAL__') || zone.name.includes('_VIRTUAL_')) return null;
+                        
+                        return (
+                        <div key={zone.id} className="bg-blue-50 rounded p-2">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-medium text-xs sm:text-sm text-blue-800 truncate">🗺️ {zone.name}</span>
+                            <div className="flex gap-0.5">
                               <Button
                                 onClick={() => openStructureModal('zone', site.id, zone)}
                                 size="sm"
                                 variant="ghost"
+                                className="h-5 w-5 sm:h-6 sm:w-6 p-0"
                               >
-                                <Edit className="h-3 w-3" />
+                                <Edit className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                               </Button>
                               <Button
                                 onClick={() => openStructureModal('roomGroup', zone.id)}
                                 size="sm"
                                 variant="ghost"
                                 title="Добавить группу"
+                                className="h-5 w-5 sm:h-6 sm:w-6 p-0"
                               >
-                                <Plus className="h-3 w-3" />
+                                <Plus className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                               </Button>
                               <Button
                                 onClick={() => deleteStructureItem('zone', zone.id, zone.name)}
                                 size="sm"
                                 variant="ghost"
+                                className="h-5 w-5 sm:h-6 sm:w-6 p-0"
                               >
-                                <Trash2 className="h-3 w-3 text-red-500" />
+                                <Trash2 className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-red-500" />
                               </Button>
                             </div>
                           </div>
-                          {zone.area && <span className="text-xs text-gray-600">📏 {zone.area} м²</span>}
+                          {zone.area && <span className="text-[10px] sm:text-xs text-gray-600">📏 {zone.area} м²</span>}
 
                           {/* Группы помещений */}
                           {zone.roomGroups && zone.roomGroups.length > 0 && (
-                            <div className="mt-2 pl-3 border-l-2 border-green-200 space-y-2">
-                              {zone.roomGroups.map((roomGroup) => (
-                                <div key={roomGroup.id} className="bg-green-50 rounded p-2">
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="font-medium text-xs text-green-800">📁 {roomGroup.name}</span>
+                            <div className="mt-1 sm:mt-2 pl-2 sm:pl-3 border-l-2 border-green-200 space-y-1 sm:space-y-2">
+                              {zone.roomGroups.map((roomGroup) => {
+                                // Скрываем технические элементы
+                                if (roomGroup.name.includes('__VIRTUAL__') || roomGroup.name.includes('_VIRTUAL_')) return null;
+                                
+                                return (
+                                <div key={roomGroup.id} className="bg-green-50 rounded p-1.5 sm:p-2">
+                                  <div className="flex items-center justify-between mb-0.5 sm:mb-1">
+                                    <span className="font-medium text-[10px] sm:text-xs text-green-800 truncate">📁 {roomGroup.name}</span>
                                     <div className="flex gap-1">
                                       <Button
                                         onClick={() => openStructureModal('roomGroup', zone.id, roomGroup)}
@@ -557,15 +576,18 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
                                     </div>
                                   )}
                                 </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           )}
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
-              ))
+                  );
+                })
               )}
 
               {/* Помещения без структуры */}
