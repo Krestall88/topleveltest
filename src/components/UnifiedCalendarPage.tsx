@@ -399,13 +399,13 @@ export default function UnifiedCalendarPage() {
       {/* Заголовок и навигация */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
         <div>
-          <h1 className="mobile-text-xl font-bold">📅 Единый календарь задач</h1>
-          <p className="mobile-text-xs text-gray-600">Новая система управления задачами</p>
+          <h1 className="text-lg sm:text-3xl font-bold">📅 Единый календарь задач</h1>
+          <p className="text-xs sm:text-base text-gray-600">Новая система управления задачами</p>
         </div>
         
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Select value={selectedObject || "all"} onValueChange={(value) => setSelectedObject(value === "all" ? "" : value)}>
-            <SelectTrigger className="mobile-input flex-1 sm:w-48">
+            <SelectTrigger className="px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base flex-1 sm:w-48">
               <SelectValue placeholder="Все объекты" />
             </SelectTrigger>
             <SelectContent>
@@ -419,7 +419,7 @@ export default function UnifiedCalendarPage() {
           </Select>
           
           <Select value={view} onValueChange={(value: 'day' | 'week' | 'month') => setView(value)}>
-            <SelectTrigger className="mobile-input w-full sm:w-32">
+            <SelectTrigger className="px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base w-full sm:w-32">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -432,19 +432,19 @@ export default function UnifiedCalendarPage() {
       </div>
 
       {/* Навигация по датам */}
-      <div className="flex flex-col sm:flex-row items-center justify-between bg-white mobile-card rounded-lg border gap-3">
+      <div className="flex flex-col sm:flex-row items-center justify-between bg-white p-3 sm:p-4 rounded-lg border gap-3">
         <Button 
           variant="outline" 
           onClick={() => handleDateChange('prev')}
-          className="mobile-button-sm w-full sm:w-auto"
+          className="px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm w-full sm:w-auto"
         >
-          <span className="hide-mobile">← Назад</span>
-          <span className="show-mobile">←</span>
+          <span className="hidden sm:inline">← Назад</span>
+          <span className="sm:hidden">←</span>
         </Button>
         
         <div className="text-center flex-1">
-          <h2 className="mobile-text-base font-semibold">{getDateRangeText()}</h2>
-          <p className="mobile-text-xs text-gray-500 capitalize">
+          <h2 className="text-base sm:text-lg font-semibold">{getDateRangeText()}</h2>
+          <p className="text-xs sm:text-sm text-gray-500 capitalize">
             {view === 'day' ? 'День' : view === 'week' ? 'Неделя' : 'Месяц'}
           </p>
         </div>
@@ -454,88 +454,88 @@ export default function UnifiedCalendarPage() {
             variant="outline" 
             onClick={() => setCurrentDate(new Date())}
             size="sm"
-            className="mobile-button-sm flex-1 sm:flex-none"
+            className="px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm flex-1 sm:flex-none"
           >
             Сегодня
           </Button>
           <Button 
             variant="outline" 
             onClick={() => handleDateChange('next')}
-            className="mobile-button-sm flex-1 sm:flex-none"
+            className="px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm flex-1 sm:flex-none"
           >
-            <span className="hide-mobile">Вперед →</span>
-            <span className="show-mobile">→</span>
+            <span className="hidden sm:inline">Вперед →</span>
+            <span className="sm:hidden">→</span>
           </Button>
         </div>
       </div>
 
       {/* Статистика */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 mobile-gap-sm">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="mobile-card">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
-                <Calendar className="mobile-icon text-blue-600" />
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
               </div>
               <div>
-                <p className="mobile-text-xs text-gray-600">Всего</p>
-                <p className="mobile-text-lg font-bold">{stats.totalTasks}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Всего</p>
+                <p className="text-lg sm:text-xl font-bold">{stats.totalTasks}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="mobile-card">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-2 bg-red-100 rounded-lg">
-                <AlertTriangle className="mobile-icon text-red-600" />
+                <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
               </div>
               <div>
-                <p className="mobile-text-xs text-gray-600">Просрочено</p>
-                <p className="mobile-text-lg font-bold text-red-600">{stats.overdueTasks}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Просрочено</p>
+                <p className="text-lg sm:text-xl font-bold text-red-600">{stats.overdueTasks}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="mobile-card">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-2 bg-orange-100 rounded-lg">
-                <Clock className="mobile-icon text-orange-600" />
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
               </div>
               <div>
-                <p className="mobile-text-xs text-gray-600">Сегодня</p>
-                <p className="mobile-text-lg font-bold text-orange-600">{stats.todayTasks}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Сегодня</p>
+                <p className="text-lg sm:text-xl font-bold text-orange-600">{stats.todayTasks}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="mobile-card">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="mobile-icon text-green-600" />
+                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
               </div>
               <div>
-                <p className="mobile-text-xs text-gray-600">Готово</p>
-                <p className="mobile-text-lg font-bold text-green-600">{stats.completedToday}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Готово</p>
+                <p className="text-lg sm:text-xl font-bold text-green-600">{stats.completedToday}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="mobile-card">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-2 bg-purple-100 rounded-lg">
-                <TrendingUp className="mobile-icon text-purple-600" />
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
               </div>
               <div>
-                <p className="mobile-text-xs text-gray-600">%</p>
-                <p className="mobile-text-lg font-bold text-purple-600">{stats.completionRate}%</p>
+                <p className="text-xs sm:text-sm text-gray-600">%</p>
+                <p className="text-lg sm:text-xl font-bold text-purple-600">{stats.completionRate}%</p>
               </div>
             </div>
           </CardContent>
@@ -554,7 +554,7 @@ export default function UnifiedCalendarPage() {
                 placeholder="Поиск..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="mobile-input pl-8 pr-8"
+                className="px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base pl-8 pr-8"
               />
               <svg
                 className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"

@@ -93,7 +93,7 @@ const ObjectCard: React.FC<ObjectCardProps> = ({
     <Card className={`w-full shadow-sm hover:shadow-md transition-shadow overflow-hidden ${
       hasDailyTasks ? 'ring-2 ring-red-400 ring-opacity-30 border-red-200' : ''
     }`}>
-      <CardHeader className="mobile-card-compact">
+      <CardHeader className="p-3 sm:p-4">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full ${
@@ -104,14 +104,14 @@ const ObjectCard: React.FC<ObjectCardProps> = ({
               <Building2 className={`w-4 h-4 sm:w-5 sm:h-5 ${hasDailyTasks ? 'text-red-600' : 'text-blue-600'}`} />
             </div>
             <div className="flex-1 min-w-0">
-              <CardTitle className="mobile-text-sm font-semibold text-gray-900 truncate">
+              <CardTitle className="text-sm sm:text-lg font-semibold text-gray-900 line-clamp-1">
                 {object.name || 'Объект не найден'}
               </CardTitle>
               {hasDailyTasks && (
-                <div className="flex items-center gap-1 bg-red-600 text-white px-1.5 py-0.5 rounded-full mobile-text-xs font-bold animate-pulse w-fit">
+                <div className="flex items-center gap-1 bg-red-600 text-white px-1.5 py-0.5 rounded-full text-[9px] sm:text-xs font-bold animate-pulse w-fit">
                   <AlertTriangle className="w-2.5 h-2.5" />
-                  <span className="hide-mobile">ЕЖЕДНЕВНЫЕ</span>
-                  <span className="show-mobile">ЕЖЕДН.</span>
+                  <span className="hidden sm:inline">ЕЖЕДНЕВНЫЕ</span>
+                  <span className="sm:hidden">ЕЖЕДН.</span>
                 </div>
               )}
             </div>
@@ -119,13 +119,13 @@ const ObjectCard: React.FC<ObjectCardProps> = ({
           
           {/* Ответственный менеджер */}
           <div className="space-y-0.5">
-            <div className="flex items-center gap-1 mobile-text-xs text-gray-700">
-              <User className="w-3 h-3" />
+            <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-700">
+              <User className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="truncate">{manager.name}</span>
             </div>
             {manager.phone && (
-              <div className="flex items-center gap-1 mobile-text-xs text-gray-600">
-                <Phone className="w-3 h-3" />
+              <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-600">
+                <Phone className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span className="truncate">{manager.phone}</span>
               </div>
             )}
@@ -134,15 +134,15 @@ const ObjectCard: React.FC<ObjectCardProps> = ({
           {/* Статистика и настройки */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex gap-1.5">
-              <Badge variant="outline" className="flex items-center gap-0.5 px-1.5 py-0.5 mobile-text-xs">
+              <Badge variant="outline" className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] sm:text-xs">
                 <AlertTriangle className="w-2.5 h-2.5 text-red-600" />
                 {stats.overdue}
               </Badge>
-              <Badge variant="outline" className="flex items-center gap-0.5 px-1.5 py-0.5 mobile-text-xs">
+              <Badge variant="outline" className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] sm:text-xs">
                 <Clock className="w-2.5 h-2.5 text-orange-600" />
                 {stats.today}
               </Badge>
-              <Badge variant="outline" className="flex items-center gap-0.5 px-1.5 py-0.5 mobile-text-xs">
+              <Badge variant="outline" className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] sm:text-xs">
                 <CheckCircle className="w-2.5 h-2.5 text-green-600" />
                 {stats.completed}
               </Badge>
@@ -152,22 +152,22 @@ const ObjectCard: React.FC<ObjectCardProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => onOpenSettings(object.id, object.name)}
-                className="mobile-button-sm flex items-center gap-1"
+                className="px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm flex items-center gap-1"
                 title="Настройки завершения задач"
               >
-                <Settings className="w-3 h-3" />
+                <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
               </Button>
             )}
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="mobile-card-compact">
+      <CardContent className="p-3 sm:p-4">
         {/* Разбивка по периодичности */}
         <div className="space-y-2">
           <div className="flex items-center gap-1.5">
-            <Calendar className="w-3 h-3 text-purple-600" />
-            <span className="mobile-text-xs font-medium text-gray-700">Периодичность ({byPeriodicity?.length || 0}):</span>
+            <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600" />
+            <span className="text-xs sm:text-sm font-medium text-gray-700">Периодичность ({byPeriodicity?.length || 0}):</span>
           </div>
           
           {byPeriodicity && byPeriodicity.length > 0 ? (
@@ -186,22 +186,22 @@ const ObjectCard: React.FC<ObjectCardProps> = ({
                           <AlertTriangle className="w-2.5 h-2.5 text-white" />
                         </div>
                       )}
-                      <span className={`mobile-text-xs font-semibold truncate ${
+                      <span className={`text-[10px] sm:text-xs font-semibold truncate ${
                         isDailyFrequency(period.frequency) ? 'text-red-900 font-bold' : ''
                       }`}>
                         {getFrequencyLabel(period.frequency)}
                       </span>
                     </div>
                     <div className="flex gap-1">
-                      <Badge variant="outline" className="mobile-text-xs bg-red-50 text-red-700 border-red-200 px-1 py-0">
+                      <Badge variant="outline" className="text-[9px] sm:text-[10px] bg-red-50 text-red-700 border-red-200 px-1 py-0">
                         <AlertTriangle className="w-2 h-2" />
                         {period.tasks?.filter((t: any) => t.status === 'OVERDUE').length || 0}
                       </Badge>
-                      <Badge variant="outline" className="mobile-text-xs bg-orange-50 text-orange-700 border-orange-200 px-1 py-0">
+                      <Badge variant="outline" className="text-[9px] sm:text-[10px] bg-orange-50 text-orange-700 border-orange-200 px-1 py-0">
                         <Clock className="w-2 h-2" />
                         {period.tasks?.filter((t: any) => ['TODAY', 'AVAILABLE', 'IN_PROGRESS'].includes(t.status)).length || 0}
                       </Badge>
-                      <Badge variant="outline" className="mobile-text-xs bg-green-50 text-green-700 border-green-200 px-1 py-0">
+                      <Badge variant="outline" className="text-[9px] sm:text-[10px] bg-green-50 text-green-700 border-green-200 px-1 py-0">
                         <CheckCircle className="w-2 h-2" />
                         {period.tasks?.filter((t: any) => t.status === 'COMPLETED').length || 0}
                       </Badge>
@@ -210,15 +210,15 @@ const ObjectCard: React.FC<ObjectCardProps> = ({
                     <Button
                       variant={isDailyFrequency(period.frequency) ? "default" : "outline"}
                       size="sm"
-                      className={`mobile-button-sm w-full ${
+                      className={`px-2 py-1 sm:px-3 sm:py-2 text-[10px] sm:text-xs w-full ${
                         isDailyFrequency(period.frequency) 
                           ? 'bg-red-600 hover:bg-red-700 text-white border-red-600 animate-pulse' 
                           : 'hover:bg-white/20'
                       }`}
                       onClick={() => onViewPeriodTasks(manager.id, period.frequency, period.tasks || [])}
                     >
-                      <Eye className="w-2.5 h-2.5" />
-                      <span className="hide-mobile ml-1">{isDailyFrequency(period.frequency) ? 'СРОЧНО' : 'Подробнее'}</span>
+                      <Eye className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                      <span className="hidden sm:inline ml-1">{isDailyFrequency(period.frequency) ? 'СРОЧНО' : 'Подробнее'}</span>
                     </Button>
                   </div>
                 </div>

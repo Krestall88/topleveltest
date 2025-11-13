@@ -160,69 +160,68 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="mobile-container mobile-padding space-y-4">
+    <div className="max-w-full overflow-x-hidden px-3 sm:px-4 md:px-6 space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Users className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
           <div>
-            <h1 className="mobile-text-xl font-bold">Управление администраторами</h1>
-            <p className="mobile-text-xs text-gray-600">Создание заместителей администратора с назначением объектов</p>
+            <h1 className="text-lg sm:text-3xl font-bold">Управление администраторами</h1>
+            <p className="text-xs sm:text-base text-gray-600">Создание заместителей администратора с назначением объектов</p>
           </div>
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)} className="mobile-button w-full sm:w-auto">
-          <UserPlus className="w-3 h-3 sm:w-4 sm:h-4" />
-          <span className="ml-1 hide-mobile">Добавить</span>
-          <span className="ml-1 show-mobile">Добавить</span>
+        <Button onClick={() => setIsCreateModalOpen(true)} className="px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base w-full sm:w-auto">
+          <UserPlus className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="ml-1">Добавить</span>
         </Button>
       </div>
 
       <div className="grid gap-3">
         {users.filter(user => user.role === 'ADMIN' || user.role === 'DEPUTY_ADMIN').map((user) => (
           <Card key={user.id} className="overflow-hidden">
-            <CardHeader className="mobile-card-compact">
+            <CardHeader className="p-3 sm:p-4">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 flex-shrink-0" />
-                    <CardTitle className="mobile-text-sm truncate">{user.name}</CardTitle>
+                    <CardTitle className="text-sm sm:text-lg truncate">{user.name}</CardTitle>
                   </div>
                   {getRoleBadge(user.role)}
                 </div>
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-1">
-                    <Mail className="w-3 h-3 flex-shrink-0" />
-                    <span className="mobile-text-xs text-gray-600 truncate">{user.email}</span>
+                    <Mail className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-gray-600 truncate">{user.email}</span>
                   </div>
                   {user.phone && (
                     <div className="flex items-center gap-1">
-                      <Phone className="w-3 h-3 flex-shrink-0" />
-                      <span className="mobile-text-xs text-gray-600 truncate">{user.phone}</span>
+                      <Phone className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="text-xs sm:text-sm text-gray-600 truncate">{user.phone}</span>
                     </div>
                   )}
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="mobile-card-compact">
+            <CardContent className="p-3 sm:p-4">
               <div className="space-y-2">
-                <div className="flex items-start gap-1.5">
-                  <Building className="w-3 h-3 text-gray-500 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-2">
+                  <Building className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 mt-0.5 flex-shrink-0" />
                   <div className="min-w-0">
-                    <div className="mobile-text-xs font-medium">Доступные объекты:</div>
-                    <div className="mobile-text-xs text-gray-600">{getObjectsInfo(user)}</div>
+                    <div className="text-xs sm:text-sm font-medium">Доступные объекты:</div>
+                    <div className="text-xs sm:text-sm text-gray-600">{getObjectsInfo(user)}</div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 pt-2 border-t">
-                  <div className="flex gap-1.5 flex-wrap w-full">
+                <div className="flex items-center gap-2 pt-2 border-t">
+                  <div className="flex gap-2 flex-wrap w-full">
                     {user.role === 'ADMIN' ? (
                       // Для главного администратора только смена пароля
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleChangePassword(user)}
-                        className="mobile-button-sm flex-1 min-w-[100px]"
+                        className="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm min-w-[100px] min-h-[36px]"
                       >
-                        <Key className="w-3 h-3" />
+                        <Key className="w-3 h-3 sm:w-4 sm:h-4" />
                         <span className="ml-1 truncate">Сменить пароль</span>
                       </Button>
                     ) : (
@@ -232,19 +231,19 @@ export default function AdminUsersPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleEditUser(user)}
-                          className="mobile-button-sm flex-1 min-w-[80px]"
+                          className="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm min-w-[80px] min-h-[36px]"
                         >
-                          <Settings className="w-3 h-3" />
-                          <span className="ml-1 truncate hide-mobile">Редактировать</span>
-                          <span className="ml-1 truncate show-mobile">Ред.</span>
+                          <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="ml-1 truncate hidden sm:inline">Редактировать</span>
+                          <span className="ml-1 truncate sm:hidden">Ред.</span>
                         </Button>
                         <Button
                           variant="destructive"
                           size="sm"
                           onClick={() => handleDeleteUser(user)}
-                          className="mobile-button-sm flex-1 min-w-[80px]"
+                          className="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm min-w-[80px] min-h-[36px]"
                         >
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span className="ml-1 truncate">Удалить</span>
                         </Button>
                       </>

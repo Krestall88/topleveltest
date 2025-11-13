@@ -208,7 +208,7 @@ export default function ManagersClientPage({ user }: Props) {
   });
 
   return (
-    <div className="space-y-4 sm:space-y-6 mobile-padding">
+    <div className="space-y-4 sm:space-y-6 px-3 sm:px-4 md:px-6">
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
           {error}
@@ -217,55 +217,55 @@ export default function ManagersClientPage({ user }: Props) {
 
       {/* Заголовок и кнопки управления */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mt-4 sm:mt-6">
-        <h2 className="mobile-text-xl font-bold text-gray-900">👥 Управление сотрудниками</h2>
+        <h2 className="text-lg sm:text-3xl font-bold text-gray-900">👥 Управление сотрудниками</h2>
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Button 
             variant="outline" 
             onClick={() => setIsAssignModalOpen(true)}
-            className="flex items-center gap-2 mobile-button-sm flex-1 sm:flex-none"
+            className="flex items-center gap-2 px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm flex-1 sm:flex-none"
           >
-            <Users className="mobile-icon" />
-            <span className="hide-mobile">Назначить на объекты</span>
-            <span className="show-mobile">Назначить</span>
+            <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline ml-1">Назначить на объекты</span>
+            <span className="sm:hidden ml-1">Назначить</span>
           </Button>
           <Button 
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 mobile-button-sm flex-1 sm:flex-none"
+            className="flex items-center gap-2 px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm flex-1 sm:flex-none"
           >
-            <UserPlus className="mobile-icon" />
-            <span className="hide-mobile">Добавить сотрудника</span>
-            <span className="show-mobile">Добавить</span>
+            <UserPlus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline ml-1">Добавить сотрудника</span>
+            <span className="sm:hidden ml-1">Добавить</span>
           </Button>
         </div>
       </div>
 
       {/* Статистика */}
-      <div className="mobile-grid-2 mobile-gap-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="mobile-card">
-            <div className="mobile-text-2xl font-bold text-blue-600">{managers.length}</div>
-            <div className="mobile-text-xs text-gray-600 mt-1">Всего менеджеров</div>
+          <CardContent className="p-3 sm:p-4 md:p-6">
+            <div className="text-2xl sm:text-3xl font-bold text-blue-600">{managers.length}</div>
+            <div className="text-xs sm:text-sm text-gray-600 mt-1">Всего менеджеров</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="mobile-card">
-            <div className="mobile-text-2xl font-bold text-green-600">
+          <CardContent className="p-3 sm:p-4 md:p-6">
+            <div className="text-2xl sm:text-3xl font-bold text-green-600">
               {managers.reduce((sum, m) => sum + m.objectsCount, 0)}
             </div>
-            <div className="mobile-text-xs text-gray-600 mt-1">Всего объектов</div>
+            <div className="text-xs sm:text-sm text-gray-600 mt-1">Всего объектов</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Поиск */}
       <div className="relative">
-        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
         <Input
           type="text"
           placeholder="Поиск..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="mobile-input pl-8"
+          className="pl-9 sm:pl-10 px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base"
         />
       </div>
 
@@ -280,42 +280,42 @@ export default function ManagersClientPage({ user }: Props) {
         ) : (
           filteredManagers.map((manager) => (
             <Card key={manager.id} className="hover:shadow-md transition-shadow overflow-hidden">
-              <CardHeader className="mobile-card-compact">
+              <CardHeader className="p-3 sm:p-4">
                 <div className="flex flex-col gap-2">
                   <div className="w-full">
-                    <CardTitle className="mobile-text-sm truncate">{manager.name}</CardTitle>
-                    <p className="mobile-text-xs text-gray-600 truncate">{manager.email}</p>
+                    <CardTitle className="text-sm sm:text-lg line-clamp-1">{manager.name}</CardTitle>
+                    <p className="text-xs sm:text-sm text-gray-600 truncate">{manager.email}</p>
                     {manager.phone && (
-                      <p className="mobile-text-xs text-blue-600 truncate">📞 {manager.phone}</p>
+                      <p className="text-xs sm:text-sm text-blue-600 truncate">📞 {manager.phone}</p>
                     )}
-                    <p className="mobile-text-xs text-gray-500 truncate">
+                    <p className="text-xs sm:text-sm text-gray-500 truncate">
                       {formatDate(manager.createdAt)}
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 w-full">
+                  <div className="flex gap-2 w-full">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleShowDetails(manager.id)}
-                      className="mobile-button-sm flex-1 min-w-[60px]"
+                      className="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm min-h-[36px]"
                     >
-                      📊
+                      📊 <span className="hidden sm:inline ml-1">Подробно</span>
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleResetPassword(manager.id, manager.name)}
-                      className="mobile-button-sm flex-1 min-w-[60px] text-blue-600 hover:text-blue-700"
+                      className="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm min-h-[36px] text-blue-600 hover:text-blue-700"
                     >
-                      🔑
+                      🔑 <span className="hidden sm:inline ml-1">Пароль</span>
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(manager.id)}
-                      className="mobile-button-sm flex-1 min-w-[60px] text-red-600 hover:text-red-700"
+                      className="flex-1 px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm min-h-[36px] text-red-600 hover:text-red-700"
                     >
-                      🗑️
+                      🗑️ <span className="hidden sm:inline ml-1">Удалить</span>
                     </Button>
                   </div>
                 </div>

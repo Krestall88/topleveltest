@@ -295,7 +295,7 @@ export default function ObjectsClientPage() {
               <CardHeader className="p-3 sm:p-4">
                 <CardTitle className="flex flex-col gap-2">
                   <div className="w-full">
-                    <h3 className="text-sm sm:text-base font-semibold line-clamp-2">{obj.name}</h3>
+                    <h3 className="text-sm sm:text-lg font-semibold line-clamp-2">{obj.name}</h3>
                   </div>
                   <div className="flex gap-2 w-full">
                     <Button

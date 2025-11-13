@@ -223,56 +223,56 @@ export default function InventoryClientPage({ session }: Props) {
 
   return (
     <div className="responsive-container space-y-4 sm:space-y-6 py-4 sm:py-6">
-      <h1 className="mobile-text-xl font-bold">Управление инвентарем</h1>
+      <h1 className="text-lg sm:text-3xl font-bold">Управление инвентарем</h1>
       
       {/* Дашборд */}
-      <div className="mobile-grid-3 mobile-gap-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="mobile-card">
-            <div className="mobile-text-2xl font-bold text-blue-600">{items.length}</div>
-            <div className="mobile-text-xs text-gray-600 mt-1">Всего позиций</div>
+          <CardContent className="p-3 sm:p-4 md:p-6">
+            <div className="text-2xl sm:text-3xl font-bold text-blue-600">{items.length}</div>
+            <div className="text-xs sm:text-sm text-gray-600 mt-1">Всего позиций</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="mobile-card">
-            <div className="mobile-text-2xl font-bold text-green-600">
+          <CardContent className="p-3 sm:p-4 md:p-6">
+            <div className="text-2xl sm:text-3xl font-bold text-green-600">
               {items.reduce((sum, item) => sum + item.quantity, 0)}
             </div>
-            <div className="mobile-text-xs text-gray-600 mt-1">Всего единиц</div>
+            <div className="text-xs sm:text-sm text-gray-600 mt-1">Всего единиц</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="mobile-card">
-            <div className="mobile-text-2xl font-bold text-purple-600">
+          <CardContent className="p-3 sm:p-4 md:p-6">
+            <div className="text-2xl sm:text-3xl font-bold text-purple-600">
               {totalValue.toLocaleString('ru-RU')} ₽
             </div>
-            <div className="mobile-text-xs text-gray-600 mt-1">Общая стоимость</div>
+            <div className="text-xs sm:text-sm text-gray-600 mt-1">Общая стоимость</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Поиск */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 mobile-icon text-gray-400" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
         <Input
           type="text"
           placeholder="Поиск..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="mobile-input pl-10"
+          className="px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base pl-10"
         />
       </div>
       
       {isAdmin && (
-        <form onSubmit={handleSubmit} className="mobile-card border rounded shadow-sm">
-          <h2 className="mobile-text-base mb-3">Добавить новую позицию</h2>
-          <div className="mobile-grid-4 mobile-gap-sm">
-            <input type="text" value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} placeholder="Название" className="mobile-input" required />
-            <input type="number" value={quantity} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuantity(Number(e.target.value))} placeholder="Количество" className="mobile-input" required />
-            <input type="text" value={unit} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUnit(e.target.value)} placeholder="Ед. изм." className="mobile-input" required />
-            <input type="number" value={price} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrice(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Цена" className="mobile-input" />
+        <form onSubmit={handleSubmit} className="p-3 sm:p-4 border rounded shadow-sm">
+          <h2 className="text-base sm:text-lg mb-3">Добавить новую позицию</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+            <input type="text" value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)} placeholder="Название" className="px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base border rounded" required />
+            <input type="number" value={quantity} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuantity(Number(e.target.value))} placeholder="Количество" className="px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base border rounded" required />
+            <input type="text" value={unit} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUnit(e.target.value)} placeholder="Ед. изм." className="px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base border rounded" required />
+            <input type="number" value={price} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrice(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Цена" className="px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base border rounded" />
           </div>
-          <button type="submit" className="mobile-button w-full sm:w-auto bg-blue-500 text-white rounded hover:bg-blue-600">Добавить</button>
+          <button type="submit" className="px-3 py-2 sm:px-4 sm:py-2.5 text-sm sm:text-base w-full sm:w-auto bg-blue-500 text-white rounded hover:bg-blue-600 mt-3">Добавить</button>
         </form>
       )}
 
