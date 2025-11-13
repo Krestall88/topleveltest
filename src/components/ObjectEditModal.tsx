@@ -326,12 +326,14 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-0.5 sm:gap-1">
-            <TabsTrigger value="basic" className="text-[9px] sm:text-sm px-1 sm:px-2 py-1 sm:py-1.5">Основная</TabsTrigger>
-            <TabsTrigger value="structure" className="text-[9px] sm:text-sm px-1 sm:px-2 py-1 sm:py-1.5">Структура</TabsTrigger>
-            <TabsTrigger value="techcards" className="text-[9px] sm:text-sm px-1 sm:px-2 py-1 sm:py-1.5">Техзадания</TabsTrigger>
-            <TabsTrigger value="stats" className="text-[9px] sm:text-sm px-1 sm:px-2 py-1 sm:py-1.5">Статистика</TabsTrigger>
-          </TabsList>
+          <div className="w-full overflow-x-auto scrollbar-hide">
+            <TabsList className="inline-flex sm:grid sm:w-full sm:grid-cols-4 gap-1 w-max">
+              <TabsTrigger value="basic" className="text-xs sm:text-sm px-3 py-2 whitespace-nowrap">Основная</TabsTrigger>
+              <TabsTrigger value="structure" className="text-xs sm:text-sm px-3 py-2 whitespace-nowrap">Структура</TabsTrigger>
+              <TabsTrigger value="techcards" className="text-xs sm:text-sm px-3 py-2 whitespace-nowrap">Техзадания</TabsTrigger>
+              <TabsTrigger value="stats" className="text-xs sm:text-sm px-3 py-2 whitespace-nowrap">Статистика</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="basic" className="space-y-3 sm:space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
