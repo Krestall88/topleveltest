@@ -50,6 +50,7 @@ model User {
   notifications            Notification[]
   adminComments            TaskAdminComment[]      @relation("AdminComments")
   reportingTaskAttachments ReportingTaskAttachment[] @relation("ReportingTaskAttachments")
+  reportingTaskComments    ReportingTaskComment[]  @relation("ReportingTaskComments")
   additionalTaskComments   AdditionalTaskComment[] @relation("AdditionalTaskComments")
   telegramBindingCode      TelegramBindingCode?    @relation("TelegramBindingCodes")
 }
@@ -499,10 +500,28 @@ model ReportingTask {
   createdBy         User                  @relation("CreatedReportingTasks", fields: [createdById], references: [id])
   object            CleaningObject        @relation("ReportingTasks", fields: [objectId], references: [id], onDelete: Cascade)
   attachments       ReportingTaskAttachment[]
+  comments          ReportingTaskComment[]
 
   @@index([objectId])
   @@index([assignedToId])
   @@index([status])
+}
+
+// Комментарии к задачам отчетности
+model ReportingTaskComment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  content   String
+  
+  // Связи
+  taskId   String
+  task     ReportingTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User          @relation("ReportingTaskComments", fields: [authorId], references: [id])
+  
+  @@index([taskId])
+  @@index([authorId])
 }
 
 // Вложения к задачам отчетности (фотоотчеты и документы)

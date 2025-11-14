@@ -350,10 +350,9 @@ export default function ReportingTaskModal({
     }
   };
 
-  const canEdit = currentUser.role === 'ADMIN' || currentUser.role === 'DEPUTY' || 
-                 (task && currentUser.role === 'MANAGER' && task.object.managerId === currentUser.id);
-  
-  const canDelete = currentUser.role === 'ADMIN' || currentUser.role === 'DEPUTY';
+  // Админы и заместители могут редактировать и удалять
+  const canEdit = currentUser.role === 'ADMIN' || currentUser.role === 'DEPUTY_ADMIN';
+  const canDelete = currentUser.role === 'ADMIN' || currentUser.role === 'DEPUTY_ADMIN';
   
   const canComplete = task && currentUser.id === task.assignedTo.id && task.status !== 'COMPLETED';
 

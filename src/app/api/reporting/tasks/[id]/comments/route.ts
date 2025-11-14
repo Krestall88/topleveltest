@@ -47,7 +47,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     // Проверяем права доступа
     const canView = user.role === 'ADMIN' || 
-                   user.role === 'DEPUTY' || 
+                   user.role === 'DEPUTY_ADMIN' || 
                    (user.role === 'MANAGER' && task.object.managerId === user.id) ||
                    task.assignedTo.id === user.id ||
                    task.createdBy.id === user.id;
@@ -133,7 +133,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     // Проверяем права на добавление комментариев
     const canComment = user.role === 'ADMIN' || 
-                      user.role === 'DEPUTY' || 
+                      user.role === 'DEPUTY_ADMIN' || 
                       (user.role === 'MANAGER' && task.object.managerId === user.id) ||
                       task.assignedTo.id === user.id ||
                       task.createdBy.id === user.id;

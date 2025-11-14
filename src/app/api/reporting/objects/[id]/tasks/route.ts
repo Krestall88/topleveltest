@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromToken } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
+import { notifyReportingTaskCreated } from '@/lib/notifications';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -115,7 +116,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     // Проверяем существование объекта
     const object = await prisma.cleaningObject.findUnique({
       where: { id: objectId },
-      select: { id: true }
+      select: { id: true, name: true }
     });
 
     if (!object) {
@@ -178,6 +179,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         }
       }
     });
+
+    // Отправляем уведомление назначенному менеджеру
+    try {
+      await notifyReportingTaskCreated(assignedToId, task.id, title, object.name);
+    } catch (notifyError) {
+      console.error('Ошибка отправки уведомления:', notifyError);
+      // Не прерываем создание задачи из-за ошибки уведомления
+    }
 
     return NextResponse.json({
       task,

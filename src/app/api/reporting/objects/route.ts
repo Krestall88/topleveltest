@@ -62,6 +62,11 @@ export async function GET(req: NextRequest) {
           select: {
             name: true
           }
+        },
+        _count: {
+          select: {
+            reportingTasks: true
+          }
         }
       },
       orderBy: {
@@ -69,16 +74,8 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    // Добавляем поддельный счетчик задач (пока таблица ReportingTask не работает)
-    const objectsWithCount = objects.map(obj => ({
-      ...obj,
-      _count: {
-        reportingTasks: 0
-      }
-    }));
-
     return NextResponse.json({
-      objects: objectsWithCount
+      objects
     });
 
   } catch (error) {

@@ -122,3 +122,13 @@ export async function notifySystemAlert(userId: string, title: string, message: 
     priority,
   });
 }
+
+export async function notifyReportingTaskCreated(userId: string, taskId: string, title: string, objectName: string) {
+  return createNotification({
+    userId,
+    type: 'REPORTING_TASK_CREATED',
+    title: `Новая задача: ${title}`,
+    message: `Вам назначена новая задача по объекту "${objectName}"`,
+    priority: 'MEDIUM',
+  });
+}

@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import ReportingTaskModal from './ReportingTaskModal';
 import { 
   Building2, 
@@ -72,6 +74,9 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
+  const [newTaskPriority, setNewTaskPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM');
+  const [newTaskDueDate, setNewTaskDueDate] = useState('');
+  const [newTaskAssignedTo, setNewTaskAssignedTo] = useState(object.managerId);
   const [creating, setCreating] = useState(false);
   
   // Состояние для модального окна задач
@@ -121,13 +126,18 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
         body: JSON.stringify({
           title: newTaskTitle,
           description: newTaskDescription,
-          assignedToId: object.managerId
+          assignedToId: newTaskAssignedTo,
+          priority: newTaskPriority,
+          dueDate: newTaskDueDate || undefined
         })
       });
 
       if (response.ok) {
         setNewTaskTitle('');
         setNewTaskDescription('');
+        setNewTaskPriority('MEDIUM');
+        setNewTaskDueDate('');
+        setNewTaskAssignedTo(object.managerId);
         setShowCreateDialog(false);
         await loadTasks();
         alert('Задача создана успешно!');
@@ -257,20 +267,44 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
-                      <label className="text-sm font-medium">Название задачи</label>
+                      <Label htmlFor="task-title">Название задачи</Label>
                       <Input
+                        id="task-title"
                         value={newTaskTitle}
                         onChange={(e) => setNewTaskTitle(e.target.value)}
                         placeholder="Введите название задачи"
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium">Описание</label>
+                      <Label htmlFor="task-description">Описание</Label>
                       <Textarea
+                        id="task-description"
                         value={newTaskDescription}
                         onChange={(e) => setNewTaskDescription(e.target.value)}
                         placeholder="Подробное описание задачи"
                         rows={3}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="task-priority">Приоритет</Label>
+                      <Select value={newTaskPriority} onValueChange={(value: any) => setNewTaskPriority(value)}>
+                        <SelectTrigger id="task-priority">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="LOW">Низкий</SelectItem>
+                          <SelectItem value="MEDIUM">Средний</SelectItem>
+                          <SelectItem value="HIGH">Высокий</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="task-duedate">Срок выполнения (необязательно)</Label>
+                      <Input
+                        id="task-duedate"
+                        type="datetime-local"
+                        value={newTaskDueDate}
+                        onChange={(e) => setNewTaskDueDate(e.target.value)}
                       />
                     </div>
                     <div className="flex justify-end gap-2">

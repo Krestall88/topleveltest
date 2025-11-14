@@ -385,6 +385,14 @@ ANNUAL ANNUAL
     }
   
 
+  "ReportingTaskComment" {
+    String id "🗝️"
+    DateTime createdAt 
+    DateTime updatedAt 
+    String content 
+    }
+  
+
   "ReportingTaskAttachment" {
     String id "🗝️"
     DateTime createdAt 
@@ -459,6 +467,7 @@ ANNUAL ANNUAL
     "User" o{--}o "notifications" : "notifications"
     "User" o{--}o "task_admin_comments" : "adminComments"
     "User" o{--}o "ReportingTaskAttachment" : "reportingTaskAttachments"
+    "User" o{--}o "ReportingTaskComment" : "reportingTaskComments"
     "User" o{--}o "AdditionalTaskComment" : "additionalTaskComments"
     "User" o{--}o "TelegramBindingCode" : "telegramBindingCode"
     "CleaningObject" o{--}o "AdditionalTask" : "additionalTasks"
@@ -554,6 +563,9 @@ ANNUAL ANNUAL
     "ReportingTask" o|--|| "User" : "createdBy"
     "ReportingTask" o|--|| "CleaningObject" : "object"
     "ReportingTask" o{--}o "ReportingTaskAttachment" : "attachments"
+    "ReportingTask" o{--}o "ReportingTaskComment" : "comments"
+    "ReportingTaskComment" o|--|| "ReportingTask" : "task"
+    "ReportingTaskComment" o|--|| "User" : "author"
     "ReportingTaskAttachment" o|--|| "ReportingTask" : "task"
     "ReportingTaskAttachment" o|--|| "User" : "uploadedBy"
     "ExcludedObject" o|--|| "User" : "excludedBy"
