@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReportingTaskModal from './ReportingTaskModal';
 import { 
   Building2, 
@@ -70,7 +71,9 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
   const [tasks, setTasks] = useState<ReportingTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState('active');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
@@ -100,7 +103,10 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
       if (response.ok) {
         const data = await response.json();
         console.log('✅ Данные получены:', data);
-        setTasks(data.tasks || []);
+        const sortedTasks = (data.tasks || []).sort((a: ReportingTask, b: ReportingTask) => {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+        setTasks(sortedTasks);
       } else {
         const errorData = await response.json().catch(() => ({}));
         console.error('❌ Ошибка ответа:', response.status, errorData);
@@ -216,12 +222,40 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
     return <Badge className={config.color}>{config.label}</Badge>;
   };
 
-  const filteredTasks = tasks.filter(task => {
-    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         task.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Разделение задач на активные и выполненные
+  const activeTasks = tasks.filter(task => 
+    task.status !== 'COMPLETED' && task.status !== 'CANCELLED'
+  );
+  
+  const completedTasks = tasks.filter(task => 
+    task.status === 'COMPLETED' || task.status === 'CANCELLED'
+  );
+
+  // Фильтрация по поиску и датам
+  const filterTasks = (taskList: ReportingTask[]) => {
+    return taskList.filter(task => {
+      const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           task.description.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      let matchesDate = true;
+      if (dateFrom || dateTo) {
+        const taskDate = new Date(task.completedAt || task.createdAt);
+        if (dateFrom) {
+          matchesDate = matchesDate && taskDate >= new Date(dateFrom);
+        }
+        if (dateTo) {
+          const endDate = new Date(dateTo);
+          endDate.setHours(23, 59, 59, 999);
+          matchesDate = matchesDate && taskDate <= endDate;
+        }
+      }
+      
+      return matchesSearch && matchesDate;
+    });
+  };
+
+  const filteredActiveTasks = filterTasks(activeTasks);
+  const filteredCompletedTasks = filterTasks(completedTasks);
 
   return (
     <div className="space-y-6">
@@ -361,7 +395,7 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
       </Card>
 
       {/* Фильтры и поиск */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
@@ -372,19 +406,37 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
           />
         </div>
         
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md"
-        >
-          <option value="all">Все статусы</option>
-          <option value="PENDING">Ожидает</option>
-          <option value="IN_PROGRESS">В работе</option>
-          <option value="COMPLETED">Выполнено</option>
-        </select>
+        <div className="flex gap-2">
+          <Input
+            type="date"
+            placeholder="От"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="w-40"
+          />
+          <Input
+            type="date"
+            placeholder="До"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="w-40"
+          />
+          {(dateFrom || dateTo) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setDateFrom('');
+                setDateTo('');
+              }}
+            >
+              Сбросить
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Список задач */}
+      {/* Вкладки с задачами */}
       {loading ? (
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
@@ -396,24 +448,36 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
             </Card>
           ))}
         </div>
-      ) : filteredTasks.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <FileText className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {tasks.length === 0 ? 'Нет задач' : 'Задачи не найдены'}
-            </h3>
-            <p className="text-gray-600 text-center">
-              {tasks.length === 0 
-                ? 'Создайте первую задачу для этого объекта'
-                : 'Попробуйте изменить критерии поиска'
-              }
-            </p>
-          </CardContent>
-        </Card>
       ) : (
-        <div className="space-y-4">
-          {filteredTasks.map((task) => (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="active" className="text-blue-600">
+              Новые задачи ({filteredActiveTasks.length})
+            </TabsTrigger>
+            <TabsTrigger value="completed" className="text-green-600">
+              Выполненные ({filteredCompletedTasks.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="active" className="space-y-4 mt-4">
+            {filteredActiveTasks.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <FileText className="h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    {activeTasks.length === 0 ? 'Нет активных задач' : 'Задачи не найдены'}
+                  </h3>
+                  <p className="text-gray-600 text-center">
+                    {activeTasks.length === 0 
+                      ? 'Создайте первую задачу для этого объекта'
+                      : 'Попробуйте изменить критерии поиска'
+                    }
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {filteredActiveTasks.map((task) => (
             <Card 
               key={task.id} 
               className="hover:shadow-md transition-shadow cursor-pointer"
@@ -442,21 +506,92 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
                   </div>
                   
                   <div className="flex items-center gap-3">
-                    {/* Комментарии и вложения будут добавлены позже */}
                     <div className="flex items-center gap-1 text-gray-500">
                       <MessageSquare className="h-3 w-3" />
-                      <span>0</span>
+                      <span>{task._count.comments}</span>
                     </div>
                     <div className="flex items-center gap-1 text-gray-500">
                       <FileText className="h-3 w-3" />
-                      <span>0</span>
+                      <span>{task._count.attachments}</span>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="completed" className="space-y-4 mt-4">
+            {filteredCompletedTasks.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <FileText className="h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    {completedTasks.length === 0 ? 'Нет выполненных задач' : 'Задачи не найдены'}
+                  </h3>
+                  <p className="text-gray-600 text-center">
+                    {completedTasks.length === 0 
+                      ? 'Выполненные задачи появятся здесь'
+                      : 'Попробуйте изменить критерии поиска или фильтры по датам'
+                    }
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {filteredCompletedTasks.map((task) => (
+                  <Card 
+                    key={task.id} 
+                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => handleTaskClick(task.id)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h3 className="font-medium text-gray-900 mb-1">{task.title}</h3>
+                          <p className="text-sm text-gray-600 mb-2">{task.description}</p>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          {getStatusBadge(task.status)}
+                          {getPriorityBadge(task.priority)}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm text-gray-500">
+                        <div className="flex items-center gap-4">
+                          <span>Создал: {task.createdBy.name}</span>
+                          <span>Исполнитель: {task.assignedTo.name}</span>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            <span>
+                              {task.completedAt 
+                                ? `Завершена: ${new Date(task.completedAt).toLocaleDateString()}`
+                                : `Создана: ${new Date(task.createdAt).toLocaleDateString()}`
+                              }
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1 text-gray-500">
+                            <MessageSquare className="h-3 w-3" />
+                            <span>{task._count.comments}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-gray-500">
+                            <FileText className="h-3 w-3" />
+                            <span>{task._count.attachments}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       )}
 
       {/* Модальное окно задачи */}
