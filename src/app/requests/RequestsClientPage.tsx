@@ -69,6 +69,15 @@ export default function RequestsClientPage({ initialRequests }: RequestsClientPa
   const createRequest = async (title: string, description: string, objectId: string) => {
     startTransition(async () => {
       try {
+        // Получаем текущего пользователя
+        const userResponse = await fetch('/api/auth/me');
+        if (!userResponse.ok) {
+          alert('Необходимо авторизоваться для создания заявки');
+          return;
+        }
+        
+        const { user } = await userResponse.json();
+        
         const response = await fetch('/api/requests', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -76,7 +85,7 @@ export default function RequestsClientPage({ initialRequests }: RequestsClientPa
             title,
             description,
             objectId,
-            creatorId: 'temp-user-id', // TODO: Получать из авторизации
+            creatorId: user.id,
             source: 'form'
           }),
         });
@@ -85,9 +94,14 @@ export default function RequestsClientPage({ initialRequests }: RequestsClientPa
           const newRequest = await response.json();
           setRequests(prev => [newRequest, ...prev]);
           setIsCreateModalOpen(false);
+          alert('Заявка успешно создана!');
+        } else {
+          const error = await response.json();
+          alert(`Ошибка: ${error.message || 'Не удалось создать заявку'}`);
         }
       } catch (error) {
         console.error('Ошибка при создании заявки:', error);
+        alert('Произошла ошибка при создании заявки');
       }
     });
   };
