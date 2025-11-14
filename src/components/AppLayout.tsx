@@ -24,6 +24,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [user, setUser] = useState<User | null>(null);
   const [mounted, setMounted] = useState(false);
   const [newTasksCount, setNewTasksCount] = useState(0);
+  const [reportingTasksCount, setReportingTasksCount] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [hasReportingObjects, setHasReportingObjects] = useState(false);
   const lastCheckRef = useRef<Date>(new Date());
@@ -62,8 +63,22 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
     fetchUser();
     fetchNewTasksCount();
+    fetchReportingTasksCount();
     checkReportingObjects();
   }, []);
+
+  // Получаем количество задач отчетности
+  const fetchReportingTasksCount = async () => {
+    try {
+      const response = await fetch('/api/reporting/tasks/count');
+      if (response.ok) {
+        const data = await response.json();
+        setReportingTasksCount(data.count || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching reporting tasks count:', error);
+    }
+  };
 
   // Проверяем наличие объектов в отчетности для менеджера
   const checkReportingObjects = async () => {
@@ -338,11 +353,18 @@ export default function AppLayout({ children }: AppLayoutProps) {
           {canViewMenuItem('reporting') && (
             <Link
               href="/reporting"
-              className={`flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/reporting')}`}
+              className={`flex items-center justify-between px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 ${isActive('/reporting')}`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              <span className="mr-3">📋</span>
-              Отчетность по чек-листам
+              <div className="flex items-center">
+                <span className="mr-3">📋</span>
+                Отчетность по чек-листам
+              </div>
+              {reportingTasksCount > 0 && (
+                <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                  {reportingTasksCount}
+                </span>
+              )}
             </Link>
           )}
           

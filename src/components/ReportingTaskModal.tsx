@@ -117,6 +117,7 @@ export default function ReportingTaskModal({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
   
   // Форма редактирования
   const [editForm, setEditForm] = useState({
@@ -131,6 +132,10 @@ export default function ReportingTaskModal({
   // Новый комментарий
   const [newComment, setNewComment] = useState('');
   const [addingComment, setAddingComment] = useState(false);
+  
+  // Форма завершения
+  const [completionComment, setCompletionComment] = useState('');
+  const [completing, setCompleting] = useState(false);
   
   // Загрузка фотографий
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -261,6 +266,41 @@ export default function ReportingTaskModal({
     }
   };
 
+  const handleComplete = async () => {
+    if (!taskId) return;
+    
+    try {
+      setCompleting(true);
+      const response = await fetch(`/api/reporting/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          status: 'COMPLETED',
+          completionComment: completionComment || undefined
+        })
+      });
+      
+      if (response.ok) {
+        setIsCompleting(false);
+        setCompletionComment('');
+        await loadTask();
+        onTaskUpdated();
+        alert('Задача успешно завершена!');
+      } else {
+        const errorData = await response.json();
+        alert(`Ошибка: ${errorData.message}`);
+      }
+    } catch (error) {
+      console.error('Ошибка завершения:', error);
+      alert('Ошибка завершения задачи');
+    } finally {
+      setCompleting(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!taskId || !task) return;
     
@@ -379,7 +419,32 @@ export default function ReportingTaskModal({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[70vh]">
             {/* Основная информация */}
             <div className="lg:col-span-2 space-y-4">
-              {isEditing ? (
+              {isCompleting ? (
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Завершение задачи</h3>
+                  <p className="text-gray-600">Задача: {task.title}</p>
+                  
+                  <div>
+                    <Label htmlFor="completionComment">Комментарий завершения (необязательно)</Label>
+                    <Textarea
+                      id="completionComment"
+                      value={completionComment}
+                      onChange={(e) => setCompletionComment(e.target.value)}
+                      placeholder="Опишите результат выполнения задачи..."
+                      rows={4}
+                    />
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button onClick={handleComplete} disabled={completing}>
+                      {completing ? 'Завершение...' : 'Завершить задачу'}
+                    </Button>
+                    <Button variant="outline" onClick={() => setIsCompleting(false)}>
+                      Отмена
+                    </Button>
+                  </div>
+                </div>
+              ) : isEditing ? (
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="title">Название</Label>
@@ -530,10 +595,7 @@ export default function ReportingTaskModal({
                     {canComplete && (
                       <Button 
                         variant="outline"
-                        onClick={() => {
-                          setEditForm({ ...editForm, status: 'COMPLETED' });
-                          setIsEditing(true);
-                        }}
+                        onClick={() => setIsCompleting(true)}
                       >
                         Завершить
                       </Button>

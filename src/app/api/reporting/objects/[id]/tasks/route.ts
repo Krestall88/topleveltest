@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromToken } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
-import { notifyReportingTaskCreated } from '@/lib/notifications';
+import { notifyReportingTaskCreated } from '@/lib/server-notifications';
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {

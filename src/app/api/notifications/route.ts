@@ -129,41 +129,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Временно возвращаем заглушку, так как модель Notification не существует
-    const notification = {
-      id: 'temp-notification-id',
-      userId,
-      type,
-      title,
-      message,
-      data: data || {},
-      priority,
-      isRead: false,
-      createdAt: new Date(),
-      user: { id: userId, name: 'Пользователь', email: 'user@example.com' }
-    };
-    
-    // TODO: Добавить модель Notification в schema.prisma
-    // const notification = await prisma.notification.create({
-    //   data: {
-    //     userId,
-    //     type,
-    //     title,
-    //     message,
-    //     data: data || {},
-    //     priority,
-    //     isRead: false,
-    //   },
-    //   include: {
-    //     user: {
-    //       select: {
-    //         id: true,
-    //         name: true,
-    //         email: true,
-    //       },
-    //     },
-    //   },
-    // });
+    // Создаем уведомление в БД
+    const notification = await prisma.notification.create({
+      data: {
+        userId,
+        type,
+        title,
+        message,
+        isRead: false,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            telegramId: true,
+          },
+        },
+      },
+    });
+
+    // Отправляем уведомление в Telegram, если у пользователя есть telegramId
+    if (notification.user.telegramId) {
+      try {
+        const telegramMessage = `🔔 *${title}*\n\n${message}`;
+        
+        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            chat_id: notification.user.telegramId,
+            text: telegramMessage,
+            parse_mode: 'Markdown',
+          }),
+        });
+        
+        console.log('✅ Уведомление отправлено в Telegram:', notification.user.telegramId);
+      } catch (telegramError) {
+        console.error('❌ Ошибка отправки в Telegram:', telegramError);
+        // Не прерываем создание уведомления
+      }
+    }
 
     return NextResponse.json(notification, { status: 201 });
   } catch (error) {
