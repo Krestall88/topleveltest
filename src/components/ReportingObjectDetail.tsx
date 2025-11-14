@@ -60,7 +60,7 @@ interface ObjectInfo {
 
 interface ReportingObjectDetailProps {
   object: ObjectInfo;
-  userRole: 'ADMIN' | 'DEPUTY' | 'MANAGER' | 'CLIENT';
+  userRole: 'ADMIN' | 'DEPUTY' | 'DEPUTY_ADMIN' | 'MANAGER' | 'CLIENT';
   userId: string;
 }
 
@@ -232,7 +232,8 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
         </div>
 
         <div className="flex items-center gap-2">
-          {(userRole === 'ADMIN' || userRole === 'DEPUTY') && (
+          {/* Админы и заместители могут создавать задачи и возвращать объекты */}
+          {(userRole === 'ADMIN' || userRole === 'DEPUTY_ADMIN') && (
             <>
               <Button
                 onClick={handleReturnToGeneral}

@@ -20,7 +20,8 @@ export default function TelegramManagementClientPage({ user }: TelegramManagemen
   const [activeTab, setActiveTab] = useState<'notifications' | 'clients'>('notifications');
   
   // Проверяем, может ли пользователь управлять клиентами
-  const canManageClients = user.role === 'ADMIN' || user.role === 'DEPUTY_ADMIN';
+  // Админы, заместители и менеджеры могут управлять клиентами
+  const canManageClients = ['ADMIN', 'DEPUTY_ADMIN', 'MANAGER'].includes(user.role);
 
   // Browser Notifications
   const { permission, isSupported, requestPermission, showNotification } = useBrowserNotifications();

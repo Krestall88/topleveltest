@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getUserFromToken } from '@/lib/auth-middleware';
 
 // GET /api/admin/client-bindings - Получить все привязки
 export async function GET(req: NextRequest) {
   try {
+    const user = await getUserFromToken(req);
+    if (!user) {
+      return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
+    }
+
+    // Для менеджеров показываем только привязки их объектов
+    const whereClause: any = {};
+    if (user.role === 'MANAGER') {
+      whereClause.object = {
+        managerId: user.id
+      };
+    }
+
     const bindings = await prisma.clientBinding.findMany({
+      where: whereClause,
       include: {
         object: {
           include: {
@@ -30,12 +45,38 @@ export async function GET(req: NextRequest) {
 // POST /api/admin/client-bindings - Создать новую привязку
 export async function POST(req: NextRequest) {
   try {
+    const user = await getUserFromToken(req);
+    if (!user) {
+      return NextResponse.json({ error: 'Не авторизован' }, { status: 401 });
+    }
+
     const { telegramId, telegramUsername, firstName, lastName, objectId } = await req.json();
 
     if (!telegramId || !objectId) {
       return NextResponse.json(
         { error: 'telegramId и objectId обязательны' },
         { status: 400 }
+      );
+    }
+
+    // Проверяем права доступа к объекту
+    const object = await prisma.cleaningObject.findUnique({
+      where: { id: objectId },
+      select: { id: true, managerId: true }
+    });
+
+    if (!object) {
+      return NextResponse.json(
+        { error: 'Объект не найден' },
+        { status: 404 }
+      );
+    }
+
+    // Менеджеры могут создавать привязки только для своих объектов
+    if (user.role === 'MANAGER' && object.managerId !== user.id) {
+      return NextResponse.json(
+        { error: 'Нет доступа к этому объекту' },
+        { status: 403 }
       );
     }
 

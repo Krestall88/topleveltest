@@ -40,8 +40,8 @@ export default async function ReportingPage() {
     redirect('/auth/login');
   }
 
-  // Только админы, заместители и заместители администратора могут видеть отчетность
-  if (user.role !== 'ADMIN' && user.role !== 'DEPUTY' && user.role !== 'DEPUTY_ADMIN') {
+  // Админы, заместители и менеджеры могут видеть отчетность
+  if (!['ADMIN', 'DEPUTY_ADMIN', 'MANAGER'].includes(user.role)) {
     redirect('/');
   }
 
