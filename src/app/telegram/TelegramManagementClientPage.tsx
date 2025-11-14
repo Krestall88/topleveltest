@@ -246,9 +246,10 @@ export default function TelegramManagementClientPage({ user }: TelegramManagemen
                   <div className="border-t pt-3">
                     <p className="font-medium mb-2 text-blue-900">📝 Как получить Telegram ID клиента:</p>
                     <ol className="list-decimal list-inside space-y-1 ml-2 text-gray-600">
-                      <li>Попросите клиента написать боту <code className="bg-gray-100 px-1 rounded">@{process.env.NEXT_PUBLIC_BOT_USERNAME || 'your_bot'}</code> команду <code className="bg-gray-100 px-1 rounded">/start</code></li>
-                      <li>Клиент получит сообщение с его Telegram ID</li>
-                      <li>Используйте этот ID при создании привязки ниже</li>
+                      <li>Попросите клиента написать команду <code className="bg-gray-100 px-1 rounded">/start</code> вашему боту</li>
+                      <li>Бот ответит сообщением с приветствием и покажет его Telegram ID</li>
+                      <li>Клиент копирует этот ID и отправляет вам</li>
+                      <li>Используйте полученный ID при создании привязки ниже</li>
                     </ol>
                     <p className="text-xs text-gray-500 mt-2">
                       💡 <strong>Альтернатива:</strong> Используйте бота <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">@userinfobot</a> — клиент пишет ему, и бот сразу показывает его ID
