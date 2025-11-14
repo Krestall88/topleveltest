@@ -11,12 +11,42 @@ export async function GET(req: NextRequest) {
     }
 
     // Только админы и заместители могут видеть все объекты
-    if (user.role !== 'ADMIN' && user.role !== 'DEPUTY') {
+    if (user.role !== 'ADMIN' && user.role !== 'DEPUTY_ADMIN') {
       return NextResponse.json({ message: 'Нет доступа' }, { status: 403 });
     }
 
-    // Получаем все объекты (пока без поля excludeFromTasks)
+    // Для заместителя админа получаем только назначенные объекты
+    let objectFilter: any = {};
+    
+    if (user.role === 'DEPUTY_ADMIN') {
+      // Получаем ID объектов, назначенных заместителю
+      const assignments = await prisma.deputyAdminAssignment.findMany({
+        where: {
+          deputyAdminId: user.id
+        },
+        select: {
+          objectId: true
+        }
+      });
+      
+      const assignedObjectIds = assignments.map(a => a.objectId);
+      console.log('🔍 Объекты, назначенные заместителю:', assignedObjectIds);
+      
+      if (assignedObjectIds.length === 0) {
+        // Если нет назначений, возвращаем пустой список
+        return NextResponse.json({ objects: [] });
+      }
+      
+      objectFilter = {
+        id: {
+          in: assignedObjectIds
+        }
+      };
+    }
+
+    // Получаем объекты с учетом фильтра
     const objects = await prisma.cleaningObject.findMany({
+      where: objectFilter,
       select: {
         id: true,
         name: true,

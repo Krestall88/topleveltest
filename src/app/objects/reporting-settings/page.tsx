@@ -41,7 +41,7 @@ export default async function ReportingSettingsPageWrapper() {
   }
 
   // Только админы и заместители могут настраивать отчетность
-  if (user.role !== 'ADMIN' && user.role !== 'DEPUTY') {
+  if (user.role !== 'ADMIN' && user.role !== 'DEPUTY_ADMIN') {
     redirect('/objects');
   }
 

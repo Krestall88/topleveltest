@@ -11,8 +11,7 @@ import {
   Search, 
   Calendar,
   User,
-  FileText,
-  Settings
+  FileText
 } from 'lucide-react';
 
 interface ReportingObject {
@@ -37,7 +36,6 @@ export default function ReportingDashboard({ userRole, userId }: ReportingDashbo
   const [objects, setObjects] = useState<ReportingObject[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     loadReportingObjects();
@@ -139,16 +137,7 @@ export default function ReportingDashboard({ userRole, userId }: ReportingDashbo
         </div>
         
         <div className="flex gap-2">
-          <Button
-            onClick={() => setShowSettings(true)}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <Settings className="h-4 w-4" />
-            Настроить объекты
-          </Button>
-          
-          {userRole !== 'MANAGER' && (
+          {(userRole === 'ADMIN' || userRole === 'DEPUTY_ADMIN') && (
             <Button
               onClick={() => window.location.href = '/objects/reporting-settings'}
               className="flex items-center gap-2"
@@ -221,10 +210,10 @@ export default function ReportingDashboard({ userRole, userId }: ReportingDashbo
                 : 'Попробуйте изменить критерии поиска'
               }
             </p>
-            {objects.length === 0 && (
-              <Button onClick={() => setShowSettings(true)}>
-                <Settings className="h-4 w-4 mr-2" />
-                Настроить объекты
+            {objects.length === 0 && (userRole === 'ADMIN' || userRole === 'DEPUTY_ADMIN') && (
+              <Button onClick={() => window.location.href = '/objects/reporting-settings'}>
+                <Plus className="h-4 w-4 mr-2" />
+                Добавить объекты
               </Button>
             )}
           </CardContent>
