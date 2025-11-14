@@ -11,10 +11,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
+    console.log('🔍 Проверка доступа к отчетности:', { userId: user.id, userName: user.name, userRole: user.role });
+
     // Только админы и заместители могут видеть отчетность
-    if (user.role !== 'ADMIN' && user.role !== 'DEPUTY') {
+    if (user.role !== 'ADMIN' && user.role !== 'DEPUTY_ADMIN') {
+      console.log('❌ Доступ запрещен для роли:', user.role);
       return NextResponse.json({ message: 'Нет доступа' }, { status: 403 });
     }
+
+    console.log('✅ Доступ разрешен для роли:', user.role);
 
     // Получаем объекты, которые исключены из автоматического создания задач
     let excludedIds: string[] = [];
@@ -86,7 +91,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
-    if (user.role !== 'ADMIN' && user.role !== 'DEPUTY') {
+    if (user.role !== 'ADMIN' && user.role !== 'DEPUTY_ADMIN') {
       return NextResponse.json({ message: 'Нет доступа' }, { status: 403 });
     }
 

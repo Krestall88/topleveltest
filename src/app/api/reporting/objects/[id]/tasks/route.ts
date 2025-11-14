@@ -101,7 +101,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
 
     // Только админы и заместители могут создавать задачи
-    if (user.role !== 'ADMIN' && user.role !== 'DEPUTY') {
+    if (user.role !== 'ADMIN' && user.role !== 'DEPUTY_ADMIN') {
       return NextResponse.json({ message: 'Нет доступа' }, { status: 403 });
     }
 

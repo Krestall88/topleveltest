@@ -67,7 +67,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     // Проверяем права доступа
     const canView = user.role === 'ADMIN' || 
-                   user.role === 'DEPUTY' || 
+                   user.role === 'DEPUTY_ADMIN' || 
                    (user.role === 'MANAGER' && task.object.managerId === user.id) ||
                    task.assignedTo.id === user.id ||
                    task.createdBy.id === user.id;
@@ -131,7 +131,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     // Проверяем права на редактирование
     const canEdit = user.role === 'ADMIN' || 
-                   user.role === 'DEPUTY' || 
+                   user.role === 'DEPUTY_ADMIN' || 
                    (user.role === 'MANAGER' && currentTask.object.managerId === user.id);
 
     // Менеджеры могут только изменять статус на COMPLETED и добавлять комментарий завершения
@@ -239,7 +239,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     }
 
     // Только админы и заместители могут удалять задачи
-    if (user.role !== 'ADMIN' && user.role !== 'DEPUTY') {
+    if (user.role !== 'ADMIN' && user.role !== 'DEPUTY_ADMIN') {
       return NextResponse.json({ message: 'Нет прав на удаление задач' }, { status: 403 });
     }
 
