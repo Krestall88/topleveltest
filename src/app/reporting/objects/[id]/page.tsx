@@ -24,7 +24,7 @@ async function getUserFromCookie() {
 
     return {
       id: user.id,
-      role: user.role as 'ADMIN' | 'DEPUTY' | 'MANAGER' | 'CLIENT',
+      role: user.role as 'ADMIN' | 'DEPUTY' | 'DEPUTY_ADMIN' | 'MANAGER' | 'CLIENT',
       name: user.name,
       email: user.email
     };
@@ -47,7 +47,7 @@ export default async function ReportingObjectPage({ params }: PageProps) {
   }
 
   // Только админы, заместители и менеджеры могут видеть отчетность
-  if (!['ADMIN', 'DEPUTY', 'MANAGER'].includes(user.role)) {
+  if (!['ADMIN', 'DEPUTY_ADMIN', 'MANAGER'].includes(user.role)) {
     redirect('/');
   }
 
@@ -85,6 +85,20 @@ export default async function ReportingObjectPage({ params }: PageProps) {
   // Проверяем права доступа для менеджеров
   if (user.role === 'MANAGER' && object.managerId !== user.id) {
     redirect('/reporting');
+  }
+
+  // Проверяем права доступа для заместителя админа
+  if (user.role === 'DEPUTY_ADMIN') {
+    const hasAccess = await prisma.deputyAdminAssignment.findFirst({
+      where: {
+        deputyAdminId: user.id,
+        objectId: id
+      }
+    });
+
+    if (!hasAccess) {
+      redirect('/reporting');
+    }
   }
 
   return (

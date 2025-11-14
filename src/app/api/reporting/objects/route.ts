@@ -13,8 +13,8 @@ export async function GET(req: NextRequest) {
 
     console.log('🔍 Проверка доступа к отчетности:', { userId: user.id, userName: user.name, userRole: user.role });
 
-    // Только админы и заместители могут видеть отчетность
-    if (user.role !== 'ADMIN' && user.role !== 'DEPUTY_ADMIN') {
+    // Админы, заместители и менеджеры могут видеть отчетность
+    if (!['ADMIN', 'DEPUTY_ADMIN', 'MANAGER'].includes(user.role)) {
       console.log('❌ Доступ запрещен для роли:', user.role);
       return NextResponse.json({ message: 'Нет доступа' }, { status: 403 });
     }
@@ -40,12 +40,19 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    // Для менеджеров фильтруем только их объекты
+    const whereClause: any = {
+      id: {
+        in: excludedIds
+      }
+    };
+
+    if (user.role === 'MANAGER') {
+      whereClause.managerId = user.id;
+    }
+
     const objects = await prisma.cleaningObject.findMany({
-      where: {
-        id: {
-          in: excludedIds
-        }
-      },
+      where: whereClause,
       select: {
         id: true,
         name: true,

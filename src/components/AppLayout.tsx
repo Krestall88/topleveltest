@@ -25,6 +25,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [mounted, setMounted] = useState(false);
   const [newTasksCount, setNewTasksCount] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [hasReportingObjects, setHasReportingObjects] = useState(false);
   const lastCheckRef = useRef<Date>(new Date());
   const previousCountsRef = useRef({ tasks: 0, comments: 0 });
 
@@ -61,7 +62,21 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
     fetchUser();
     fetchNewTasksCount();
+    checkReportingObjects();
   }, []);
+
+  // Проверяем наличие объектов в отчетности для менеджера
+  const checkReportingObjects = async () => {
+    try {
+      const response = await fetch('/api/user/has-reporting-objects');
+      if (response.ok) {
+        const data = await response.json();
+        setHasReportingObjects(data.hasReportingObjects);
+      }
+    } catch (error) {
+      console.error('Error checking reporting objects:', error);
+    }
+  };
 
   // Функция для получения количества новых заданий
   const fetchNewTasksCount = async () => {
@@ -191,8 +206,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
     
     // Менеджер видит ограниченный набор
     if (role === 'MANAGER') {
-      const managerMenus = ['objects', 'manager-calendar', 'additional-tasks', 'photos', 'inventory'];
-      return managerMenus.includes(menuItem);
+      // Если у менеджера есть объекты в отчетности, показываем reporting вместо manager-calendar
+      if (hasReportingObjects) {
+        const managerMenus = ['objects', 'reporting', 'additional-tasks', 'photos', 'inventory'];
+        return managerMenus.includes(menuItem);
+      } else {
+        const managerMenus = ['objects', 'manager-calendar', 'additional-tasks', 'photos', 'inventory'];
+        return managerMenus.includes(menuItem);
+      }
     }
     
     // Бухгалтер видит только инвентарь
