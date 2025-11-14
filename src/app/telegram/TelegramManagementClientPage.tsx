@@ -232,14 +232,28 @@ export default function TelegramManagementClientPage({ user }: TelegramManagemen
                   Здесь вы можете управлять привязками Telegram аккаунтов клиентов к объектам. 
                   Клиенты смогут отправлять дополнительные задания через бота.
                 </p>
-                <div className="bg-white rounded p-3 text-sm text-gray-700">
-                  <p className="font-medium mb-1">Как это работает:</p>
-                  <ol className="list-decimal list-inside space-y-1 ml-2">
-                    <li>Создайте привязку клиента к объекту</li>
-                    <li>Клиент пишет боту в Telegram</li>
-                    <li>Бот создаёт дополнительное задание</li>
-                    <li>Менеджер объекта получает уведомление</li>
-                  </ol>
+                <div className="bg-white rounded p-3 text-sm text-gray-700 space-y-3">
+                  <div>
+                    <p className="font-medium mb-1">Как это работает:</p>
+                    <ol className="list-decimal list-inside space-y-1 ml-2">
+                      <li>Создайте привязку клиента к объекту</li>
+                      <li>Клиент пишет боту в Telegram</li>
+                      <li>Бот создаёт дополнительное задание</li>
+                      <li>Менеджер объекта получает уведомление</li>
+                    </ol>
+                  </div>
+                  
+                  <div className="border-t pt-3">
+                    <p className="font-medium mb-2 text-blue-900">📝 Как получить Telegram ID клиента:</p>
+                    <ol className="list-decimal list-inside space-y-1 ml-2 text-gray-600">
+                      <li>Попросите клиента написать боту <code className="bg-gray-100 px-1 rounded">@{process.env.NEXT_PUBLIC_BOT_USERNAME || 'your_bot'}</code> команду <code className="bg-gray-100 px-1 rounded">/start</code></li>
+                      <li>Клиент получит сообщение с его Telegram ID</li>
+                      <li>Используйте этот ID при создании привязки ниже</li>
+                    </ol>
+                    <p className="text-xs text-gray-500 mt-2">
+                      💡 <strong>Альтернатива:</strong> Используйте бота <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">@userinfobot</a> — клиент пишет ему, и бот сразу показывает его ID
+                    </p>
+                  </div>
                 </div>
               </div>
 
