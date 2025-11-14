@@ -3,7 +3,7 @@ import { getUserFromToken } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { notifyReportingTaskCreated } from '@/lib/server-notifications';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     console.log('🔍 GET /api/reporting/objects/[id]/tasks - начало');
     
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
-    const objectId = params.id;
+    const { id: objectId } = await params;
     console.log('🏢 ID объекта:', objectId);
 
     // Проверяем существование объекта и права доступа
@@ -70,6 +70,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         assignedTo: {
           select: {
             name: true
+          }
+        },
+        _count: {
+          select: {
+            comments: true,
+            attachments: true
           }
         }
       },
