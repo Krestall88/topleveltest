@@ -92,6 +92,18 @@ export async function GET(req: NextRequest, { params }: Params) {
           },
           orderBy: { name: 'asc' }
         },
+        techCards: {
+          select: {
+            id: true,
+            name: true,
+            workType: true,
+            frequency: true,
+            description: true,
+            period: true,
+            seasonality: true
+          },
+          orderBy: { name: 'asc' }
+        },
         _count: {
           select: {
             rooms: true,
@@ -107,7 +119,15 @@ export async function GET(req: NextRequest, { params }: Params) {
       return NextResponse.json({ message: 'Объект не найден' }, { status: 404 });
     }
 
-    return NextResponse.json(object);
+    const excluded = await prisma.excludedObject.findUnique({
+      where: { objectId: id },
+      select: { id: true }
+    });
+
+    return NextResponse.json({
+      ...object,
+      excludeFromTasks: !!excluded
+    });
   } catch (error) {
     console.error('Ошибка получения объекта:', error);
     return NextResponse.json({ message: 'Ошибка сервера' }, { status: 500 });

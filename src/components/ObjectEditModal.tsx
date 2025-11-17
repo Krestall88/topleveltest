@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Trash2, Plus, Edit, Save, X } from 'lucide-react';
 import StructureItemModal, { StructureType } from '@/components/StructureItemModal';
 import TechTaskModal from '@/components/TechTaskModal';
+import { Switch } from '@/components/ui/switch';
 
 interface Manager {
   id: string;
@@ -71,6 +72,7 @@ interface CleaningObject {
   sites: Site[];
   rooms: Room[];
   techCards: TechCard[];
+  excludeFromTasks?: boolean;
 }
 
 interface ObjectEditModalProps {
@@ -88,6 +90,7 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
   const [activeTab, setActiveTab] = useState('basic');
   const [editingTechTask, setEditingTechTask] = useState<TechCard | null>(null);
   const [showTechTaskModal, setShowTechTaskModal] = useState(false);
+  const [excludeLoading, setExcludeLoading] = useState(false);
 
   // Состояние для управления структурой
   const [structureModal, setStructureModal] = useState<{
@@ -117,7 +120,13 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
         console.log('🏭 Участков:', data.sites?.length || 0);
         console.log('🏭 Участки:', data.sites);
         console.log('🏠 Помещений:', data.rooms?.length || 0);
-        setObject(data);
+        setObject({
+          ...data,
+          sites: data.sites || [],
+          rooms: data.rooms || [],
+          techCards: data.techCards || [],
+          excludeFromTasks: data.excludeFromTasks ?? false
+        });
       }
     } catch (error) {
       console.error('Ошибка загрузки объекта:', error);
@@ -272,6 +281,31 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
     }
   };
 
+  const handleExcludeToggle = async (exclude: boolean) => {
+    if (!object) return;
+    setExcludeLoading(true);
+    try {
+      const response = await fetch('/api/reporting/objects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ objectIds: [object.id], exclude })
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || 'Не удалось обновить статус');
+      }
+
+      setObject(prev => prev ? { ...prev, excludeFromTasks: exclude } : prev);
+    } catch (error) {
+      console.error('Ошибка изменения статуса исключения:', error);
+      alert((error as Error).message || 'Ошибка изменения статуса');
+    } finally {
+      setExcludeLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -406,6 +440,30 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
                 onChange={(e) => setObject({ ...object, notes: e.target.value })}
                 rows={3}
               />
+            </div>
+
+            <div className="border rounded-lg p-3 sm:p-4 bg-gray-50">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <p className="font-medium text-sm sm:text-base">
+                    Исключить из автоматических задач
+                  </p>
+                  <p className="text-xs sm:text-sm text-gray-600">
+                    Когда объект исключён, задачи для него создаются вручную через раздел «Отчетность».
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="exclude-switch"
+                    checked={!!object.excludeFromTasks}
+                    onCheckedChange={(checked) => handleExcludeToggle(checked)}
+                    disabled={excludeLoading}
+                  />
+                  <Label htmlFor="exclude-switch" className="text-sm">
+                    {object.excludeFromTasks ? 'Исключен' : 'В общем плане'}
+                  </Label>
+                </div>
+              </div>
             </div>
           </TabsContent>
 
@@ -637,7 +695,7 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
 
           <TabsContent value="techcards" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Техзадания ({object.techCards.length})</h3>
+              <h3 className="text-lg font-semibold">Техзадания ({object.techCards?.length || 0})</h3>
               <Button onClick={createTechTask} size="sm">
                 <Plus className="h-4 w-4 mr-1" />
                 Добавить техзадание
@@ -645,7 +703,7 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
             </div>
 
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {object.techCards.map((techCard) => (
+              {(object.techCards || []).map((techCard) => (
                 <div key={techCard.id} className="border rounded p-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -708,7 +766,7 @@ export default function ObjectEditModal({ isOpen, onClose, objectId, onUpdate }:
               </div>
               
               <div className="bg-orange-50 p-4 rounded-lg">
-                <div className="text-2xl font-bold text-orange-600">{object.techCards.length}</div>
+                <div className="text-2xl font-bold text-orange-600">{object.techCards?.length || 0}</div>
                 <div className="text-sm text-orange-800">Техзаданий</div>
               </div>
             </div>
