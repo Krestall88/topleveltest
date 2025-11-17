@@ -6,7 +6,8 @@ import { useEffect, useState, useRef } from 'react';
 import { useTaskPolling } from '@/hooks/useTaskPolling';
 import { useBrowserNotifications } from '@/hooks/useBrowserNotifications';
 import { useSmartPolling } from '@/hooks/useSmartPolling';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, BookOpen } from 'lucide-react';
+import ManualViewer from './ManualViewer';
 
 interface User {
   id: string;
@@ -27,6 +28,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [reportingTasksCount, setReportingTasksCount] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [hasReportingObjects, setHasReportingObjects] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   const lastCheckRef = useRef<Date>(new Date());
   const previousCountsRef = useRef({ tasks: 0, comments: 0 });
 
@@ -404,6 +406,20 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </Link>
       )}
       
+      {/* Инструкция - доступна всем пользователям */}
+      {user && (
+        <button
+          onClick={() => {
+            setShowManual(true);
+            setIsMobileMenuOpen(false);
+          }}
+          className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white rounded transition-colors mb-1 w-full text-left"
+        >
+          <BookOpen className="mr-3 w-5 h-5" />
+          Инструкция
+        </button>
+      )}
+      
       {/* Кнопка выхода для всех пользователей */}
       <div className="mt-4 pt-4 border-t border-slate-700">
         <button
@@ -477,6 +493,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <main className="flex-1 overflow-y-auto pt-16 lg:pt-0">
         {children}
       </main>
+
+      {/* Компонент просмотра мануала */}
+      <ManualViewer
+        isOpen={showManual}
+        onClose={() => setShowManual(false)}
+      />
     </div>
   );
 }
