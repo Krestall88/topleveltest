@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export const runtime = 'nodejs';
+
 // GET /api/manual/sections/[slug] - получить конкретный раздел
 export async function GET(
   req: NextRequest,
