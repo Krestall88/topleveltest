@@ -168,6 +168,11 @@ export default function UnifiedTaskCompletionModal({
   const handleSubmit = async () => {
     if (!task) return;
 
+    // Защита от повторных кликов, если отправка уже идет
+    if (isSubmitting) {
+      return;
+    }
+
     console.log('🔍 UNIFIED MODAL: Попытка завершить задачу:', {
       taskId: task.id,
       currentStatus: task.status,
@@ -182,23 +187,15 @@ export default function UnifiedTaskCompletionModal({
       return;
     }
 
-    // Ждем загрузки настроек
-    if (!settingsLoaded) {
-      console.log('⏳ MODAL: Ожидание загрузки настроек...');
-      setError('Загрузка настроек объекта...');
-      // Ждем максимум 3 секунды
-      let attempts = 0;
-      while (!settingsLoaded && attempts < 30) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        attempts++;
-      }
-      if (!settingsLoaded) {
-        console.log('⚠️ MODAL: Настройки не загрузились, продолжаем без проверки');
-      }
-    }
-
+    // Отмечаем начало отправки, чтобы заблокировать повторные клики
     setIsSubmitting(true);
     setError('');
+
+    // Если настройки еще не загрузились, не блокируем пользователя —
+    // сервер все равно проверит требования завершения
+    if (!settingsLoaded) {
+      console.log('⏳ MODAL: Настройки еще не загружены, полагаемся на серверную валидацию');
+    }
     
     console.log('🔍 MODAL: Проверка требований завершения:', {
       settingsLoaded,
@@ -245,43 +242,7 @@ export default function UnifiedTaskCompletionModal({
         }
       }
 
-      // Завершаем задачу через новый API
-      console.log('🔍 UNIFIED MODAL: Отправляем запрос на завершение:', {
-        taskId: task.id,
-        status: 'COMPLETED',
-        comment: comment.trim(),
-        photosCount: photoUrls.length
-      });
-
-      const response = await fetch('/api/tasks/unified-complete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          taskId: task.id,
-          status: 'COMPLETED',
-          comment: comment.trim(),
-          photos: photoUrls,
-        }),
-      });
-
-      console.log('🔍 UNIFIED MODAL: Получен ответ:', {
-        status: response.status,
-        ok: response.ok
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Не удалось завершить задачу');
-      }
-
-      // Получаем обновленные данные с сервера
-      const responseData = await response.json();
-      console.log('🔍 UNIFIED MODAL: Ответ от API:', responseData);
-      
-      // Создаем объект завершенной задачи
+      // Передаём данные о завершении наверх, где уже вызывается API
       const completedTask: UnifiedTask = {
         ...task,
         status: 'COMPLETED',
@@ -291,11 +252,13 @@ export default function UnifiedTaskCompletionModal({
         completedBy: { id: 'current', name: 'Текущий пользователь' }
       };
 
-      console.log('🔍 UNIFIED MODAL: Завершенная задача:', completedTask);
-      console.log('🔍 UNIFIED MODAL: Вызываем onComplete...');
+      console.log('🔍 UNIFIED MODAL: Готовые данные для завершения задачи:', {
+        taskId: completedTask.id,
+        photosCount: photoUrls.length
+      });
+
       onComplete(completedTask);
-      console.log('🔍 UNIFIED MODAL: onComplete выполнен, модальное окно остается открытым');
-      
+
       // Сбрасываем форму для следующей задачи
       setComment('');
       setPhotos([]);

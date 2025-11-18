@@ -302,8 +302,16 @@ export async function GET(req: NextRequest) {
     // Объединяем все фотографии
     const allPhotos = [...enrichedPhotos, ...flatTaskPhotos];
 
+    const uniquePhotosMap = new Map<string, any>();
+    for (const photo of allPhotos) {
+      if (!uniquePhotosMap.has(photo.url)) {
+        uniquePhotosMap.set(photo.url, photo);
+      }
+    }
+    const uniquePhotos = Array.from(uniquePhotosMap.values());
+
     return NextResponse.json({
-      photos: allPhotos
+      photos: uniquePhotos
     });
 
   } catch (error) {

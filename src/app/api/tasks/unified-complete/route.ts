@@ -141,20 +141,32 @@ export async function POST(req: NextRequest) {
         }
       });
 
-      // Создаем фотоотчеты
+      // Создаем фотоотчеты для существующих задач
       if (photos && photos.length > 0) {
+        // Получаем objectId через checklist
+        let objectId: string | null = null;
+        if (updatedTask.checklistId) {
+          const checklist = await prisma.checklist.findUnique({
+            where: { id: updatedTask.checklistId },
+            select: { objectId: true }
+          });
+          objectId = checklist?.objectId || null;
+        }
+
         const photoReports = photos.map((photoUrl: string) => ({
           url: photoUrl,
           comment: comment || `Фото при завершении задачи: ${updatedTask.description}`,
           uploaderId: user.id,
           taskId: updatedTask.id,
-          objectId: null, // Для существующих задач objectId может быть неизвестен
-          checklistId: updatedTask.checklistId || null // Может быть null для виртуальных задач
+          objectId: objectId,
+          checklistId: updatedTask.checklistId || null
         }));
 
         await prisma.photoReport.createMany({
           data: photoReports
         });
+        
+        console.log('✅ UNIFIED COMPLETE: Создано фотоотчетов:', photoReports.length, 'с objectId:', objectId);
       }
 
       completedTask = {
@@ -226,6 +238,13 @@ export async function POST(req: NextRequest) {
 
         // Создаем фотоотчеты для материализованной задачи
         if (photos && photos.length > 0) {
+          console.log('✅ UNIFIED COMPLETE: Создаем фотоотчеты для виртуальной задачи:', {
+            taskId: materializedTask.id,
+            objectId: materializedTask.objectId,
+            photosCount: photos.length,
+            photos: photos
+          });
+
           const photoReports = photos.map((photoUrl: string) => ({
             url: photoUrl,
             comment: comment || `Фото при завершении задачи: ${materializedTask.description}`,
@@ -238,6 +257,8 @@ export async function POST(req: NextRequest) {
           await prisma.photoReport.createMany({
             data: photoReports
           });
+          
+          console.log('✅ UNIFIED COMPLETE: Фотоотчеты созданы:', photoReports.length);
         }
 
         completedTask = {

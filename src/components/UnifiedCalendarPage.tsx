@@ -244,7 +244,10 @@ export default function UnifiedCalendarPage() {
   // Обработчик завершения из модального окна
   const handleTaskCompletionFromModal = async (completedTask: UnifiedTask) => {
     console.log('🔍 UNIFIED CLIENT: Завершение из модального окна:', completedTask);
-    
+
+    // Сразу закрываем модальное окно, чтобы не было ощущения зависания
+    setTaskCompletionModal(null);
+
     try {
       console.log('🔍 UNIFIED CLIENT: Вызываем handleTaskCompletion...');
       await handleTaskCompletion(
@@ -254,7 +257,6 @@ export default function UnifiedCalendarPage() {
       );
       
       console.log('🔍 UNIFIED CLIENT: handleTaskCompletion выполнен успешно');
-      setTaskCompletionModal(null);
       
       // Обновляем periodModalData если открыто
       if (periodModalData) {
@@ -262,7 +264,14 @@ export default function UnifiedCalendarPage() {
           ...prev,
           tasks: prev.tasks.map(task => 
             task.id === completedTask.id 
-              ? { ...task, status: 'COMPLETED', completedAt: new Date() }
+              ? {
+                  ...task,
+                  status: 'COMPLETED',
+                  completedAt: completedTask.completedAt || new Date(),
+                  completedBy: completedTask.completedBy,
+                  completionComment: completedTask.completionComment,
+                  completionPhotos: completedTask.completionPhotos || []
+                }
               : task
           )
         } : null);
@@ -273,6 +282,7 @@ export default function UnifiedCalendarPage() {
       
     } catch (error) {
       console.error('Ошибка завершения задачи:', error);
+      alert(error instanceof Error ? error.message : 'Ошибка завершения задачи');
     }
   };
 
