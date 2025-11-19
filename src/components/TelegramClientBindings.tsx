@@ -61,11 +61,15 @@ export default function TelegramClientBindings() {
 
   const loadBindings = async () => {
     try {
-      const response = await fetch('/api/client-bindings');
+      const response = await fetch('/api/admin/client-bindings');
       if (response.ok) {
         const data = await response.json();
         setBindings(data);
+        return;
       }
+
+      const error = await response.json();
+      console.error('Error loading bindings:', error?.error || response.statusText);
     } catch (error) {
       console.error('Error loading bindings:', error);
     }
@@ -88,7 +92,7 @@ export default function TelegramClientBindings() {
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/client-bindings/${id}`, {
+      const response = await fetch(`/api/admin/client-bindings/${id}`, {
         method: 'DELETE'
       });
 
@@ -132,7 +136,7 @@ export default function TelegramClientBindings() {
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/client-bindings/${editingId}`, {
+      const response = await fetch(`/api/admin/client-bindings/${editingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editForm)
@@ -160,7 +164,7 @@ export default function TelegramClientBindings() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/client-bindings', {
+      const response = await fetch('/api/admin/client-bindings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(createForm)
