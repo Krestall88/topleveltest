@@ -1,15 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import ManualViewer from '@/components/ManualViewer';
+import { BookOpen } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showManual, setShowManual] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -94,8 +98,38 @@ export default function LoginPage() {
               {loading ? 'Вход...' : 'Войти'}
             </Button>
           </form>
+
+          {/* Кнопка инструкции */}
+          <div className="mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowManual(true)}
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <BookOpen className="w-5 h-5" />
+              Инструкция пользователя
+            </Button>
+            <p className="mt-3 text-center text-sm text-gray-500">
+              <span>Нет доступа? </span>
+              <Link
+                href="/manual"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-700 hover:underline"
+              >
+                Открыть инструкцию без входа
+              </Link>
+            </p>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Компонент просмотра мануала */}
+      <ManualViewer
+        isOpen={showManual}
+        onClose={() => setShowManual(false)}
+      />
     </div>
   );
 }

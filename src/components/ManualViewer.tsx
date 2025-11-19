@@ -37,12 +37,15 @@ export default function ManualViewer({ isOpen, onClose, initialSlug }: ManualVie
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageZoom, setImageZoom] = useState(1);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Загрузка списка разделов
   useEffect(() => {
     if (isOpen) {
       fetchSections();
       fetchScreenshots();
+    } else {
+      setIsMobileMenuOpen(false);
     }
   }, [isOpen]);
 
@@ -89,6 +92,9 @@ export default function ManualViewer({ isOpen, onClose, initialSlug }: ManualVie
       if (response.ok) {
         const data = await response.json();
         setCurrentSection(data);
+        if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+          setIsMobileMenuOpen(false);
+        }
       }
     } catch (error) {
       console.error('Error loading section:', error);
@@ -237,20 +243,46 @@ export default function ManualViewer({ isOpen, onClose, initialSlug }: ManualVie
 
   return (
     <>
-      <div className="fixed inset-0 bg-white z-50 flex">
+      <div className="fixed inset-0 bg-white z-50 flex flex-col lg:flex-row">
+        {/* Мобильная шапка */}
+        <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b bg-white">
+          <div>
+            <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <span>📚</span>
+              Инструкция
+            </p>
+            <p className="text-xs text-gray-500">Руководство пользователя</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsMobileMenuOpen(prev => !prev)}
+            >
+              {isMobileMenuOpen ? 'Скрыть разделы' : 'Разделы'}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
+
         {/* Левое меню с разделами */}
-        <div className="w-80 border-r bg-gray-50 flex flex-col">
-          <div className="p-4 border-b bg-white">
-            <div className="flex items-center justify-between mb-2">
+        <div
+          className={`bg-gray-50 flex flex-col border-b lg:border-b-0 lg:border-r w-full lg:w-80 lg:h-full
+          ${isMobileMenuOpen ? 'flex' : 'hidden'} lg:flex`}
+        >
+          <div className="hidden lg:flex items-center justify-between p-4 border-b bg-white">
+            <div>
               <h2 className="text-xl font-bold text-gray-900">📚 Инструкция</h2>
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                <X className="w-5 h-5" />
-              </Button>
+              <p className="text-sm text-gray-600">Руководство пользователя</p>
             </div>
-            <p className="text-sm text-gray-600">Руководство пользователя</p>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="w-5 h-5" />
+            </Button>
           </div>
 
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 max-h-[50vh] lg:max-h-none">
             <div className="p-2">
               {sections.map((section) => (
                 <button
@@ -273,10 +305,9 @@ export default function ManualViewer({ isOpen, onClose, initialSlug }: ManualVie
         </div>
 
         {/* Основная область контента */}
-        <div className="flex-1 flex flex-col">
-          {/* Заголовок раздела */}
+        <div className="flex-1 flex flex-col min-h-0">
           {currentSection && (
-            <div className="p-4 border-b bg-white">
+            <div className="hidden lg:block p-4 border-b bg-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">{currentSection.icon}</span>
@@ -308,9 +339,20 @@ export default function ManualViewer({ isOpen, onClose, initialSlug }: ManualVie
             </div>
           )}
 
+          {currentSection && (
+            <div className="lg:hidden px-4 pt-4">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{currentSection.icon}</span>
+                <h1 className="text-xl font-semibold text-gray-900">
+                  {currentSection.title}
+                </h1>
+              </div>
+            </div>
+          )}
+
           {/* Контент раздела */}
           <ScrollArea className="flex-1">
-            <div className="max-w-4xl mx-auto p-8">
+            <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
               {loading ? (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
