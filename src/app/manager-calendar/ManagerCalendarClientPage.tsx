@@ -284,7 +284,7 @@ export default function ManagerCalendarClientPage() {
       }
 
       // Используем упрощенный API для получения задач на основе техкарт
-      const response = await fetch(`/api/tasks/calendar-simple?${params}`);
+      const response = await fetch(`/api/tasks/calendar-unified?${params}`);
       if (response.ok) {
         const data = await response.json();
         
@@ -738,8 +738,10 @@ export default function ManagerCalendarClientPage() {
                                 }}
                               >
                                 <div className="flex-1">
-                                  <span className="font-medium text-sm">{task.techCard?.name || task.description}</span>
-                                  <span className="text-xs text-gray-500 ml-2">({task.room?.name || task.roomName || 'Общее'})</span>
+                                  <div className="font-medium">{task.techCard?.name || task.description}</div>
+                                  <div className="text-xs text-gray-500 ml-2">
+                                    <TaskLocationBreadcrumb task={task} showFullPath={true} />
+                                  </div>
                                 </div>
                                 <Badge 
                                   variant={
@@ -805,10 +807,12 @@ export default function ManagerCalendarClientPage() {
                   {tasks.overdue.map((task: any) => (
                     <div key={task.id} className="flex items-center justify-between p-3 bg-red-50 rounded border-l-4 border-red-400">
                       <div>
-                        <div className="font-medium">{task.techCard?.name || 'Задача'}</div>
-                        <div className="text-sm text-gray-600">{task.object.name}</div>
+                        <div className="font-medium">{task.techCard?.name || task.description || 'Задача'}</div>
                         <div className="text-xs text-gray-500">
-                          Запланировано: {new Date(task.scheduledFor).toLocaleString('ru-RU')}
+                          <TaskLocationBreadcrumb task={task} showFullPath={false} />
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Запланировано: {new Date(task.scheduledDate || task.scheduledFor).toLocaleString('ru-RU')}
                         </div>
                       </div>
                       <Button 
@@ -838,10 +842,12 @@ export default function ManagerCalendarClientPage() {
                   {tasks.today.map((task: any) => (
                     <div key={task.id} className="flex items-center justify-between p-3 bg-blue-50 rounded">
                       <div>
-                        <div className="font-medium">{task.techCard?.name || 'Задача'}</div>
-                        <div className="text-sm text-gray-600">{task.object.name}</div>
+                        <div className="font-medium">{task.techCard?.name || task.description || 'Задача'}</div>
                         <div className="text-xs text-gray-500">
-                          Запланировано: {new Date(task.scheduledFor).toLocaleString('ru-RU')}
+                          <TaskLocationBreadcrumb task={task} showFullPath={true} compact={true} />
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Запланировано: {new Date(task.scheduledFor || task.scheduledDate).toLocaleString('ru-RU')}
                         </div>
                       </div>
                       <Button 
@@ -871,14 +877,16 @@ export default function ManagerCalendarClientPage() {
                   {tasks.upcoming.slice(0, 10).map((task: any) => (
                     <div key={task.id} className="flex items-center justify-between p-3 bg-green-50 rounded">
                       <div>
-                        <div className="font-medium">{task.techCard?.name || 'Задача'}</div>
-                        <div className="text-sm text-gray-600">{task.object.name}</div>
+                        <div className="font-medium">{task.techCard?.name || task.description || 'Задача'}</div>
                         <div className="text-xs text-gray-500">
-                          Запланировано: {new Date(task.scheduledFor).toLocaleString('ru-RU')}
+                          <TaskLocationBreadcrumb task={task} showFullPath={true} compact={true} />
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Запланировано: {new Date(task.scheduledFor || task.scheduledDate).toLocaleString('ru-RU')}
                         </div>
                       </div>
                       <Badge variant="outline">
-                        {new Date(task.scheduledFor).toLocaleDateString('ru-RU')}
+                        {new Date(task.scheduledFor || task.scheduledDate).toLocaleDateString('ru-RU')}
                       </Badge>
                     </div>
                   ))}

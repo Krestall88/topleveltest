@@ -108,14 +108,53 @@ export default function TaskLocationBreadcrumb({
 
   if (compact) {
     return (
-      <div className="flex items-center gap-1 text-xs text-gray-600">
-        <Building2 className="h-3 w-3" />
-        <span className="truncate max-w-32">{objectData.name}</span>
-        {roomData.name && roomData.name !== 'Неизвестное помещение' && (
+      <div className="flex items-center gap-1 text-xs text-gray-600 flex-wrap">
+        {/* Участок */}
+        {siteData.name && (
           <>
-            <ChevronRight className="h-3 w-3" />
-            <Home className="h-3 w-3" />
-            <span className="truncate max-w-24">{roomData.name}</span>
+            <div className="h-3 w-3 bg-green-600 rounded-sm flex-shrink-0"></div>
+            <span>{siteData.name}</span>
+          </>
+        )}
+        
+        {/* Зона */}
+        {siteData.name && zoneData.name && (
+          <ChevronRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
+        )}
+        {zoneData.name && (
+          <>
+            <div className="h-3 w-3 bg-yellow-600 rounded-sm flex-shrink-0"></div>
+            <span>{zoneData.name}</span>
+          </>
+        )}
+
+        {/* Группа помещений */}
+        {(siteData.name || zoneData.name) && roomGroupData.name && (
+          <ChevronRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
+        )}
+        {roomGroupData.name && (
+          <>
+            <div className="h-3 w-3 bg-indigo-600 rounded-sm flex-shrink-0"></div>
+            <span>{roomGroupData.name}</span>
+          </>
+        )}
+        
+        {/* Помещение */}
+        {(siteData.name || zoneData.name || roomGroupData.name) && roomData.name && roomData.name !== 'Неизвестное помещение' && !roomData.name.includes('_VIRTUAL_') && (
+          <ChevronRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
+        )}
+        {roomData.name && roomData.name !== 'Неизвестное помещение' && !roomData.name.includes('_VIRTUAL_') && (
+          <>
+            <Home className="h-3 w-3 text-purple-600 flex-shrink-0" />
+            <span>{roomData.name}</span>
+          </>
+        )}
+        
+        {/* Fallback если нет иерархии - показываем объект без _VIRTUAL_ */}
+        {!siteData.name && !zoneData.name && !roomGroupData.name && (
+          <>
+            <Building2 className="h-3 w-3 flex-shrink-0" />
+            <span>{objectData.name.replace(/_VIRTUAL_/g, '').replace(/__VIRTUAL__/g, '')}</span>
           </>
         )}
       </div>

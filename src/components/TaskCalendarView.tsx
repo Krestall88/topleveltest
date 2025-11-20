@@ -2,14 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { CalendarTask, TaskGroup, groupTasksByPriority, groupTasksByFrequency, formatTaskTime, formatTaskDate, getStatusColor, getStatusIcon } from '@/lib/task-calendar-utils';
 import { Camera, MessageSquare, CheckCircle, Clock, AlertTriangle, Calendar } from 'lucide-react';
+import TaskLocationBreadcrumb from './TaskLocationBreadcrumb';
 
 interface TaskCalendarViewProps {
   managerId?: string;
@@ -65,10 +66,12 @@ function ExecuteTaskModal({ task, isOpen, onClose, onExecute }: ExecuteTaskModal
         
         <div className="space-y-4">
           <div className="p-3 bg-gray-50 rounded-lg">
-            <h4 className="font-medium text-sm">{task.techCard.name}</h4>
-            <p className="text-xs text-gray-600">{task.object.name}</p>
+            <h4 className="font-medium text-sm">{task.techCard?.name || task.description}</h4>
+            <div className="text-xs text-gray-600">
+              <TaskLocationBreadcrumb task={task} showFullPath={true} compact={true} />
+            </div>
             <p className="text-xs text-gray-500">
-              {formatTaskDate(task.scheduledFor)} {formatTaskTime(task.scheduledFor, task.dueDate)}
+              {formatTaskDate(task.scheduledFor || task.scheduledDate)} {formatTaskTime(task.scheduledFor || task.scheduledDate, task.dueDate)}
             </p>
           </div>
 
@@ -142,10 +145,7 @@ function TaskCard({ task, onExecute }: { task: CalendarTask; onExecute: (task: C
             </div>
             
             <div className="text-xs text-gray-600 space-y-1">
-              <div className="flex items-center gap-1">
-                <span>📍</span>
-                <span>{task.object.name}</span>
-              </div>
+              <TaskLocationBreadcrumb task={task} showFullPath={true} compact={true} />
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 <span>{formatTaskTime(task.scheduledFor, task.dueDate)}</span>

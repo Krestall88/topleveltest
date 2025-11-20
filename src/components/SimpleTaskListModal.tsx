@@ -5,9 +5,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, MapPin, Clock, AlertTriangle, CheckCircle, Camera, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Clock, AlertTriangle, CheckCircle, Camera, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
 import { UnifiedTask } from '@/lib/unified-task-system';
+import TaskLocationBreadcrumb from '@/components/TaskLocationBreadcrumb';
 
 interface SimpleTaskListModalProps {
   isOpen: boolean;
@@ -308,20 +309,11 @@ const TaskCard: React.FC<{
         <div className="flex-1 w-full">
           <h4 className="font-medium text-sm md:text-base text-gray-900 mb-2 break-words">{task.description}</h4>
           
-          <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-600">
-            <div className="flex items-center gap-1">
-              <MapPin className="w-4 h-4" />
-              <span>{task.objectName}</span>
-            </div>
-            {task.roomName && (
-              <div className="flex items-center gap-1">
-                <span>•</span>
-                <span>{task.roomName}</span>
-              </div>
-            )}
+          <div className="flex flex-col gap-1 text-xs md:text-sm text-gray-600">
+            <TaskLocationBreadcrumb task={task} showFullPath={true} compact={true} />
             <div className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
-              <span>{new Date(task.scheduledDate).toLocaleDateString('ru-RU')}</span>
+              <span>{new Date(task.scheduledDate || task.scheduledFor).toLocaleDateString('ru-RU')}</span>
             </div>
           </div>
           

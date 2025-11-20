@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import TaskLocationBreadcrumb from './TaskLocationBreadcrumb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
@@ -97,10 +98,12 @@ export default function ManagerTasksModal({
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h4 className="font-medium text-sm">{task.techCard?.name || 'Задача'}</h4>
-            <p className="text-xs text-gray-600 mt-1">{task.object.name}</p>
+            <h4 className="font-medium text-sm">{task.techCard?.name || task.description || 'Задача'}</h4>
+            <div className="text-xs text-gray-600 mt-1">
+              <TaskLocationBreadcrumb task={task} showFullPath={true} compact={true} />
+            </div>
             <p className="text-xs text-gray-500 mt-1">
-              Запланировано: {new Date(task.scheduledFor).toLocaleString('ru-RU')}
+              Запланировано: {new Date(task.scheduledFor || task.scheduledDate).toLocaleString('ru-RU')}
             </p>
             {task.comment && (
               <p className="text-xs text-blue-600 mt-1 italic">💬 {task.comment}</p>

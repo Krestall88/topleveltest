@@ -10,6 +10,7 @@ import UnifiedTaskCompletionModal from '@/components/UnifiedTaskCompletionModal'
 import SimpleTaskListModal from '@/components/SimpleTaskListModal';
 import ObjectCard from '@/components/ObjectCard';
 import ObjectCompletionSettingsModal from '@/components/ObjectCompletionSettingsModal';
+import TaskLocationBreadcrumb from '@/components/TaskLocationBreadcrumb';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar, Clock, TrendingUp, AlertTriangle, CheckCircle, Eye, Camera } from 'lucide-react';
 import { UnifiedTask, CalendarResponse, ManagerTaskGroup, ObjectTaskGroup } from '@/lib/unified-task-system';
@@ -675,7 +676,9 @@ export default function UnifiedCalendarPage() {
                         <div key={task.id} className="flex items-center justify-between p-3 bg-red-50 rounded border-l-4 border-red-400">
                           <div>
                             <div className="font-medium">{task.description}</div>
-                            <div className="text-sm text-gray-600">{task.objectName}</div>
+                            <div className="text-xs text-gray-600">
+                              <TaskLocationBreadcrumb task={task} showFullPath={true} compact={true} />
+                            </div>
                             <div className="text-xs text-gray-500">
                               Запланировано: {new Date(task.scheduledDate).toLocaleString('ru-RU')}
                             </div>
@@ -716,7 +719,9 @@ export default function UnifiedCalendarPage() {
                         <div key={task.id} className="flex items-center justify-between p-3 bg-blue-50 rounded">
                           <div>
                             <div className="font-medium">{task.description}</div>
-                            <div className="text-sm text-gray-600">{task.objectName}</div>
+                            <div className="text-xs text-gray-600">
+                              <TaskLocationBreadcrumb task={task} showFullPath={true} compact={true} />
+                            </div>
                             <div className="text-xs text-gray-500">
                               Запланировано: {new Date(task.scheduledDate).toLocaleString('ru-RU')}
                             </div>
@@ -757,7 +762,9 @@ export default function UnifiedCalendarPage() {
                         <div key={task.id} className="flex items-center justify-between p-3 bg-green-50 rounded">
                           <div>
                             <div className="font-medium">{task.description}</div>
-                            <div className="text-sm text-gray-600">{task.objectName}</div>
+                            <div className="text-xs text-gray-600">
+                              <TaskLocationBreadcrumb task={task} showFullPath={true} compact={true} />
+                            </div>
                             <div className="text-xs text-gray-500">
                               Выполнено: {task.completedAt ? new Date(task.completedAt).toLocaleString('ru-RU') : 'Неизвестно'}
                               {task.completedBy && ` • ${task.completedBy.name}`}

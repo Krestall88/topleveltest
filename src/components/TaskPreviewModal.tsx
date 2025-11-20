@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, Clock, TrendingUp, Building, Eye, ChevronRight } from 'lucide-react';
+import TaskLocationBreadcrumb from './TaskLocationBreadcrumb';
 import { CalendarTask, formatTaskTime } from '@/lib/task-calendar-utils';
 
 interface TaskPreviewModalProps {
@@ -287,8 +288,10 @@ export default function TaskPreviewModal({ isOpen, onClose, managerId, objectId 
                           {day.tasks.slice(0, 5).map((task) => (
                             <div key={task.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                               <div className="flex-1">
-                                <div className="font-medium text-sm">{task.techCard.name}</div>
-                                <div className="text-xs text-gray-600">{task.object.name}</div>
+                                <div className="font-medium text-sm">{task.techCard?.name || task.description}</div>
+                                <div className="text-xs text-gray-600">
+                                  <TaskLocationBreadcrumb task={task} showFullPath={true} compact={true} />
+                                </div>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Badge className={getFrequencyColor(task.techCard.frequencyDays || 1)}>
