@@ -1094,11 +1094,12 @@ export async function materializeVirtualTask(
     roomName: techCard.room?.name
   });
   
-  // Создаем материализованную задачу
+  // Создаем или обновляем материализованную задачу (используем upsert для предотвращения дублей)
   const completedAt = status === 'COMPLETED' ? new Date() : null;
   
-  const materializedTask = await prisma.task.create({
-    data: {
+  const materializedTask = await prisma.task.upsert({
+    where: { id: taskId },
+    create: {
       id: taskId, // ID содержит techCardId в формате: techCardId-YYYY-MM-DD
       description: techCard.name,
       status,
@@ -1113,6 +1114,14 @@ export async function materializeVirtualTask(
       failureReason: techCard.frequency // ВРЕМЕННО: используем failureReason для хранения frequency
       // НЕ устанавливаем checklistId - это внешний ключ на Checklist, а не TechCard
       // techCardId извлекается из id задачи при загрузке
+    },
+    update: {
+      status,
+      completedAt,
+      completedById: completedAt ? userId : null,
+      completionComment: comment || null,
+      completionPhotos: photos || [],
+      failureReason: techCard.frequency
     },
     include: {
       completedBy: { select: { id: true, name: true } }

@@ -73,15 +73,15 @@ export default function TaskLocationBreadcrumb({
 
   // Определяем данные полной иерархии
   const siteData = {
-    name: task.site?.name || 'Неизвестный участок'
+    name: task.site?.name && !task.site.name.includes('_VIRTUAL_') ? task.site.name : null
   };
 
   const zoneData = {
-    name: task.zone?.name || 'Неизвестная зона'
+    name: task.zone?.name && !task.zone.name.includes('_VIRTUAL_') ? task.zone.name : null
   };
 
   const roomGroupData = {
-    name: task.roomGroup?.name || 'Неизвестная группа помещений'
+    name: task.roomGroup?.name && !task.roomGroup.name.includes('_VIRTUAL_') ? task.roomGroup.name : null
   };
 
   const roomData = task.checklist?.room || task.room || {
@@ -143,37 +143,50 @@ export default function TaskLocationBreadcrumb({
         
         {/* Визуальный путь навигации с полной иерархией */}
         <div className="flex items-center gap-1 text-xs text-gray-600">
-          <Building2 className="h-3 w-3 text-blue-600" />
-          <span className="truncate max-w-32 font-medium">{objectData.name}</span>
-          
           {/* Участок */}
-          {(task as any).site?.name && (task as any).site.name !== 'Неизвестный участок' && (
+          {siteData.name && (
             <>
-              <ChevronRight className="h-3 w-3 text-gray-400" />
               <div className="h-3 w-3 bg-green-600 rounded-sm"></div>
-              <span className="truncate max-w-20 text-green-700">{(task as any).site.name}</span>
+              <span className="truncate max-w-20 text-green-700">{siteData.name}</span>
             </>
           )}
           
           {/* Зона */}
-          {(task as any).zone?.name && (task as any).zone.name !== 'Неизвестная зона' && (
+          {siteData.name && zoneData.name && (
+            <ChevronRight className="h-3 w-3 text-gray-400" />
+          )}
+          {zoneData.name && (
             <>
-              <ChevronRight className="h-3 w-3 text-gray-400" />
               <div className="h-3 w-3 bg-yellow-600 rounded-sm"></div>
-              <span className="truncate max-w-20 text-yellow-700">{(task as any).zone.name}</span>
+              <span className="truncate max-w-20 text-yellow-700">{zoneData.name}</span>
+            </>
+          )}
+
+          {/* Группа помещений */}
+          {(siteData.name || zoneData.name) && roomGroupData.name && (
+            <ChevronRight className="h-3 w-3 text-gray-400" />
+          )}
+          {roomGroupData.name && (
+            <>
+              <div className="h-3 w-3 bg-indigo-600 rounded-sm"></div>
+              <span className="truncate max-w-20 text-indigo-700">{roomGroupData.name}</span>
             </>
           )}
           
           {/* Помещение */}
+          {(siteData.name || zoneData.name || roomGroupData.name) && roomData.name && roomData.name !== 'Неизвестное помещение' && (
+            <ChevronRight className="h-3 w-3 text-gray-400" />
+          )}
           {roomData.name && roomData.name !== 'Неизвестное помещение' && (
             <>
-              <ChevronRight className="h-3 w-3 text-gray-400" />
               <Home className="h-3 w-3 text-purple-600" />
               <span className="truncate max-w-24 text-purple-700">{roomData.name}</span>
             </>
           )}
           
-          <ChevronRight className="h-3 w-3 text-gray-400" />
+          {(siteData.name || zoneData.name || roomGroupData.name || (roomData.name && roomData.name !== 'Неизвестное помещение')) && (
+            <ChevronRight className="h-3 w-3 text-gray-400" />
+          )}
           <Layers className="h-3 w-3 text-orange-600" />
           <span className="font-medium truncate max-w-32 text-orange-700">
             {task.techCard?.name || task.description || 'Техзадание'}
@@ -219,7 +232,7 @@ export default function TaskLocationBreadcrumb({
         )}
 
         {/* Участок */}
-        {siteData.name && siteData.name !== 'Неизвестный участок' && (
+        {siteData.name && (
           <div className="flex items-start gap-2 text-sm">
             <div className="flex items-center gap-1 flex-shrink-0">
               <div className="h-4 w-4 bg-green-600 rounded-sm"></div>
@@ -230,7 +243,7 @@ export default function TaskLocationBreadcrumb({
         )}
 
         {/* Зона */}
-        {zoneData.name && zoneData.name !== 'Неизвестная зона' && (
+        {zoneData.name && (
           <div className="flex items-start gap-2 text-sm">
             <div className="flex items-center gap-1 flex-shrink-0">
               <div className="h-4 w-4 bg-yellow-600 rounded-sm"></div>
@@ -241,7 +254,7 @@ export default function TaskLocationBreadcrumb({
         )}
 
         {/* Группа помещений */}
-        {roomGroupData.name && roomGroupData.name !== 'Неизвестная группа помещений' && (
+        {roomGroupData.name && (
           <div className="flex items-start gap-2 text-sm">
             <div className="flex items-center gap-1 flex-shrink-0">
               <div className="h-4 w-4 bg-indigo-600 rounded-sm"></div>
@@ -283,50 +296,56 @@ export default function TaskLocationBreadcrumb({
 
       {/* Визуальный путь навигации */}
       <div className="flex items-center gap-1 text-xs bg-white p-2 rounded-lg border overflow-x-auto">
-        <Building2 className="h-3 w-3 text-blue-600 flex-shrink-0" />
-        <span className="text-gray-700 font-medium flex-shrink-0">{objectData.name}</span>
-        
-        {siteData.name && siteData.name !== 'Неизвестный участок' && (
+        {siteData.name && (
           <>
-            <ChevronRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
             <div className="h-3 w-3 bg-green-600 rounded-sm flex-shrink-0"></div>
             <span className="text-green-700 flex-shrink-0">{siteData.name}</span>
           </>
         )}
         
-        {zoneData.name && zoneData.name !== 'Неизвестная зона' && (
+        {siteData.name && zoneData.name && (
+          <ChevronRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
+        )}
+        {zoneData.name && (
           <>
-            <ChevronRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
             <div className="h-3 w-3 bg-yellow-600 rounded-sm flex-shrink-0"></div>
             <span className="text-yellow-700 flex-shrink-0">{zoneData.name}</span>
           </>
         )}
 
-        {roomGroupData.name && roomGroupData.name !== 'Неизвестная группа помещений' && (
+        {(siteData.name || zoneData.name) && roomGroupData.name && (
+          <ChevronRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
+        )}
+        {roomGroupData.name && (
           <>
-            <ChevronRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
             <div className="h-3 w-3 bg-indigo-600 rounded-sm flex-shrink-0"></div>
             <span className="text-indigo-700 flex-shrink-0">{roomGroupData.name}</span>
           </>
         )}
         
+        {(siteData.name || zoneData.name || roomGroupData.name) && roomData.name && roomData.name !== 'Неизвестное помещение' && (
+          <ChevronRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
+        )}
         {roomData.name && roomData.name !== 'Неизвестное помещение' && (
           <>
-            <ChevronRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
             <Home className="h-3 w-3 text-purple-600 flex-shrink-0" />
             <span className="text-purple-700 flex-shrink-0">{roomData.name}</span>
           </>
         )}
 
+        {(siteData.name || zoneData.name || roomGroupData.name || (roomData.name && roomData.name !== 'Неизвестное помещение')) && cleaningObjectItemData.name && (
+          <ChevronRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
+        )}
         {cleaningObjectItemData.name && (
           <>
-            <ChevronRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
             <Layers className="h-3 w-3 text-orange-600 flex-shrink-0" />
             <span className="text-orange-700 flex-shrink-0">{cleaningObjectItemData.name}</span>
           </>
         )}
         
-        <ChevronRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
+        {(siteData.name || zoneData.name || roomGroupData.name || (roomData.name && roomData.name !== 'Неизвестное помещение') || cleaningObjectItemData.name) && (
+          <ChevronRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
+        )}
         <div className="h-3 w-3 bg-red-600 rounded-sm flex-shrink-0"></div>
         <span className="text-red-700 font-medium flex-shrink-0">
           {task.techCard?.name || task.description || 'Техзадание'}

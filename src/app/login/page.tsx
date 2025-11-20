@@ -2,11 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ManualViewer from '@/components/ManualViewer';
+import { BookOpen } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showManual, setShowManual] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,7 +81,25 @@ export default function LoginPage() {
             Войти
           </button>
         </form>
+
+        {/* Кнопка инструкции */}
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={() => setShowManual(true)}
+            className="w-full py-2 text-blue-600 bg-white border border-blue-600 rounded hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center gap-2"
+          >
+            <BookOpen className="w-5 h-5" />
+            Инструкция пользователя
+          </button>
+        </div>
       </div>
+
+      {/* Компонент просмотра мануала */}
+      <ManualViewer
+        isOpen={showManual}
+        onClose={() => setShowManual(false)}
+      />
     </div>
   );
 }

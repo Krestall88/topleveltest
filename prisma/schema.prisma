@@ -677,3 +677,29 @@ enum ExpensePeriodType {
   SEMI_ANNUAL     // Раз в 6 месяцев
   ANNUAL          // Годовой лимит
 }
+
+// Модели для встроенного мануала
+model ManualSection {
+  id          String   @id @default(cuid())
+  slug        String   @unique // URL-friendly идентификатор (01-nachalo-raboty)
+  title       String   // Название раздела
+  order       Int      // Порядок отображения
+  content     String   @db.Text // Markdown контент
+  icon        String?  // Эмодзи или иконка
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("manual_sections")
+}
+
+model ManualScreenshot {
+  id          String   @id @default(cuid())
+  number      Int      @unique // Номер скриншота (1, 2, 3...)
+  filename    String   // Имя файла (screenshot-001.png)
+  description String   // Описание скриншота
+  alt         String   // Alt текст для доступности
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("manual_screenshots")
+}

@@ -10,7 +10,8 @@ import UnifiedTaskCompletionModal from '@/components/UnifiedTaskCompletionModal'
 import SimpleTaskListModal from '@/components/SimpleTaskListModal';
 import ObjectCard from '@/components/ObjectCard';
 import ObjectCompletionSettingsModal from '@/components/ObjectCompletionSettingsModal';
-import { Calendar, Clock, TrendingUp, AlertTriangle, CheckCircle, Eye } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Calendar, Clock, TrendingUp, AlertTriangle, CheckCircle, Eye, Camera } from 'lucide-react';
 import { UnifiedTask, CalendarResponse, ManagerTaskGroup, ObjectTaskGroup } from '@/lib/unified-task-system';
 
 // Простые утилиты для работы с датами
@@ -68,6 +69,7 @@ export default function UnifiedCalendarPage() {
   const [loading, setLoading] = useState(true);
   const [calendarData, setCalendarData] = useState<CalendarResponse | null>(null);
   const [taskCompletionModal, setTaskCompletionModal] = useState<UnifiedTask | null>(null);
+  const [photoViewerTask, setPhotoViewerTask] = useState<UnifiedTask | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [settingsModal, setSettingsModal] = useState<{ objectId: string; objectName: string } | null>(null);
   const [periodModalData, setPeriodModalData] = useState<{
@@ -769,9 +771,16 @@ export default function UnifiedCalendarPage() {
                           <div className="flex items-center gap-2">
                             <Badge variant="secondary">Завершено</Badge>
                             {task.completionPhotos && task.completionPhotos.length > 0 && (
-                              <Badge variant="outline" className="text-xs">
-                                📷 {task.completionPhotos.length}
-                              </Badge>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-2 text-xs flex items-center gap-1"
+                                onClick={() => setPhotoViewerTask(task)}
+                              >
+                                <Camera className="w-3 h-3" />
+                                <span>{task.completionPhotos.length}</span>
+                              </Button>
                             )}
                           </div>
                         </div>
@@ -836,6 +845,48 @@ export default function UnifiedCalendarPage() {
           objectId={settingsModal.objectId}
           objectName={settingsModal.objectName}
         />
+      )}
+
+      {photoViewerTask && (
+        <Dialog open={!!photoViewerTask} onOpenChange={() => setPhotoViewerTask(null)}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Camera className="w-4 h-4" />
+                Фото по задаче
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <div className="font-medium text-gray-900 mb-1">{photoViewerTask.description}</div>
+                <div className="text-sm text-gray-600">{photoViewerTask.objectName}</div>
+                {photoViewerTask.completedAt && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    Выполнено: {new Date(photoViewerTask.completedAt).toLocaleString('ru-RU')}
+                    {photoViewerTask.completedBy && ` • ${photoViewerTask.completedBy.name}`}
+                  </div>
+                )}
+                {photoViewerTask.completionComment && (
+                  <div className="text-xs text-gray-600 mt-2 italic">
+                    "{photoViewerTask.completionComment}"
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {photoViewerTask.completionPhotos?.map((url, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={url}
+                      alt={`Фото ${index + 1}`}
+                      className="w-full h-32 object-cover rounded-lg border"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

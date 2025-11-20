@@ -46,6 +46,7 @@ interface CleaningObject {
     name: string;
     comment?: string;
     manager?: { id: string; name: string; email: string };
+    seniorManager?: { id: string; name: string; email: string };
   }>;
   _count: {
     rooms: number;
@@ -600,17 +601,13 @@ export default function ObjectDetailClientPage() {
 
                 {/* Менеджеры участков - показываем всех с их участками */}
                 {(() => {
-                  // Получаем всех менеджеров с участками
-                  const managersWithSites = object.sites
-                    ?.filter(site => site.manager && !site.name.includes('__VIRTUAL__'))
-                    .map(site => ({ ...site, isVirtual: false })) || [];
-                  
-                  // Получаем менеджеров с виртуальных участков
-                  const managersFromVirtual = object.sites
-                    ?.filter(site => site.manager && site.name.includes('__VIRTUAL__'))
-                    .map(site => ({ ...site, isVirtual: true })) || [];
-                  
-                  const allManagers = [...managersWithSites, ...managersFromVirtual];
+                  // Получаем всех менеджеров с участками (включая виртуальные)
+                  const allManagers = object.sites
+                    ?.filter(site => site.manager)
+                    .map(site => ({
+                      ...site,
+                      isVirtual: site.name.includes('__VIRTUAL__') || site.name.includes('_VIRTUAL_')
+                    })) || [];
                   
                   // Если только один менеджер и он на виртуальном участке - не показываем участок
                   const showSiteName = allManagers.length > 1 || (allManagers.length === 1 && !allManagers[0].isVirtual);

@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, MapPin, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Calendar, MapPin, Clock, AlertTriangle, CheckCircle, Camera, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import Image from 'next/image';
 import { UnifiedTask } from '@/lib/unified-task-system';
 
 interface SimpleTaskListModalProps {
@@ -67,6 +68,23 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
   const todayTasks = tasks.filter(task => task.status === 'AVAILABLE');
   const completedTasks = tasks.filter(task => task.status === 'COMPLETED');
   const pendingTasks = tasks.filter(task => task.status === 'PENDING');
+
+  const [photoViewerTask, setPhotoViewerTask] = useState<UnifiedTask | null>(null);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+
+  const openPhotoViewer = (task: UnifiedTask, index: number = 0) => {
+    setPhotoViewerTask(task);
+    setCurrentPhotoIndex(index);
+  };
+
+  const navigatePhoto = (direction: 'prev' | 'next') => {
+    if (!photoViewerTask?.completionPhotos || photoViewerTask.completionPhotos.length === 0) return;
+    if (direction === 'prev') {
+      setCurrentPhotoIndex(prev => prev > 0 ? prev - 1 : photoViewerTask.completionPhotos!.length - 1);
+    } else {
+      setCurrentPhotoIndex(prev => prev < photoViewerTask.completionPhotos!.length - 1 ? prev + 1 : 0);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -150,7 +168,12 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
             {completedTasks.length > 0 ? (
               <div className="space-y-2">
                 {completedTasks.map((task) => (
-                  <TaskCard key={task.id} task={task} showCompletionDetails={true} />
+                  <TaskCard 
+                    key={task.id} 
+                    task={task} 
+                    showCompletionDetails={true}
+                    onViewPhotos={(index) => openPhotoViewer(task, index)}
+                  />
                 ))}
               </div>
             ) : (
@@ -185,6 +208,67 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
             </div>
           )}
         </Tabs>
+
+        {photoViewerTask && photoViewerTask.completionPhotos && photoViewerTask.completionPhotos.length > 0 && (
+          <Dialog open={!!photoViewerTask} onOpenChange={() => setPhotoViewerTask(null)}>
+            <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-4 right-4 z-10 bg-black bg-opacity-50 text-white hover:bg-opacity-70"
+                  onClick={() => setPhotoViewerTask(null)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+
+                <div className="relative aspect-video bg-black">
+                  <Image
+                    src={photoViewerTask.completionPhotos[currentPhotoIndex]}
+                    alt={`Фото ${currentPhotoIndex + 1}`}
+                    fill
+                    className="object-contain"
+                  />
+
+                  {photoViewerTask.completionPhotos.length > 1 && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white hover:bg-opacity-70"
+                        onClick={() => navigatePhoto('prev')}
+                      >
+                        <ChevronLeft className="h-6 w-6" />
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white hover:bg-opacity-70"
+                        onClick={() => navigatePhoto('next')}
+                      >
+                        <ChevronRight className="h-6 w-6" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+
+                <div className="p-4 bg-white flex items-center justify-between">
+                  <span className="text-sm text-gray-600">
+                    Фото {currentPhotoIndex + 1} из {photoViewerTask.completionPhotos.length}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(photoViewerTask.completionPhotos![currentPhotoIndex], '_blank')}
+                  >
+                    Открыть в новой вкладке
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -195,7 +279,8 @@ const TaskCard: React.FC<{
   task: UnifiedTask;
   showCompletionDetails?: boolean;
   onTaskComplete?: (task: UnifiedTask) => void;
-}> = ({ task, showCompletionDetails = false, onTaskComplete }) => {
+  onViewPhotos?: (index: number) => void;
+}> = ({ task, showCompletionDetails = false, onTaskComplete, onViewPhotos }) => {
   
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -290,9 +375,16 @@ const TaskCard: React.FC<{
           )}
           
           {task.completionPhotos && task.completionPhotos.length > 0 && (
-            <div className="text-sm text-gray-700">
-              <strong>Фото:</strong> {task.completionPhotos.length} шт.
-            </div>
+            <button
+              type="button"
+              className="mt-1 inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+              onClick={() => onViewPhotos && onViewPhotos(0)}
+            >
+              <Camera className="w-4 h-4" />
+              <span>
+                Фото: {task.completionPhotos.length} шт.
+              </span>
+            </button>
           )}
         </div>
       )}

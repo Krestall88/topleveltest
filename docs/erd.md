@@ -442,6 +442,29 @@ ANNUAL ANNUAL
     Boolean isRead 
     }
   
+
+  "manual_sections" {
+    String id "🗝️"
+    String slug 
+    String title 
+    Int order 
+    String content 
+    String icon "❓"
+    DateTime createdAt 
+    DateTime updatedAt 
+    }
+  
+
+  "manual_screenshots" {
+    String id "🗝️"
+    Int number 
+    String filename 
+    String description 
+    String alt 
+    DateTime createdAt 
+    DateTime updatedAt 
+    }
+  
     "User" o|--|| "Role" : "enum:role"
     "User" o{--}o "AdditionalTask" : "assignedAdditionalTasks"
     "User" o{--}o "AdditionalTask" : "completedAdditionalTasks"
