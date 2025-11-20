@@ -224,7 +224,25 @@ export async function generateVirtualTasks(
       room: {
         select: {
           id: true,
-          name: true
+          name: true,
+          roomGroup: {
+            select: {
+              id: true,
+              name: true,
+              zone: {
+                select: {
+                  id: true,
+                  name: true,
+                  site: {
+                    select: {
+                      id: true,
+                      name: true
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -280,6 +298,12 @@ export async function generateVirtualTasks(
           objectName: techCard.object.name,
           roomId: techCard.roomId || undefined,
           roomName: techCard.room?.name || undefined,
+          
+          // Добавляем иерархию
+          site: techCard.room?.roomGroup?.zone?.site || undefined,
+          zone: techCard.room?.roomGroup?.zone || undefined,
+          roomGroup: techCard.room?.roomGroup || undefined,
+          room: techCard.room || undefined,
           
           techCard: {
             id: techCard.id,
@@ -408,7 +432,30 @@ export async function getMaterializedTasks(
               }
             } 
           },
-          room: { select: { id: true, name: true } }
+          room: { 
+            select: { 
+              id: true, 
+              name: true,
+              roomGroup: {
+                select: {
+                  id: true,
+                  name: true,
+                  zone: {
+                    select: {
+                      id: true,
+                      name: true,
+                      site: {
+                        select: {
+                          id: true,
+                          name: true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            } 
+          }
         }
       }
     },
@@ -526,6 +573,12 @@ export async function getMaterializedTasks(
       objectName: task.objectName || 'Неизвестный объект',
       roomId: task.checklist?.room?.id || undefined,
       roomName: task.checklist?.room?.name || task.roomName || undefined,
+      
+      // Добавляем иерархию из checklist
+      site: task.checklist?.room?.roomGroup?.zone?.site || undefined,
+      zone: task.checklist?.room?.roomGroup?.zone || undefined,
+      roomGroup: task.checklist?.room?.roomGroup || undefined,
+      room: task.checklist?.room || undefined,
       
       techCard: {
         id: task.checklistId || 'unknown',

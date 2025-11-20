@@ -599,6 +599,29 @@ export default function ObjectDetailClientPage() {
                   return null;
                 })()}
 
+                {/* Менеджер объекта - показываем если есть и нет менеджеров на участках */}
+                {(() => {
+                  const siteManagers = object.sites?.filter(site => site.manager) || [];
+                  
+                  // Если есть менеджер объекта и нет менеджеров на участках
+                  if (object.manager && siteManagers.length === 0) {
+                    return (
+                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded border-l-2 border-gray-300">
+                        <div className="flex items-center flex-1">
+                          <div className="w-5 h-5 bg-gray-500 rounded-full flex items-center justify-center mr-2">
+                            <span className="text-white text-xs">●</span>
+                          </div>
+                          <div className="flex-1">
+                            <span className="text-sm font-medium text-gray-800">{object.manager.name}</span>
+                            <span className="text-xs text-gray-600 block">Менеджер объекта</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
                 {/* Менеджеры участков - показываем всех с их участками */}
                 {(() => {
                   // Получаем всех менеджеров с участками (включая виртуальные)
@@ -657,7 +680,8 @@ export default function ObjectDetailClientPage() {
                 })()}
 
                 {/* Если нет ни одного менеджера */}
-                {(!object.sites || object.sites.filter(s => s.manager).length === 0) && 
+                {!object.manager && 
+                 (!object.sites || object.sites.filter(s => s.manager).length === 0) && 
                  !object.sites?.find(s => s.seniorManager) && (
                   <div className="p-2 bg-gray-50 rounded border-l-2 border-gray-300 text-center">
                     <span className="text-sm text-gray-500">Менеджеры не назначены</span>
