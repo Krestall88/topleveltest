@@ -496,6 +496,14 @@ model ReportingTask {
   completionComment String?
   status            ReportingTaskStatus   @default(NEW)
   priority          ReportingTaskPriority @default(MEDIUM)
+  
+  // Поля для периодичности
+  isRecurring       Boolean               @default(false)
+  frequency         String?               // "DAILY" или "WEEKLY"
+  weekDay           Int?                  // 0-6 (воскресенье-суббота) для еженедельных задач
+  stoppedAt         DateTime?             // Дата остановки повторения
+  parentTaskId      String?               // ID родительской задачи для повторяющихся
+  
   assignedTo        User                  @relation("AssignedReportingTasks", fields: [assignedToId], references: [id])
   createdBy         User                  @relation("CreatedReportingTasks", fields: [createdById], references: [id])
   object            CleaningObject        @relation("ReportingTasks", fields: [objectId], references: [id], onDelete: Cascade)
@@ -505,6 +513,8 @@ model ReportingTask {
   @@index([objectId])
   @@index([assignedToId])
   @@index([status])
+  @@index([isRecurring])
+  @@index([parentTaskId])
 }
 
 // Комментарии к задачам отчетности

@@ -23,7 +23,11 @@ import {
   Search,
   Filter,
   Settings,
-  Trash2
+  Trash2,
+  Repeat,
+  StopCircle,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -36,6 +40,12 @@ interface ReportingTask {
   createdAt: string;
   dueDate?: string;
   completedAt?: string;
+  isRecurring?: boolean;
+  frequency?: string;
+  weekDay?: number;
+  stoppedAt?: string;
+  parentTaskId?: string;
+  isVirtual?: boolean;
   createdBy: {
     name: string;
   };
@@ -72,6 +82,7 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('active');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -80,6 +91,9 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
   const [newTaskPriority, setNewTaskPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH'>('MEDIUM');
   const [newTaskDueDate, setNewTaskDueDate] = useState('');
   const [newTaskAssignedTo, setNewTaskAssignedTo] = useState(object.managerId);
+  const [newTaskIsRecurring, setNewTaskIsRecurring] = useState(false);
+  const [newTaskFrequency, setNewTaskFrequency] = useState<'DAILY' | 'WEEKLY'>('DAILY');
+  const [newTaskWeekDay, setNewTaskWeekDay] = useState<number>(1); // Понедельник по умолчанию
   const [creating, setCreating] = useState(false);
   
   // Состояние для модального окна задач
@@ -134,7 +148,10 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
           description: newTaskDescription,
           assignedToId: newTaskAssignedTo,
           priority: newTaskPriority,
-          dueDate: newTaskDueDate || undefined
+          dueDate: newTaskDueDate || undefined,
+          isRecurring: newTaskIsRecurring,
+          frequency: newTaskIsRecurring ? newTaskFrequency : undefined,
+          weekDay: newTaskIsRecurring && newTaskFrequency === 'WEEKLY' ? newTaskWeekDay : undefined
         })
       });
 
@@ -144,6 +161,9 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
         setNewTaskPriority('MEDIUM');
         setNewTaskDueDate('');
         setNewTaskAssignedTo(object.managerId);
+        setNewTaskIsRecurring(false);
+        setNewTaskFrequency('DAILY');
+        setNewTaskWeekDay(1);
         setShowCreateDialog(false);
         await loadTasks();
         alert('Задача создана успешно!');
@@ -170,6 +190,71 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
 
   const handleTaskUpdated = () => {
     loadTasks();
+  };
+
+  const handleStopRecurring = async (task: ReportingTask) => {
+    // Если это виртуальная задача, останавливаем родительскую
+    const taskIdToStop = task.parentTaskId || task.id;
+    
+    if (!confirm(`Остановить повторение задачи "${task.title}"?\n\nНа следующий день/период эта задача больше не будет создаваться автоматически.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/reporting/tasks/${taskIdToStop}/stop`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        alert('Повторение задачи остановлено');
+        await loadTasks();
+      } else {
+        const errorData = await response.json();
+        alert(`Ошибка: ${errorData.message || 'Не удалось остановить задачу'}`);
+      }
+    } catch (error) {
+      console.error('Ошибка остановки задачи:', error);
+      alert('Произошла ошибка при остановке задачи');
+    }
+  };
+
+  const getFrequencyLabel = (frequency?: string, weekDay?: number) => {
+    if (!frequency) return null;
+    
+    if (frequency === 'DAILY') {
+      return 'Ежедневно';
+    } else if (frequency === 'WEEKLY' && weekDay !== undefined) {
+      const days = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+      return `Еженедельно (${days[weekDay]})`;
+    }
+    return frequency;
+  };
+
+  const handlePrevDay = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() - 1);
+    setSelectedDate(newDate);
+  };
+
+  const handleNextDay = () => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(newDate.getDate() + 1);
+    setSelectedDate(newDate);
+  };
+
+  const handleToday = () => {
+    setSelectedDate(new Date());
+  };
+
+  const formatSelectedDate = () => {
+    const days = ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+    const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+    const dayName = days[selectedDate.getDay()];
+    const day = selectedDate.getDate();
+    const month = months[selectedDate.getMonth()];
+    const year = selectedDate.getFullYear();
+    return `${dayName}, ${day} ${month} ${year}`;
   };
 
   const handleReturnToGeneral = async () => {
@@ -222,14 +307,27 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
     return <Badge className={config.color}>{config.label}</Badge>;
   };
 
+  // Фильтрация задач по выбранной дате
+  const filterTasksByDate = (taskList: ReportingTask[]) => {
+    const selectedDateStr = selectedDate.toISOString().split('T')[0];
+    return taskList.filter(task => {
+      const taskDateStr = new Date(task.createdAt).toISOString().split('T')[0];
+      return taskDateStr === selectedDateStr;
+    });
+  };
+
   // Разделение задач на активные и выполненные
-  const activeTasks = tasks.filter(task => 
+  const allActiveTasks = tasks.filter(task => 
     task.status !== 'COMPLETED' && task.status !== 'CANCELLED'
   );
   
-  const completedTasks = tasks.filter(task => 
+  const allCompletedTasks = tasks.filter(task => 
     task.status === 'COMPLETED' || task.status === 'CANCELLED'
   );
+
+  // Фильтруем по выбранной дате
+  const activeTasks = filterTasksByDate(allActiveTasks);
+  const completedTasks = filterTasksByDate(allCompletedTasks);
 
   // Фильтрация по поиску и датам
   const filterTasks = (taskList: ReportingTask[]) => {
@@ -341,6 +439,55 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
                         onChange={(e) => setNewTaskDueDate(e.target.value)}
                       />
                     </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="task-recurring"
+                          checked={newTaskIsRecurring}
+                          onChange={(e) => setNewTaskIsRecurring(e.target.checked)}
+                          className="h-4 w-4 rounded border-gray-300"
+                        />
+                        <Label htmlFor="task-recurring" className="cursor-pointer">
+                          Повторяющаяся задача
+                        </Label>
+                      </div>
+                      {newTaskIsRecurring && (
+                        <>
+                          <div>
+                            <Label htmlFor="task-frequency">Периодичность</Label>
+                            <Select value={newTaskFrequency} onValueChange={(value: any) => setNewTaskFrequency(value)}>
+                              <SelectTrigger id="task-frequency">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="DAILY">Ежедневно</SelectItem>
+                                <SelectItem value="WEEKLY">Еженедельно</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          {newTaskFrequency === 'WEEKLY' && (
+                            <div>
+                              <Label htmlFor="task-weekday">День недели</Label>
+                              <Select value={newTaskWeekDay.toString()} onValueChange={(value) => setNewTaskWeekDay(parseInt(value))}>
+                                <SelectTrigger id="task-weekday">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="1">Понедельник</SelectItem>
+                                  <SelectItem value="2">Вторник</SelectItem>
+                                  <SelectItem value="3">Среда</SelectItem>
+                                  <SelectItem value="4">Четверг</SelectItem>
+                                  <SelectItem value="5">Пятница</SelectItem>
+                                  <SelectItem value="6">Суббота</SelectItem>
+                                  <SelectItem value="0">Воскресенье</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
                     <div className="flex justify-end gap-2">
                       <Button
                         variant="outline"
@@ -390,6 +537,49 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
                 <p className="font-medium">{object.manager.name}</p>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Навигация по дням */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrevDay}
+              className="flex items-center gap-1"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Предыдущий день
+            </Button>
+            
+            <div className="flex items-center gap-3">
+              <div className="text-center">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-blue-500" />
+                  <span className="font-semibold text-lg">{formatSelectedDate()}</span>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleToday}
+              >
+                Сегодня
+              </Button>
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextDay}
+              className="flex items-center gap-1"
+            >
+              Следующий день
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -486,7 +676,29 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900 mb-1">{task.title}</h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-medium text-gray-900">{task.title}</h3>
+                      {/* Показываем бейдж для родительских повторяющихся задач */}
+                      {task.isRecurring && !task.stoppedAt && (
+                        <Badge variant="outline" className="flex items-center gap-1 text-blue-600 border-blue-300">
+                          <Repeat className="h-3 w-3" />
+                          {getFrequencyLabel(task.frequency, task.weekDay)}
+                        </Badge>
+                      )}
+                      {/* Показываем бейдж для виртуальных задач (из повторяющихся) */}
+                      {task.isVirtual && task.parentTaskId && (
+                        <Badge variant="outline" className="flex items-center gap-1 text-blue-600 border-blue-300">
+                          <Repeat className="h-3 w-3" />
+                          Повторяющаяся
+                        </Badge>
+                      )}
+                      {task.isRecurring && task.stoppedAt && (
+                        <Badge variant="outline" className="flex items-center gap-1 text-gray-500 border-gray-300">
+                          <StopCircle className="h-3 w-3" />
+                          Остановлено
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-600 mb-2">{task.description}</p>
                   </div>
                   <div className="flex items-center gap-2 ml-4">
@@ -506,6 +718,22 @@ export default function ReportingObjectDetail({ object, userRole, userId }: Repo
                   </div>
                   
                   <div className="flex items-center gap-3">
+                    {/* Показываем кнопку остановки для родительских и виртуальных повторяющихся задач */}
+                    {((task.isRecurring && !task.stoppedAt) || (task.parentTaskId && task.isVirtual)) && (userRole === 'ADMIN' || userRole === 'DEPUTY_ADMIN') && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStopRecurring(task);
+                        }}
+                        className="h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        title={task.isVirtual ? "Остановить повторение (остановит родительскую задачу)" : "Остановить повторение"}
+                      >
+                        <StopCircle className="h-3 w-3 mr-1" />
+                        Остановить
+                      </Button>
+                    )}
                     <div className="flex items-center gap-1 text-gray-500">
                       <MessageSquare className="h-3 w-3" />
                       <span>{task._count.comments}</span>

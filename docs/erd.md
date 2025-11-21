@@ -382,6 +382,11 @@ ANNUAL ANNUAL
     String completionComment "❓"
     ReportingTaskStatus status 
     ReportingTaskPriority priority 
+    Boolean isRecurring 
+    String frequency "❓"
+    Int weekDay "❓"
+    DateTime stoppedAt "❓"
+    String parentTaskId "❓"
     }
   
 
