@@ -110,17 +110,6 @@ export default function LoginPage() {
               <BookOpen className="w-5 h-5" />
               Инструкция пользователя
             </Button>
-            <p className="mt-3 text-center text-sm text-gray-500">
-              <span>Нет доступа? </span>
-              <Link
-                href="/manual"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-700 hover:underline"
-              >
-                Открыть инструкцию без входа
-              </Link>
-            </p>
           </div>
         </CardContent>
       </Card>

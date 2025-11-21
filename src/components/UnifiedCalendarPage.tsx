@@ -79,6 +79,7 @@ export default function UnifiedCalendarPage() {
     frequency: string;
     tasks: UnifiedTask[];
   } | null>(null);
+  const [quickCompletingTasks, setQuickCompletingTasks] = useState<Set<string>>(new Set());
 
   // Загрузка объектов
   const loadObjects = async () => {
@@ -191,7 +192,6 @@ export default function UnifiedCalendarPage() {
           // Удаляем из текущих списков
           updatedData.overdue = updatedData.overdue.filter(t => t.id !== task.id);
           updatedData.today = updatedData.today.filter(t => t.id !== task.id);
-          updatedData.upcoming = updatedData.upcoming.filter(t => t.id !== task.id);
           
           // Добавляем в завершенные
           const completedTask: UnifiedTask = {
@@ -241,6 +241,46 @@ export default function UnifiedCalendarPage() {
     } catch (error) {
       console.error('❌ UNIFIED CLIENT: Ошибка завершения задачи:', error);
       throw error;
+    }
+  };
+
+  // Быстрое закрытие задачи (без модалки)
+  const handleQuickComplete = async (task: UnifiedTask) => {
+    setQuickCompletingTasks(prev => new Set(prev).add(task.id));
+    
+    try {
+      const response = await fetch('/api/tasks/bulk-complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ taskIds: [task.id], skipValidation: false })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ QUICK COMPLETE:', result);
+        
+        if (result.completed > 0) {
+          // Обновляем UI
+          await handleTaskCompletion(task);
+        } else if (result.skippedTasks && result.skippedTasks.length > 0) {
+          // Задача требует дополнительных данных - открываем модалку
+          alert(result.skippedTasks[0].reason + '. Откроется форма для заполнения.');
+          setTaskCompletionModal(task);
+        }
+      } else {
+        const error = await response.json();
+        alert('Ошибка: ' + error.message);
+      }
+    } catch (error) {
+      console.error('❌ QUICK COMPLETE ERROR:', error);
+      alert('Ошибка при закрытии задачи');
+    } finally {
+      setQuickCompletingTasks(prev => {
+        const next = new Set(prev);
+        next.delete(task.id);
+        return next;
+      });
     }
   };
 
@@ -324,7 +364,12 @@ export default function UnifiedCalendarPage() {
         
         if (!objectsMap.has(objectId)) {
           objectsMap.set(objectId, {
-            object: { id: objectId, name: objectName },
+            object: { 
+              id: objectId, 
+              name: objectName,
+              requirePhotoForCompletion: task.object?.requirePhotoForCompletion,
+              requireCommentForCompletion: task.object?.requireCommentForCompletion
+            },
             manager: managerGroup.manager,
             tasks: [],
             stats: { total: 0, completed: 0, overdue: 0, today: 0 },
@@ -674,7 +719,7 @@ export default function UnifiedCalendarPage() {
                     <div className="space-y-2">
                       {calendarData.overdue.map((task: UnifiedTask) => (
                         <div key={task.id} className="flex items-center justify-between p-3 bg-red-50 rounded border-l-4 border-red-400">
-                          <div>
+                          <div className="flex-1">
                             <div className="font-medium">{task.description}</div>
                             <div className="text-xs text-gray-600">
                               <TaskLocationBreadcrumb task={task} showFullPath={true} compact={true} />
@@ -683,13 +728,25 @@ export default function UnifiedCalendarPage() {
                               Запланировано: {new Date(task.scheduledDate).toLocaleString('ru-RU')}
                             </div>
                           </div>
-                          <Button 
-                            size="sm" 
-                            variant="destructive"
-                            onClick={() => setTaskCompletionModal(task)}
-                          >
-                            Выполнить
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleQuickComplete(task)}
+                              disabled={quickCompletingTasks.has(task.id)}
+                              className="flex items-center gap-1"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                              {quickCompletingTasks.has(task.id) ? 'Закрытие...' : 'Быстро'}
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="destructive"
+                              onClick={() => setTaskCompletionModal(task)}
+                            >
+                              С деталями
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -717,7 +774,7 @@ export default function UnifiedCalendarPage() {
                     <div className="space-y-2">
                       {calendarData.today.map((task: UnifiedTask) => (
                         <div key={task.id} className="flex items-center justify-between p-3 bg-blue-50 rounded">
-                          <div>
+                          <div className="flex-1">
                             <div className="font-medium">{task.description}</div>
                             <div className="text-xs text-gray-600">
                               <TaskLocationBreadcrumb task={task} showFullPath={true} compact={true} />
@@ -726,13 +783,25 @@ export default function UnifiedCalendarPage() {
                               Запланировано: {new Date(task.scheduledDate).toLocaleString('ru-RU')}
                             </div>
                           </div>
-                          <Button 
-                            size="sm" 
-                            variant="default"
-                            onClick={() => setTaskCompletionModal(task)}
-                          >
-                            Выполнить
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleQuickComplete(task)}
+                              disabled={quickCompletingTasks.has(task.id)}
+                              className="flex items-center gap-1"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                              {quickCompletingTasks.has(task.id) ? 'Закрытие...' : 'Быстро'}
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="default"
+                              onClick={() => setTaskCompletionModal(task)}
+                            >
+                              С деталями
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -837,6 +906,7 @@ export default function UnifiedCalendarPage() {
             setPeriodModalData(null);
             setTaskCompletionModal(task);
           }}
+          onDataRefresh={loadCalendarData}
         />
       )}
 

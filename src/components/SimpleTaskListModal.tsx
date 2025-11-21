@@ -5,10 +5,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Clock, AlertTriangle, CheckCircle, Camera, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Clock, AlertTriangle, CheckCircle, Camera, X, ChevronLeft, ChevronRight, Square, CheckSquare } from 'lucide-react';
 import Image from 'next/image';
 import { UnifiedTask } from '@/lib/unified-task-system';
 import TaskLocationBreadcrumb from '@/components/TaskLocationBreadcrumb';
+import UnifiedTaskCompletionModal from '@/components/UnifiedTaskCompletionModal';
 
 interface SimpleTaskListModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ interface SimpleTaskListModalProps {
   frequency: string;
   tasks: UnifiedTask[];
   onTaskComplete?: (task: UnifiedTask) => void;
+  onDataRefresh?: () => void;
 }
 
 const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
@@ -27,7 +29,8 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
   managerName,
   frequency,
   tasks,
-  onTaskComplete
+  onTaskComplete,
+  onDataRefresh
 }) => {
   const getFrequencyLabel = (freq: string) => {
     const lowerFreq = freq?.toLowerCase();
@@ -68,10 +71,18 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
   const overdueTasks = tasks.filter(task => task.status === 'OVERDUE');
   const todayTasks = tasks.filter(task => task.status === 'AVAILABLE');
   const completedTasks = tasks.filter(task => task.status === 'COMPLETED');
-  const pendingTasks = tasks.filter(task => task.status === 'PENDING');
+
+  // Проверяем требования объектов для массового закрытия
+  const hasRequirements = tasks.some(task => 
+    task.object?.requirePhotoForCompletion || task.object?.requireCommentForCompletion
+  );
 
   const [photoViewerTask, setPhotoViewerTask] = useState<UnifiedTask | null>(null);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [isBulkCompleting, setIsBulkCompleting] = useState(false);
+  const [taskToComplete, setTaskToComplete] = useState<UnifiedTask | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
 
   const openPhotoViewer = (task: UnifiedTask, index: number = 0) => {
     setPhotoViewerTask(task);
@@ -87,6 +98,74 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
     }
   };
 
+  const toggleTaskSelection = (taskId: string) => {
+    setSelectedTasks(prev => {
+      const next = new Set(prev);
+      if (next.has(taskId)) {
+        next.delete(taskId);
+      } else {
+        next.add(taskId);
+      }
+      return next;
+    });
+  };
+
+  const handleBulkComplete = async () => {
+    const incompleteTasks = selectionMode 
+      ? tasks.filter(t => selectedTasks.has(t.id) && t.status !== 'COMPLETED')
+      : [...overdueTasks, ...todayTasks];
+    
+    if (incompleteTasks.length === 0) {
+      alert('Все задачи уже закрыты');
+      return;
+    }
+
+    if (!confirm(`Закрыть ${incompleteTasks.length} задач(\u0438)?\n\nБудут закрыты только задачи, не требующие фото или комментариев.`)) {
+      return;
+    }
+
+    setIsBulkCompleting(true);
+
+    try {
+      const response = await fetch('/api/tasks/bulk-complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ 
+          taskIds: incompleteTasks.map(t => t.id),
+          skipValidation: false 
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(result.message);
+        
+        if (result.completed > 0) {
+          // Перезагружаем данные календаря
+          if (onDataRefresh) {
+            onDataRefresh();
+          }
+          
+          // Сбрасываем режим выбора
+          setSelectionMode(false);
+          setSelectedTasks(new Set());
+          
+          // Закрываем модалку
+          setTimeout(() => onClose(), 500);
+        }
+      } else {
+        const error = await response.json();
+        alert('Ошибка: ' + error.message);
+      }
+    } catch (error) {
+      console.error('❌ BULK COMPLETE ERROR:', error);
+      alert('Ошибка при закрытии задач');
+    } finally {
+      setIsBulkCompleting(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
@@ -95,9 +174,63 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
         <DialogHeader>
           <DialogTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div className="w-full">
-              <span className="text-base md:text-lg break-words">{getFrequencyLabel(frequency)}</span>
-              <div className="text-xs md:text-sm font-normal text-gray-600 mt-1">
-                {managerName} • {tasks.length} задач
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <span className="text-base md:text-lg break-words">{getFrequencyLabel(frequency)}</span>
+                  <div className="text-xs md:text-sm font-normal text-gray-600 mt-1">
+                    {managerName} • {tasks.length} задач
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {!selectionMode && (overdueTasks.length > 0 || todayTasks.length > 0) && !hasRequirements && (
+                    <Button
+                      onClick={() => setSelectionMode(true)}
+                      size="sm"
+                      variant="outline"
+                      className="flex items-center gap-1 whitespace-nowrap"
+                    >
+                      <Square className="w-4 h-4" />
+                      Выбрать
+                    </Button>
+                  )}
+                  {selectionMode && (
+                    <>
+                      <Button
+                        onClick={() => {
+                          setSelectionMode(false);
+                          setSelectedTasks(new Set());
+                        }}
+                        size="sm"
+                        variant="outline"
+                        className="flex items-center gap-1 whitespace-nowrap"
+                      >
+                        Отмена
+                      </Button>
+                      <Button
+                        onClick={handleBulkComplete}
+                        disabled={isBulkCompleting || selectedTasks.size === 0 || hasRequirements}
+                        size="sm"
+                        variant="default"
+                        className="flex items-center gap-1 whitespace-nowrap"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        {isBulkCompleting ? 'Закрытие...' : `Закрыть (${selectedTasks.size})`}
+                      </Button>
+                    </>
+                  )}
+                  {!selectionMode && (overdueTasks.length > 0 || todayTasks.length > 0) && !hasRequirements && (
+                    <Button
+                      onClick={handleBulkComplete}
+                      disabled={isBulkCompleting || hasRequirements}
+                      size="sm"
+                      variant="default"
+                      className="flex items-center gap-1 whitespace-nowrap"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      {isBulkCompleting ? 'Закрытие...' : `Закрыть все (${overdueTasks.length + todayTasks.length})`}
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </DialogTitle>
@@ -105,7 +238,7 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
 
         <Tabs defaultValue="overdue" className="w-full">
           <div className="overflow-x-auto scrollbar-hide -mx-2 px-2">
-            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-4 gap-1">
+            <TabsList className="inline-flex w-auto min-w-full sm:grid sm:w-full sm:grid-cols-3 gap-1">
               <TabsTrigger value="overdue" className="text-red-600 text-xs sm:text-sm px-2 whitespace-nowrap flex-shrink-0">
                 <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 <span className="hidden sm:inline">Просроч.</span>
@@ -124,12 +257,6 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
                 <span className="sm:hidden">✓</span>
                 <span>({completedTasks.length})</span>
               </TabsTrigger>
-              <TabsTrigger value="pending" className="text-gray-600 text-xs sm:text-sm px-2 whitespace-nowrap flex-shrink-0">
-                <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Предст.</span>
-                <span className="sm:hidden">📅</span>
-              <span>({pendingTasks.length})</span>
-              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -137,7 +264,15 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
             {overdueTasks.length > 0 ? (
               <div className="space-y-2">
                 {overdueTasks.map((task) => (
-                  <TaskCard key={task.id} task={task} onTaskComplete={onTaskComplete} />
+                  <TaskCard 
+                    key={task.id} 
+                    task={task} 
+                    onTaskComplete={onTaskComplete}
+                    onOpenCompletionModal={() => setTaskToComplete(task)}
+                    selectionMode={selectionMode}
+                    isSelected={selectedTasks.has(task.id)}
+                    onToggleSelection={() => toggleTaskSelection(task.id)}
+                  />
                 ))}
               </div>
             ) : (
@@ -153,7 +288,15 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
             {todayTasks.length > 0 ? (
               <div className="space-y-2">
                 {todayTasks.map((task) => (
-                  <TaskCard key={task.id} task={task} onTaskComplete={onTaskComplete} />
+                  <TaskCard 
+                    key={task.id} 
+                    task={task} 
+                    onTaskComplete={onTaskComplete}
+                    onOpenCompletionModal={() => setTaskToComplete(task)}
+                    selectionMode={selectionMode}
+                    isSelected={selectedTasks.has(task.id)}
+                    onToggleSelection={() => toggleTaskSelection(task.id)}
+                  />
                 ))}
               </div>
             ) : (
@@ -182,22 +325,6 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
                 <CheckCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                 <div className="text-lg font-medium mb-2">Нет выполненных задач</div>
                 <p className="text-sm">Выполненные задачи появятся здесь после завершения</p>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="pending" className="space-y-4 mt-4">
-            {pendingTasks.length > 0 ? (
-              <div className="space-y-2">
-                {pendingTasks.map((task) => (
-                  <TaskCard key={task.id} task={task} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 text-gray-500">
-                <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <div className="text-lg font-medium mb-2">Нет предстоящих задач</div>
-                <p className="text-sm">Предстоящие задачи появятся здесь по расписанию</p>
               </div>
             )}
           </TabsContent>
@@ -270,6 +397,24 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
             </DialogContent>
           </Dialog>
         )}
+
+        {/* Модалка завершения задачи */}
+        {taskToComplete && (
+          <UnifiedTaskCompletionModal
+            task={taskToComplete}
+            isOpen={!!taskToComplete}
+            onClose={() => setTaskToComplete(null)}
+            onComplete={(completedTask) => {
+              setTaskToComplete(null);
+              // Перезагружаем данные календаря
+              if (onDataRefresh) {
+                onDataRefresh();
+              }
+              // Закрываем модалку списка задач
+              setTimeout(() => onClose(), 300);
+            }}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -281,7 +426,11 @@ const TaskCard: React.FC<{
   showCompletionDetails?: boolean;
   onTaskComplete?: (task: UnifiedTask) => void;
   onViewPhotos?: (index: number) => void;
-}> = ({ task, showCompletionDetails = false, onTaskComplete, onViewPhotos }) => {
+  onOpenCompletionModal?: () => void;
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelection?: () => void;
+}> = ({ task, showCompletionDetails = false, onTaskComplete, onViewPhotos, onOpenCompletionModal, selectionMode = false, isSelected = false, onToggleSelection }) => {
   
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -304,8 +453,24 @@ const TaskCard: React.FC<{
   };
 
   return (
-    <div className="p-3 md:p-4 border rounded-lg bg-white hover:shadow-sm transition-shadow">
+    <div className={`p-3 md:p-4 border rounded-lg bg-white hover:shadow-sm transition-shadow ${
+      selectionMode && isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+    }`}>
       <div className="flex flex-col sm:flex-row items-start justify-between gap-2 mb-2 md:mb-3">
+        {selectionMode && task.status !== 'COMPLETED' && (
+          <div className="flex items-center mr-2">
+            <button
+              onClick={onToggleSelection}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              {isSelected ? (
+                <CheckSquare className="w-5 h-5 text-blue-600" />
+              ) : (
+                <Square className="w-5 h-5 text-gray-400" />
+              )}
+            </button>
+          </div>
+        )}
         <div className="flex-1 w-full">
           <h4 className="font-medium text-sm md:text-base text-gray-900 mb-2 break-words">{task.description}</h4>
           
@@ -313,7 +478,7 @@ const TaskCard: React.FC<{
             <TaskLocationBreadcrumb task={task} showFullPath={true} compact={true} />
             <div className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
-              <span>{new Date(task.scheduledDate || task.scheduledFor).toLocaleDateString('ru-RU')}</span>
+              <span>{new Date(task.scheduledDate).toLocaleDateString('ru-RU')}</span>
             </div>
           </div>
           
@@ -331,13 +496,13 @@ const TaskCard: React.FC<{
         </div>
         
         <div className="flex gap-2 ml-4">
-          {task.status !== 'COMPLETED' && onTaskComplete && (
+          {task.status !== 'COMPLETED' && onOpenCompletionModal && (
             <Button
               size="sm"
               variant={task.status === 'OVERDUE' ? 'destructive' : 'default'}
-              onClick={() => onTaskComplete(task)}
+              onClick={onOpenCompletionModal}
             >
-              Завершить
+              Выполнить
             </Button>
           )}
         </div>

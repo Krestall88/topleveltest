@@ -32,6 +32,8 @@ export interface UnifiedTask {
   object: {
     id: string;
     name: string;
+    requirePhotoForCompletion?: boolean;
+    requireCommentForCompletion?: boolean;
     manager?: {
       id: string;
       name: string;
@@ -71,7 +73,12 @@ export interface ManagerTaskGroup {
   };
   tasks: UnifiedTask[];
   stats: TaskStats;
-  objects: Array<{ id: string; name: string; }>;
+  objects: Array<{ 
+    id: string; 
+    name: string; 
+    requirePhotoForCompletion?: boolean;
+    requireCommentForCompletion?: boolean;
+  }>;
   byPeriodicity: Array<{
     frequency: string;
     count: number;
@@ -91,6 +98,8 @@ export interface ObjectTaskGroup {
   object: {
     id: string;
     name: string;
+    requirePhotoForCompletion?: boolean;
+    requireCommentForCompletion?: boolean;
   };
   manager?: {
     id: string;
@@ -107,7 +116,6 @@ export interface CalendarResponse {
   // Задачи по статусам
   overdue: UnifiedTask[];
   today: UnifiedTask[];
-  upcoming: UnifiedTask[];
   completed: UnifiedTask[];
   
   // Группировки для админов
@@ -212,6 +220,8 @@ export async function generateVirtualTasks(
         select: {
           id: true,
           name: true,
+          requirePhotoForCompletion: true,
+          requireCommentForCompletion: true,
           manager: {
             select: {
               id: true,
@@ -316,6 +326,8 @@ export async function generateVirtualTasks(
           object: {
             id: techCard.object.id,
             name: techCard.object.name,
+            requirePhotoForCompletion: techCard.object.requirePhotoForCompletion,
+            requireCommentForCompletion: techCard.object.requireCommentForCompletion,
             manager: techCard.object.manager || undefined
           },
           
@@ -423,6 +435,8 @@ export async function getMaterializedTasks(
             select: { 
               id: true, 
               name: true,
+              requirePhotoForCompletion: true,
+              requireCommentForCompletion: true,
               manager: {
                 select: {
                   id: true,
@@ -587,12 +601,18 @@ export async function getMaterializedTasks(
       },
       
       object: {
-        id: objectInfo?.id || 'unknown',
+        id: objectInfo?.id || task.checklist?.object?.id || 'unknown',
         name: task.objectName || 'Неизвестный объект',
+        requirePhotoForCompletion: objectInfo?.requirePhotoForCompletion || task.checklist?.object?.requirePhotoForCompletion,
+        requireCommentForCompletion: objectInfo?.requireCommentForCompletion || task.checklist?.object?.requireCommentForCompletion,
         manager: objectInfo?.manager ? {
           id: objectInfo.manager.id,
           name: objectInfo.manager.name || 'Неизвестный менеджер',
           phone: objectInfo.manager.phone || undefined
+        } : task.checklist?.object?.manager ? {
+          id: task.checklist.object.manager.id,
+          name: task.checklist.object.manager.name || 'Неизвестный менеджер',
+          phone: task.checklist.object.manager.phone || undefined
         } : undefined
       },
       
@@ -792,8 +812,18 @@ export async function getActualOverdueTasks(
       room: {
         include: {
           object: {
-            include: {
-              manager: true
+            select: {
+              id: true,
+              name: true,
+              requirePhotoForCompletion: true,
+              requireCommentForCompletion: true,
+              manager: {
+                select: {
+                  id: true,
+                  name: true,
+                  phone: true
+                }
+              }
             }
           }
         }
@@ -821,16 +851,18 @@ export async function getActualOverdueTasks(
       description: task.description,
       frequency: 'daily'
     },
-    object: task.room?.object ? {
-      id: task.room.object.id,
-      name: task.room.object.name,
-      manager: task.room.object.manager ? {
+    object: {
+      id: task.room?.object?.id || 'unknown',
+      name: task.room?.object?.name || task.objectName || 'Неизвестный объект',
+      requirePhotoForCompletion: task.room?.object?.requirePhotoForCompletion,
+      requireCommentForCompletion: task.room?.object?.requireCommentForCompletion,
+      manager: task.room?.object?.manager ? {
         id: task.room.object.manager.id,
         name: task.room.object.manager.name || 'Неизвестен',
         phone: task.room.object.manager.phone || undefined
       } : undefined
-    } : undefined,
-    completedAt: task.completedAt,
+    },
+    completedAt: task.completedAt || undefined,
     completedBy: task.completedById ? {
       id: task.completedById,
       name: 'Неизвестен'
@@ -863,13 +895,6 @@ export function groupTasksByStatus(tasks: UnifiedTask[], baseDate: Date, overdue
       return taskDate.getTime() === today.getTime();
     }),
     
-    // Будущие: задачи на даты после сегодня
-    upcoming: tasks.filter(task => {
-      if (task.status !== 'PENDING') return false;
-      const taskDate = startOfDay(task.scheduledDate);
-      return taskDate > today;
-    }),
-    
     // Выполненные: только те, что выполнены именно в этот день
     completed: tasks.filter(task => {
       if (task.status !== 'COMPLETED') return false;
@@ -882,7 +907,6 @@ export function groupTasksByStatus(tasks: UnifiedTask[], baseDate: Date, overdue
   console.log('🔍 STATUS: Результат группировки:', {
     overdue: result.overdue.length,
     today: result.today.length,
-    upcoming: result.upcoming.length,
     completed: result.completed.length
   });
 
@@ -956,7 +980,9 @@ export function groupTasksByManager(tasks: UnifiedTask[]): ManagerTaskGroup[] {
     if (!objectExists) {
       group.objects.push({
         id: task.objectId,
-        name: task.objectName
+        name: task.objectName,
+        requirePhotoForCompletion: task.object?.requirePhotoForCompletion,
+        requireCommentForCompletion: task.object?.requireCommentForCompletion
       });
     }
     
@@ -1007,17 +1033,45 @@ export function groupTasksByManager(tasks: UnifiedTask[]): ManagerTaskGroup[] {
 }
 
 // Группировка задач по объектам
-export function groupTasksByObject(tasks: UnifiedTask[]): ObjectTaskGroup[] {
+export async function groupTasksByObject(tasks: UnifiedTask[]): Promise<ObjectTaskGroup[]> {
+  console.log('🔍 GROUP BY OBJECT: ФУНКЦИЯ ВЫЗВАНА! Задач:', tasks.length);
   const objectMap = new Map<string, ObjectTaskGroup>();
+  
+  // Собираем уникальные ID объектов
+  const uniqueObjectIds = [...new Set(tasks.map(t => t.objectId).filter(id => id && id !== 'unknown'))];
+  
+  // Загружаем данные объектов из БД
+  const objectsData = await prisma.cleaningObject.findMany({
+    where: { id: { in: uniqueObjectIds } },
+    select: {
+      id: true,
+      name: true,
+      requirePhotoForCompletion: true,
+      requireCommentForCompletion: true
+    }
+  });
+  
+  // Создаем карту объектов для быстрого доступа
+  const objectsDataMap = new Map(objectsData.map(obj => [obj.id, obj]));
+  
+  console.log('🔍 GROUP BY OBJECT: Загружено объектов из БД:', {
+    total: objectsData.length,
+    withPhoto: objectsData.filter(o => o.requirePhotoForCompletion).length,
+    withComment: objectsData.filter(o => o.requireCommentForCompletion).length
+  });
   
   tasks.forEach(task => {
     if (!objectMap.has(task.objectId)) {
+      const objectData = objectsDataMap.get(task.objectId);
+      
       objectMap.set(task.objectId, {
         object: {
           id: task.objectId,
-          name: task.objectName
+          name: task.objectName,
+          requirePhotoForCompletion: objectData?.requirePhotoForCompletion || task.object?.requirePhotoForCompletion,
+          requireCommentForCompletion: objectData?.requireCommentForCompletion || task.object?.requireCommentForCompletion
         },
-        manager: task.manager || null,
+        manager: task.object?.manager || null,
         tasks: [],
         stats: { total: 0, completed: 0, overdue: 0, today: 0, pending: 0 },
         byPeriodicity: []
