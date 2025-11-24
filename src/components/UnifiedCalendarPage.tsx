@@ -167,6 +167,13 @@ export default function UnifiedCalendarPage() {
         status: task.status
       });
 
+      console.log('📤 UNIFIED CLIENT: Отправляем запрос на сервер:', {
+        taskId: task.id,
+        status: 'COMPLETED',
+        commentLength: comment?.length || 0,
+        photosCount: photos?.length || 0
+      });
+
       const response = await fetch('/api/tasks/unified-complete', {
         method: 'POST',
         headers: {
@@ -179,6 +186,11 @@ export default function UnifiedCalendarPage() {
           comment: comment || '',
           photos: photos || []
         }),
+      });
+
+      console.log('📥 UNIFIED CLIENT: Получен ответ от сервера:', {
+        status: response.status,
+        ok: response.ok
       });
 
       if (response.ok) {
@@ -286,20 +298,31 @@ export default function UnifiedCalendarPage() {
 
   // Обработчик завершения из модального окна
   const handleTaskCompletionFromModal = async (completedTask: UnifiedTask) => {
-    console.log('🔍 UNIFIED CLIENT: Завершение из модального окна:', completedTask);
+    console.log('🔍 UNIFIED CLIENT: Завершение из модального окна:', {
+      taskId: completedTask.id,
+      status: completedTask.status,
+      photosCount: completedTask.completionPhotos?.length || 0,
+      comment: completedTask.completionComment
+    });
 
     // Сразу закрываем модальное окно, чтобы не было ощущения зависания
     setTaskCompletionModal(null);
 
     try {
       console.log('🔍 UNIFIED CLIENT: Вызываем handleTaskCompletion...');
-      await handleTaskCompletion(
+      console.log('🔍 UNIFIED CLIENT: Данные для завершения:', {
+        taskId: completedTask.id,
+        comment: completedTask.completionComment,
+        photos: completedTask.completionPhotos
+      });
+      
+      const result = await handleTaskCompletion(
         completedTask,
         completedTask.completionComment,
         completedTask.completionPhotos
       );
       
-      console.log('🔍 UNIFIED CLIENT: handleTaskCompletion выполнен успешно');
+      console.log('✅ UNIFIED CLIENT: handleTaskCompletion выполнен успешно:', result);
       
       // Обновляем periodModalData если открыто
       if (periodModalData) {
@@ -324,7 +347,12 @@ export default function UnifiedCalendarPage() {
       console.log('🔍 UNIFIED CLIENT: Задача завершена, локальное состояние обновлено');
       
     } catch (error) {
-      console.error('Ошибка завершения задачи:', error);
+      console.error('❌ UNIFIED CLIENT: Ошибка завершения задачи:', error);
+      console.error('❌ UNIFIED CLIENT: Детали ошибки:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       alert(error instanceof Error ? error.message : 'Ошибка завершения задачи');
     }
   };
@@ -507,7 +535,7 @@ export default function UnifiedCalendarPage() {
           </p>
         </div>
         
-        <div className="flex gap-2 w-full sm:w-auto">
+        <div className="flex gap-2 w-full sm:w-auto items-center">
           <Button 
             variant="outline" 
             onClick={() => setCurrentDate(new Date())}
@@ -516,6 +544,17 @@ export default function UnifiedCalendarPage() {
           >
             Сегодня
           </Button>
+          <input
+            type="date"
+            value={format(currentDate, 'yyyy-MM-dd')}
+            onChange={(e) => {
+              const newDate = new Date(e.target.value);
+              if (!isNaN(newDate.getTime())) {
+                setCurrentDate(newDate);
+              }
+            }}
+            className="px-2 py-1.5 border border-gray-300 rounded text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
           <Button 
             variant="outline" 
             onClick={() => handleDateChange('next')}
@@ -907,6 +946,7 @@ export default function UnifiedCalendarPage() {
             setTaskCompletionModal(task);
           }}
           onDataRefresh={loadCalendarData}
+          onTaskCompletionFromModal={handleTaskCompletionFromModal}
         />
       )}
 

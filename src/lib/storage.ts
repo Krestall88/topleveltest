@@ -50,7 +50,7 @@ export async function uploadFileToStorage(
           Key: filePath,
           Body: buffer,
           ContentType: file.type,
-          // ACL: 'public-read', // Если нужен публичный доступ
+          ACL: 'public-read', // Публичный доступ к файлам
         })
       );
 
@@ -90,16 +90,25 @@ export async function uploadFileToStorage(
  * Загружает изображение в хранилище
  */
 export async function uploadImage(file: File): Promise<string> {
+  console.log('📸 STORAGE: Загрузка изображения:', {
+    name: file.name,
+    type: file.type,
+    size: file.size
+  });
+
   // Проверяем тип файла
   if (!file.type.startsWith('image/')) {
+    console.error('❌ STORAGE: Неверный тип файла:', file.type);
     throw new Error('Разрешены только изображения');
   }
 
   // Проверяем размер файла (максимум 10MB)
   if (file.size > 10 * 1024 * 1024) {
+    console.error('❌ STORAGE: Файл слишком большой:', file.size);
     throw new Error('Файл слишком большой (максимум 10MB)');
   }
 
+  console.log('✅ STORAGE: Проверки пройдены, загружаем в S3...');
   return uploadFileToStorage(file, 'photos');
 }
 

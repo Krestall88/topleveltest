@@ -26,6 +26,11 @@
     "import-techcards": "tsx scripts/import-techcards-from-excel.ts",
     "check-object-names": "tsx scripts/check-current-object-names.ts",
     "final-object-update": "tsx scripts/final-object-update.ts",
+    "fix-photos": "tsx scripts/fix-photos-20nov.ts",
+    "analyze-photos-detailed": "tsx scripts/detailed-photo-analysis.ts",
+    "check-photo-urls": "tsx scripts/check-photo-urls.ts",
+    "delete-gordeev": "tsx scripts/delete-gordeev-20nov.ts",
+    "check-s3": "tsx scripts/check-s3-config.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {

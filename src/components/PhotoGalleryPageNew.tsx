@@ -338,13 +338,27 @@ export default function PhotoGalleryPageNew() {
           {filteredPhotos.map((photo) => (
             <Card key={photo.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
               <div className="aspect-square relative bg-gray-100">
-                <Image
-                  src={photo.url}
-                  alt="Фотоотчет"
-                  fill
-                  className="object-cover cursor-pointer"
-                  onClick={() => setSelectedPhoto(photo)}
-                />
+                {/* Используем прокси для S3 URL */}
+                {photo.url.includes('s3.twcstorage.ru') ? (
+                  <img
+                    src={`/api/proxy-image?url=${encodeURIComponent(photo.url)}`}
+                    alt="Фотоотчет"
+                    className="w-full h-full object-cover cursor-pointer"
+                    onClick={() => setSelectedPhoto(photo)}
+                    onError={(e) => {
+                      console.error('Ошибка загрузки изображения:', photo.url);
+                      e.currentTarget.src = '/placeholder-image.png';
+                    }}
+                  />
+                ) : (
+                  <Image
+                    src={photo.url}
+                    alt="Фотоотчет"
+                    fill
+                    className="object-cover cursor-pointer"
+                    onClick={() => setSelectedPhoto(photo)}
+                  />
+                )}
                 <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button
                     size="sm"
@@ -442,12 +456,25 @@ export default function PhotoGalleryPageNew() {
             
             <div className="space-y-4">
               <div className="relative w-full h-96">
-                <Image
-                  src={selectedPhoto.url}
-                  alt="Фотоотчет"
-                  fill
-                  className="object-contain"
-                />
+                {/* Используем прокси для S3 URL */}
+                {selectedPhoto.url.includes('s3.twcstorage.ru') ? (
+                  <img
+                    src={`/api/proxy-image?url=${encodeURIComponent(selectedPhoto.url)}`}
+                    alt="Фотоотчет"
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      console.error('Ошибка загрузки изображения:', selectedPhoto.url);
+                      e.currentTarget.src = '/placeholder-image.png';
+                    }}
+                  />
+                ) : (
+                  <Image
+                    src={selectedPhoto.url}
+                    alt="Фотоотчет"
+                    fill
+                    className="object-contain"
+                  />
+                )}
               </div>
               
               <div className="grid grid-cols-2 gap-4">

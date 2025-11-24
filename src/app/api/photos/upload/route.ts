@@ -28,42 +28,79 @@ async function getUserFromToken(req: NextRequest) {
 // POST /api/photos/upload - Загрузка фотоотчетов
 export async function POST(req: NextRequest) {
   try {
+    console.log('📸 API: Начало загрузки фото');
+    
     const user = await getUserFromToken(req);
     if (!user) {
+      console.log('❌ API: Пользователь не авторизован');
       return NextResponse.json({ message: 'Не авторизован' }, { status: 401 });
     }
 
+    console.log('✅ API: Пользователь авторизован:', user.name);
+
     const formData = await req.formData();
+    console.log('📋 API: FormData получена');
+    
     const files = formData.getAll('photos') as File[];
     const taskId = formData.get('taskId') as string;
     const objectId = formData.get('objectId') as string;
     const techCardId = formData.get('techCardId') as string;
     const comment = formData.get('comment') as string;
 
+    console.log('📸 API: Параметры:', {
+      filesCount: files.length,
+      taskId,
+      objectId,
+      techCardId,
+      hasComment: !!comment
+    });
+
     if (!files || files.length === 0) {
+      console.log('❌ API: Нет файлов для загрузки');
       return NextResponse.json({ message: 'Нет файлов для загрузки' }, { status: 400 });
     }
 
     const uploadedPhotos = [];
 
     for (const file of files) {
-      if (file.size === 0) continue;
+      if (file.size === 0) {
+        console.log('⚠️ API: Пропускаем пустой файл');
+        continue;
+      }
 
-      // Загружаем файл в облачное хранилище (Timeweb S3)
-      const fileUrl = await uploadImage(file);
+      console.log('📤 API: Загружаем файл:', file.name, 'размер:', file.size);
 
-      // Создаем запись в базе данных
-      const photoReport = await prisma.photoReport.create({
-        data: {
+      try {
+        // Загружаем файл в облачное хранилище (Timeweb S3)
+        const fileUrl = await uploadImage(file);
+        console.log('✅ API: Файл загружен в S3:', fileUrl);
+
+        // Создаем запись в базе данных
+        // Для виртуальных задач taskId может не существовать в БД
+        // Поэтому НЕ передаем taskId если это виртуальная задача
+        const photoData: any = {
           url: fileUrl,
           comment: comment || null,
           uploaderId: user.id,
-          objectId: objectId,
-          taskId: taskId
+          objectId: objectId
+        };
+        
+        // Только для материализованных задач добавляем taskId
+        // Виртуальные задачи (с датой в ID) не существуют в таблице Task
+        if (taskId && !taskId.includes('-2025-')) {
+          photoData.taskId = taskId;
         }
-      });
+        
+        const photoReport = await prisma.photoReport.create({
+          data: photoData
+        });
 
-      uploadedPhotos.push(photoReport);
+        console.log('✅ API: Запись в БД создана:', photoReport.id);
+        uploadedPhotos.push(photoReport);
+      } catch (fileError) {
+        console.error('❌ API: Ошибка загрузки файла:', file.name, fileError);
+        throw fileError;
+      }
     }
 
     // Логируем действие
@@ -93,8 +130,15 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Ошибка загрузки фотоотчетов:', error);
-    return NextResponse.json({ message: 'Ошибка сервера' }, { status: 500 });
+    console.error('❌ API: Ошибка загрузки фотоотчетов:', error);
+    console.error('❌ API: Детали ошибки:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    return NextResponse.json({ 
+      message: 'Ошибка сервера: ' + (error instanceof Error ? error.message : String(error))
+    }, { status: 500 });
   }
 }
 

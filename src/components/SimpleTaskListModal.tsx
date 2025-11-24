@@ -20,6 +20,7 @@ interface SimpleTaskListModalProps {
   tasks: UnifiedTask[];
   onTaskComplete?: (task: UnifiedTask) => void;
   onDataRefresh?: () => void;
+  onTaskCompletionFromModal?: (completedTask: UnifiedTask) => Promise<void>;
 }
 
 const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
@@ -30,7 +31,8 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
   frequency,
   tasks,
   onTaskComplete,
-  onDataRefresh
+  onDataRefresh,
+  onTaskCompletionFromModal
 }) => {
   const getFrequencyLabel = (freq: string) => {
     const lowerFreq = freq?.toLowerCase();
@@ -404,7 +406,18 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
             task={taskToComplete}
             isOpen={!!taskToComplete}
             onClose={() => setTaskToComplete(null)}
-            onComplete={(completedTask) => {
+            onComplete={async (completedTask) => {
+              console.log('🔍 SIMPLE MODAL: onComplete вызван с задачей:', completedTask.id);
+              
+              // Вызываем функцию завершения из родительского компонента
+              if (onTaskCompletionFromModal) {
+                console.log('🔍 SIMPLE MODAL: Вызываем onTaskCompletionFromModal...');
+                await onTaskCompletionFromModal(completedTask);
+                console.log('✅ SIMPLE MODAL: onTaskCompletionFromModal выполнен');
+              } else {
+                console.warn('⚠️ SIMPLE MODAL: onTaskCompletionFromModal не передан!');
+              }
+              
               setTaskToComplete(null);
               // Перезагружаем данные календаря
               if (onDataRefresh) {

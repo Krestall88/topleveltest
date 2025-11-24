@@ -225,22 +225,48 @@ export default function UnifiedTaskCompletionModal({
 
       // Загружаем фото
       const photoUrls: string[] = [];
-      for (const photo of photos) {
-        const formData = new FormData();
-        formData.append('file', photo);
-        formData.append('type', 'task-completion');
-        formData.append('taskId', task.id);
-
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (uploadResponse.ok) {
-          const { url } = await uploadResponse.json();
-          photoUrls.push(url);
-        }
+      console.log('📸 UNIFIED MODAL: Начинаем загрузку фото:', photos.length);
+      
+      // Загружаем все фото одним запросом
+      const formData = new FormData();
+      
+      photos.forEach(photo => {
+        formData.append('photos', photo);
+        console.log('📸 UNIFIED MODAL: Добавляем фото:', photo.name);
+      });
+      
+      formData.append('taskId', task.id);
+      if (task.objectId) {
+        formData.append('objectId', task.objectId);
       }
+      if (comment.trim()) {
+        formData.append('comment', comment.trim());
+      }
+
+      console.log('📸 UNIFIED MODAL: Отправляем запрос на загрузку...');
+      
+      const uploadResponse = await fetch('/api/photos/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      console.log('📸 UNIFIED MODAL: Ответ от сервера:', uploadResponse.status);
+
+      if (uploadResponse.ok) {
+        const result = await uploadResponse.json();
+        console.log('📸 UNIFIED MODAL: Результат загрузки:', result);
+        
+        // API возвращает массив фото
+        if (result.photos && result.photos.length > 0) {
+          photoUrls.push(...result.photos.map((p: any) => p.url));
+        }
+      } else {
+        const error = await uploadResponse.json();
+        console.error('❌ UNIFIED MODAL: Ошибка загрузки фото:', error);
+        throw new Error(error.message || 'Ошибка загрузки фото');
+      }
+      
+      console.log('✅ UNIFIED MODAL: Все фото загружены:', photoUrls);
 
       // Передаём данные о завершении наверх, где уже вызывается API
       const completedTask: UnifiedTask = {
@@ -254,10 +280,13 @@ export default function UnifiedTaskCompletionModal({
 
       console.log('🔍 UNIFIED MODAL: Готовые данные для завершения задачи:', {
         taskId: completedTask.id,
-        photosCount: photoUrls.length
+        photosCount: photoUrls.length,
+        photos: photoUrls
       });
 
-      onComplete(completedTask);
+      console.log('🔍 UNIFIED MODAL: Вызываем onComplete...');
+      await onComplete(completedTask);
+      console.log('✅ UNIFIED MODAL: onComplete выполнен успешно!');
 
       // Сбрасываем форму для следующей задачи
       setComment('');

@@ -10,7 +10,14 @@ const nextConfig = {
   },
   // Настройки для изображений
   images: {
-    domains: ['localhost'],
+    domains: ['localhost', 's3.twcstorage.ru'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 's3.twcstorage.ru',
+        pathname: '/**',
+      },
+    ],
     unoptimized: true
   },
   // Обновленная настройка для Prisma
