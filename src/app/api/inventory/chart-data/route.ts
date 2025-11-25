@@ -91,12 +91,16 @@ export async function GET(request: NextRequest) {
         const amount = parseFloat(limit.amount.toString());
         
         if (limit.periodType === 'MONTHLY') {
+          // Месячный лимит - берем как есть
           return sum + amount;
         } else if (limit.periodType === 'DAILY') {
+          // Ежедневный лимит * количество дней в месяце
           return sum + (amount * daysInMonth);
         } else if (limit.periodType === 'SEMI_ANNUAL') {
+          // Полугодовой лимит / 6 месяцев (распределяем на 6 месяцев)
           return sum + (amount / 6);
         } else if (limit.periodType === 'ANNUAL') {
+          // Годовой лимит / 12 месяцев (распределяем на 12 месяцев)
           return sum + (amount / 12);
         }
         
