@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
 import { prisma } from '@/lib/prisma';
+import { cleanupExpenseLimitDuplicates } from '@/lib/expenseLimits';
 
 async function getUserFromToken(request: NextRequest) {
   const cookieStore = await cookies();
@@ -29,7 +30,7 @@ async function getUserFromToken(request: NextRequest) {
 // PATCH /api/expense-limits/[id] - Обновить лимит
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUserFromToken(request);
@@ -38,7 +39,7 @@ export async function PATCH(
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const {
       amount,
@@ -89,6 +90,12 @@ export async function PATCH(
           select: { id: true, name: true }
         }
       }
+    });
+
+    await cleanupExpenseLimitDuplicates(prisma, {
+      objectId: limit.object.id,
+      categoryId: limit.categoryId,
+      periodType: updated.periodType
     });
 
     return NextResponse.json({ limit: updated });

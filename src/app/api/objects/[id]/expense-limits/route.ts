@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
 import { prisma } from '@/lib/prisma';
+import { dedupeLimits, cleanupExpenseLimitDuplicates } from '@/lib/expenseLimits';
 
 async function getUserFromToken(request: NextRequest) {
   const cookieStore = await cookies();
@@ -58,7 +59,7 @@ export async function GET(
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
     }
 
-    const limits = await prisma.expenseCategoryLimit.findMany({
+    let limits = await prisma.expenseCategoryLimit.findMany({
       where: { objectId },
       include: {
         category: true,
@@ -71,6 +72,8 @@ export async function GET(
         { periodType: 'asc' }
       ]
     });
+
+    limits = dedupeLimits(limits);
 
     return NextResponse.json({ limits });
   } catch (error) {
@@ -197,42 +200,57 @@ export async function POST(
       });
     }
 
-    if (existingLimit) {
-      console.log('⚠️ Лимит уже существует:', existingLimit.id);
-      return NextResponse.json(
-        { message: 'Limit for this category and period already exists', limitId: existingLimit.id },
-        { status: 400 }
-      );
-    }
-
-    const limitData = {
-      objectId,
-      categoryId,
+    const baseData: any = {
       amount,
       periodType,
+      isRecurring: isRecurring || false,
+      setById: user.id,
       month: periodType === 'MONTHLY' ? month : null,
       year: periodType === 'MONTHLY' ? year : null,
-      startDate: startDate ? new Date(startDate) : null,
-      endDate: endDate ? new Date(endDate) : null,
-      isRecurring: isRecurring || false,
-      setById: user.id
+      startDate: periodType === 'MONTHLY' ? null : (startDate ? new Date(startDate) : null),
+      endDate: periodType === 'MONTHLY' ? null : (endDate ? new Date(endDate) : null)
     };
 
-    console.log('💾 Создаем лимит с данными:', limitData);
+    let limit;
 
-    const limit = await prisma.expenseCategoryLimit.create({
-      data: limitData,
-      include: {
-        category: true,
-        setBy: {
-          select: { id: true, name: true }
+    if (existingLimit) {
+      console.log('♻️ Обновляем существующий лимит:', existingLimit.id);
+      limit = await prisma.expenseCategoryLimit.update({
+        where: { id: existingLimit.id },
+        data: baseData,
+        include: {
+          category: true,
+          setBy: {
+            select: { id: true, name: true }
+          }
         }
-      }
+      });
+    } else {
+      console.log('💾 Создаем лимит с данными:', baseData);
+      limit = await prisma.expenseCategoryLimit.create({
+        data: {
+          objectId,
+          categoryId,
+          ...baseData
+        },
+        include: {
+          category: true,
+          setBy: {
+            select: { id: true, name: true }
+          }
+        }
+      });
+    }
+
+    await cleanupExpenseLimitDuplicates(prisma, {
+      objectId,
+      categoryId,
+      periodType
     });
 
-    console.log('✅ Лимит успешно создан:', limit);
+    console.log('✅ Лимит сохранен:', limit.id);
 
-    return NextResponse.json({ limit }, { status: 201 });
+    return NextResponse.json({ limit }, { status: existingLimit ? 200 : 201 });
   } catch (error: any) {
     console.error('Error creating expense limit:', error);
     

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
 import { prisma } from '@/lib/prisma';
+import { dedupeLimits } from '@/lib/expenseLimits';
 
 async function getUserFromToken(request: NextRequest) {
   const cookieStore = await cookies();

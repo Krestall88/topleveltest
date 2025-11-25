@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
 import { prisma } from '@/lib/prisma';
 import { Decimal } from '@prisma/client/runtime/library';
+import { dedupeLimits } from '@/lib/expenseLimits';
 
 async function getUserFromToken(request: NextRequest) {
   const cookieStore = await cookies();
@@ -72,10 +73,12 @@ export async function GET(
     });
 
     // Получаем лимиты для объекта
-    const limits = await prisma.expenseCategoryLimit.findMany({
+    let limits = await prisma.expenseCategoryLimit.findMany({
       where: { objectId },
       include: { category: true }
     });
+
+    limits = dedupeLimits(limits);
 
     // Получаем расходы за месяц по категориям
     const expenses = await prisma.inventoryExpense.groupBy({

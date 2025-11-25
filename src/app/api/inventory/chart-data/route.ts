@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { dedupeLimits } from '@/lib/expenseLimits';
 import { getAuthSession } from '@/lib/auth';
 
 const prisma = new PrismaClient();
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
       const year = targetDate.getFullYear();
 
       // Получаем лимиты по категориям за месяц (только активные категории)
-      const categoryLimits = await prisma.expenseCategoryLimit.findMany({
+      let categoryLimits = await prisma.expenseCategoryLimit.findMany({
         where: {
           objectId,
           category: {
@@ -80,10 +81,20 @@ export async function GET(request: NextRequest) {
           ]
         },
         select: {
+          id: true,
+          objectId: true,
+          categoryId: true,
           amount: true,
-          periodType: true
+          periodType: true,
+          month: true,
+          year: true,
+          startDate: true,
+          endDate: true,
+          updatedAt: true
         }
       });
+
+      categoryLimits = dedupeLimits(categoryLimits);
 
       // Суммируем лимиты по категориям, приводя к месячному эквиваленту
       const daysInMonth = new Date(year, month, 0).getDate();
