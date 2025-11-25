@@ -26,7 +26,94 @@ async function getUserFromToken(request: NextRequest) {
   }
 }
 
-// POST /api/expense-limits/cleanup-duplicates - Найти и удалить дубликаты лимитов
+// GET /api/expense-limits/cleanup-duplicates - Просмотр дубликатов (без удаления)
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getUserFromToken(request);
+
+    if (!user || user.role !== 'ADMIN') {
+      return NextResponse.json({ message: 'Forbidden: Admin only' }, { status: 403 });
+    }
+
+    // Находим все лимиты
+    const allLimits = await prisma.expenseCategoryLimit.findMany({
+      include: {
+        category: { select: { name: true } },
+        object: { select: { name: true } }
+      },
+      orderBy: [
+        { objectId: 'asc' },
+        { categoryId: 'asc' },
+        { periodType: 'asc' },
+        { createdAt: 'asc' }
+      ]
+    });
+
+    console.log(`📊 Всего лимитов в базе: ${allLimits.length}`);
+
+    // Группируем лимиты
+    const groupedLimits = new Map<string, typeof allLimits>();
+
+    for (const limit of allLimits) {
+      let key: string;
+      
+      if (limit.periodType === 'MONTHLY') {
+        key = `${limit.objectId}_${limit.categoryId}_${limit.periodType}_${limit.month}_${limit.year}`;
+      } else if (limit.periodType === 'SEMI_ANNUAL' || limit.periodType === 'ANNUAL') {
+        key = `${limit.objectId}_${limit.categoryId}_${limit.periodType}_${limit.startDate?.toISOString() || 'null'}_${limit.endDate?.toISOString() || 'null'}`;
+      } else {
+        // DAILY
+        key = `${limit.objectId}_${limit.categoryId}_${limit.periodType}`;
+      }
+      
+      if (!groupedLimits.has(key)) {
+        groupedLimits.set(key, []);
+      }
+      
+      groupedLimits.get(key)!.push(limit);
+    }
+
+    // Находим группы с дубликатами
+    const duplicates = [];
+
+    for (const [key, limits] of groupedLimits.entries()) {
+      if (limits.length > 1) {
+        duplicates.push({
+          key,
+          count: limits.length,
+          objectName: limits[0].object.name,
+          categoryName: limits[0].category.name,
+          periodType: limits[0].periodType,
+          limits: limits.map(l => ({
+            id: l.id,
+            amount: l.amount.toString(),
+            createdAt: l.createdAt,
+            startDate: l.startDate,
+            endDate: l.endDate,
+            month: l.month,
+            year: l.year
+          }))
+        });
+      }
+    }
+
+    return NextResponse.json({
+      totalLimits: allLimits.length,
+      duplicateGroups: duplicates.length,
+      totalDuplicates: duplicates.reduce((sum, d) => sum + (d.count - 1), 0),
+      duplicates
+    });
+
+  } catch (error) {
+    console.error('Error finding duplicates:', error);
+    return NextResponse.json(
+      { message: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST /api/expense-limits/cleanup-duplicates - Удалить дубликаты
 export async function POST(request: NextRequest) {
   try {
     const user = await getUserFromToken(request);
@@ -47,11 +134,20 @@ export async function POST(request: NextRequest) {
 
     console.log(`📊 Всего лимитов в базе: ${allLimits.length}`);
 
-    // Группируем лимиты по ключу: objectId + categoryId + periodType + startDate + endDate
+    // Группируем лимиты
     const groupedLimits = new Map<string, typeof allLimits>();
 
     for (const limit of allLimits) {
-      const key = `${limit.objectId}_${limit.categoryId}_${limit.periodType}_${limit.startDate?.toISOString() || 'null'}_${limit.endDate?.toISOString() || 'null'}`;
+      let key: string;
+      
+      if (limit.periodType === 'MONTHLY') {
+        key = `${limit.objectId}_${limit.categoryId}_${limit.periodType}_${limit.month}_${limit.year}`;
+      } else if (limit.periodType === 'SEMI_ANNUAL' || limit.periodType === 'ANNUAL') {
+        key = `${limit.objectId}_${limit.categoryId}_${limit.periodType}_${limit.startDate?.toISOString() || 'null'}_${limit.endDate?.toISOString() || 'null'}`;
+      } else {
+        // DAILY
+        key = `${limit.objectId}_${limit.categoryId}_${limit.periodType}`;
+      }
       
       if (!groupedLimits.has(key)) {
         groupedLimits.set(key, []);

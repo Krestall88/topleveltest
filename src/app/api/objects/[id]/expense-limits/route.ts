@@ -158,6 +158,53 @@ export async function POST(
     // Если не переданы, они будут null в базе
     // (фронтенд теперь всегда передает их)
 
+    // ПРОВЕРКА НА СУЩЕСТВОВАНИЕ ЛИМИТА
+    let existingLimit = null;
+    
+    if (periodType === 'MONTHLY') {
+      // Для месячных - проверяем по objectId, categoryId, periodType, month, year
+      existingLimit = await prisma.expenseCategoryLimit.findFirst({
+        where: {
+          objectId,
+          categoryId,
+          periodType: 'MONTHLY',
+          month,
+          year
+        }
+      });
+    } else if (periodType === 'SEMI_ANNUAL' || periodType === 'ANNUAL') {
+      // Для полугодовых и годовых - проверяем по objectId, categoryId, periodType, startDate, endDate
+      const checkStartDate = startDate ? new Date(startDate) : null;
+      const checkEndDate = endDate ? new Date(endDate) : null;
+      
+      existingLimit = await prisma.expenseCategoryLimit.findFirst({
+        where: {
+          objectId,
+          categoryId,
+          periodType,
+          startDate: checkStartDate,
+          endDate: checkEndDate
+        }
+      });
+    } else if (periodType === 'DAILY') {
+      // Для дневных - проверяем только objectId, categoryId, periodType
+      existingLimit = await prisma.expenseCategoryLimit.findFirst({
+        where: {
+          objectId,
+          categoryId,
+          periodType: 'DAILY'
+        }
+      });
+    }
+
+    if (existingLimit) {
+      console.log('⚠️ Лимит уже существует:', existingLimit.id);
+      return NextResponse.json(
+        { message: 'Limit for this category and period already exists', limitId: existingLimit.id },
+        { status: 400 }
+      );
+    }
+
     const limitData = {
       objectId,
       categoryId,

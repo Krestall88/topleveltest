@@ -190,18 +190,42 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        const created = await prisma.expenseCategoryLimit.create({
-          data: {
-            amount: amount,
-            periodType: periodType,
-            startDate: new Date(startDate),
-            endDate: new Date(endDate),
+        // Проверяем, нет ли уже такого лимита
+        const existing = await prisma.expenseCategoryLimit.findFirst({
+          where: {
             objectId,
             categoryId,
-            setById: user.id
+            periodType,
+            startDate: new Date(startDate),
+            endDate: new Date(endDate)
           }
         });
-        results.push(created);
+
+        if (existing) {
+          // Обновляем существующий
+          const updated = await prisma.expenseCategoryLimit.update({
+            where: { id: existing.id },
+            data: {
+              amount: amount,
+              setById: user.id
+            }
+          });
+          results.push(updated);
+        } else {
+          // Создаем новый
+          const created = await prisma.expenseCategoryLimit.create({
+            data: {
+              amount: amount,
+              periodType: periodType,
+              startDate: new Date(startDate),
+              endDate: new Date(endDate),
+              objectId,
+              categoryId,
+              setById: user.id
+            }
+          });
+          results.push(created);
+        }
       }
 
       // Логируем действие
