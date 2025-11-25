@@ -111,6 +111,20 @@ export async function GET(
 
       // Находим лимиты по этой категории
       const categoryLimits = limits.filter(l => l.categoryId === category.id);
+      
+      console.log(`📊 [${category.name}] Найдено лимитов: ${categoryLimits.length}`);
+      if (categoryLimits.length > 1) {
+        console.warn(`⚠️ [${category.name}] ВНИМАНИЕ: Найдено ${categoryLimits.length} лимитов! Возможно, есть дубликаты.`);
+        categoryLimits.forEach((lim, idx) => {
+          console.log(`  Лимит ${idx + 1}:`, {
+            id: lim.id,
+            amount: lim.amount.toString(),
+            periodType: lim.periodType,
+            startDate: lim.startDate,
+            endDate: lim.endDate
+          });
+        });
+      }
 
       // Считаем общий лимит (ВСЕ типы лимитов, приведенные к месячному эквиваленту)
       let totalLimit = new Decimal(0);
