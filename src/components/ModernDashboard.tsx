@@ -25,6 +25,9 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import ManagerDetailModal from './ManagerDetailModal';
+import TasksStatsModal from './TasksStatsModal';
+import CompletionStatsModal from './CompletionStatsModal';
 
 interface DashboardData {
   overview: {
@@ -65,6 +68,26 @@ interface DashboardData {
     monthTasks: number;
     totalInventory: number;
   };
+  inventory: {
+    month: number;
+    year: number;
+    summary: {
+      totalLimit: number;
+      totalSpent: number;
+      totalBalance: number;
+      overBudgetCount: number;
+    };
+    topRisks: Array<{
+      id: string;
+      name: string;
+      address?: string | null;
+      limit: number;
+      spent: number;
+      balance: number;
+      utilization: number;
+      isOverBudget: boolean;
+    }>;
+  };
 }
 
 interface ModernDashboardProps {
@@ -77,6 +100,10 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
+  const [selectedManagerId, setSelectedManagerId] = useState<string | null>(null);
+  const [isManagerModalOpen, setIsManagerModalOpen] = useState(false);
+  const [isTasksModalOpen, setIsTasksModalOpen] = useState(false);
+  const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -121,6 +148,14 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
     if (change > 0) return 'text-green-500';
     if (change < 0) return 'text-red-500';
     return 'text-gray-500';
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('ru-RU', {
+      style: 'currency',
+      currency: 'RUB',
+      maximumFractionDigits: 0
+    }).format(amount);
   };
 
   if (loading) {
@@ -203,8 +238,8 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer group"
-                onClick={() => setSelectedMetric('objects')}>
+          <Link href="/objects">
+            <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer group">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">
                 Объекты
@@ -227,6 +262,7 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
               </div>
             </CardContent>
           </Card>
+          </Link>
         </motion.div>
 
         <motion.div
@@ -234,8 +270,8 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer group"
-                onClick={() => setSelectedMetric('managers')}>
+          <Link href="/managers">
+            <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer group">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">
                 Менеджеры
@@ -258,6 +294,7 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
               </div>
             </CardContent>
           </Card>
+          </Link>
         </motion.div>
 
         <motion.div
@@ -265,8 +302,10 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer group"
-                onClick={() => setSelectedMetric('tasks')}>
+          <Card 
+            className="hover:shadow-lg transition-all duration-300 cursor-pointer group"
+            onClick={() => setIsTasksModalOpen(true)}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">
                 Задачи
@@ -296,8 +335,10 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
         >
-          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer group"
-                onClick={() => setSelectedMetric('completion')}>
+          <Card 
+            className="hover:shadow-lg transition-all duration-300 cursor-pointer group"
+            onClick={() => setIsCompletionModalOpen(true)}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">
                 Выполнение
@@ -341,7 +382,7 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-4">
-              <Link href="/additional-tasks" className="group">
+              <Link href="/manager?filter=active" className="group">
                 <div className="flex items-center space-x-3 p-3 rounded-lg bg-white hover:bg-blue-50 transition-colors">
                   <div className="p-2 bg-blue-100 rounded-lg">
                     <Clock className="h-5 w-5 text-blue-600" />
@@ -354,7 +395,7 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
                 </div>
               </Link>
 
-              <Link href="/additional-tasks" className="group">
+              <Link href="/manager?filter=overdue" className="group">
                 <div className="flex items-center space-x-3 p-3 rounded-lg bg-white hover:bg-red-50 transition-colors">
                   <div className="p-2 bg-red-100 rounded-lg">
                     <AlertCircle className="h-5 w-5 text-red-600" />
@@ -367,7 +408,7 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
                 </div>
               </Link>
 
-              <Link href="/additional-tasks" className="group">
+              <Link href="/requests" className="group">
                 <div className="flex items-center space-x-3 p-3 rounded-lg bg-white hover:bg-green-50 transition-colors">
                   <div className="p-2 bg-green-100 rounded-lg">
                     <MessageSquare className="h-5 w-5 text-green-600" />
@@ -397,12 +438,61 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
         </Card>
       </motion.div>
 
+      {/* Аналитика по инвентарю */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.6 }}
+      >
+        <Card className="border-emerald-100">
+          <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+              <CardTitle className="flex items-center space-x-2">
+                <Package className="h-5 w-5 text-emerald-600" />
+                <span>Аналитика по инвентарю</span>
+              </CardTitle>
+              <p className="text-sm text-gray-500 mt-1">
+                Показатели за {data.inventory.month.toString().padStart(2, '0')}.{data.inventory.year}
+              </p>
+            </div>
+            <Link href="/inventory">
+              <Button variant="outline" size="sm" className="mt-4 md:mt-0">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Управление инвентарём
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="p-4 rounded-xl border border-emerald-50 bg-emerald-50/50">
+                <p className="text-sm text-gray-600">Совокупный лимит</p>
+                <p className="text-2xl font-bold text-gray-900">{formatCurrency(data.inventory.summary.totalLimit)}</p>
+              </div>
+              <div className="p-4 rounded-xl border border-rose-50 bg-rose-50/50">
+                <p className="text-sm text-gray-600">Потрачено</p>
+                <p className="text-2xl font-bold text-rose-600">{formatCurrency(data.inventory.summary.totalSpent)}</p>
+              </div>
+              <div className="p-4 rounded-xl border border-sky-50 bg-sky-50/50">
+                <p className="text-sm text-gray-600">Остаток</p>
+                <p className={`text-2xl font-bold ${data.inventory.summary.totalBalance < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                  {formatCurrency(data.inventory.summary.totalBalance)}
+                </p>
+              </div>
+              <div className="p-4 rounded-xl border border-amber-50 bg-amber-50/50">
+                <p className="text-sm text-gray-600">Перерасходы</p>
+                <p className="text-2xl font-bold text-amber-600">{data.inventory.summary.overBudgetCount}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
       {/* Топ менеджеры и объекты */}
       <div className="grid gap-6 lg:grid-cols-2">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
+          transition={{ duration: 0.5, delay: 0.7 }}
         >
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -419,8 +509,14 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
             </CardHeader>
             <CardContent className="space-y-4">
               {data.performance.topManagers.map((manager, index) => (
-                <Link key={manager.id} href={`/managers/${manager.id}`}>
-                  <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                <div 
+                  key={manager.id}
+                  onClick={() => {
+                    setSelectedManagerId(manager.id);
+                    setIsManagerModalOpen(true);
+                  }}
+                  className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                >
                     <div className="flex-shrink-0">
                       <Badge variant={index === 0 ? "default" : "secondary"}>
                         #{index + 1}
@@ -440,8 +536,7 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
                       </div>
                       <div className="text-xs text-gray-500">выполнение</div>
                     </div>
-                  </div>
-                </Link>
+                </div>
               ))}
             </CardContent>
           </Card>
@@ -450,7 +545,7 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.7 }}
+          transition={{ duration: 0.5, delay: 0.8 }}
         >
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -500,7 +595,7 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.8 }}
+        transition={{ duration: 0.5, delay: 0.9 }}
       >
         <Card>
           <CardHeader>
@@ -542,6 +637,28 @@ export default function ModernDashboard({ userRole, userId }: ModernDashboardPro
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Manager Detail Modal */}
+      <ManagerDetailModal
+        managerId={selectedManagerId || ''}
+        isOpen={isManagerModalOpen}
+        onClose={() => {
+          setIsManagerModalOpen(false);
+          setSelectedManagerId(null);
+        }}
+      />
+
+      {/* Tasks Stats Modal */}
+      <TasksStatsModal
+        isOpen={isTasksModalOpen}
+        onClose={() => setIsTasksModalOpen(false)}
+      />
+
+      {/* Completion Stats Modal */}
+      <CompletionStatsModal
+        isOpen={isCompletionModalOpen}
+        onClose={() => setIsCompletionModalOpen(false)}
+      />
     </div>
   );
 }

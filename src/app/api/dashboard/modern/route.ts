@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserFromToken, getManagerObjectsFilter } from '@/lib/auth-middleware';
+import { getUserFromToken } from '@/lib/auth-middleware';
 import { createObjectAccessFilter } from '@/lib/user-objects-middleware';
 import { prisma } from '@/lib/prisma';
+import { dedupeLimits } from '@/lib/expenseLimits';
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,6 +22,13 @@ export async function GET(req: NextRequest) {
 
     // Фильтр объектов по правам доступа пользователя
     const objectsFilter = await createObjectAccessFilter(user, 'id');
+
+    const currentDate = new Date();
+    const targetMonth = currentDate.getMonth() + 1;
+    const targetYear = currentDate.getFullYear();
+    const monthStart = new Date(targetYear, targetMonth - 1, 1);
+    const monthEnd = new Date(targetYear, targetMonth, 0, 23, 59, 59);
+    const daysInMonth = new Date(targetYear, targetMonth, 0).getDate();
 
     // Получаем основные данные
     const [
@@ -68,8 +76,10 @@ export async function GET(req: NextRequest) {
         }
       }),
       
-      // Новые дополнительные заявки (пока 0, так как модель может не существовать)
-      0,
+      // Новые заявки
+      prisma.request.count({
+        where: { status: 'NEW' }
+      }),
       
       // Фото за сегодня
       prisma.photoReport.count({
@@ -128,6 +138,19 @@ export async function GET(req: NextRequest) {
       Math.round((lastMonthCompleted / lastMonthTasks) * 100) : 0;
     
     const completionChange = completionRate - lastMonthCompletionRate;
+
+    const lastMonthManagers = user.role === 'MANAGER'
+      ? 1
+      : await prisma.user.count({
+          where: {
+            role: 'MANAGER',
+            createdAt: { lt: lastMonth }
+          }
+        });
+
+    const managersChange = lastMonthManagers > 0
+      ? Math.round(((totalManagers - lastMonthManagers) / lastMonthManagers) * 100)
+      : 0;
 
     // Топ менеджеры (только для админов и заместителей)
     let topManagers: Array<{
@@ -243,6 +266,112 @@ export async function GET(req: NextRequest) {
       })
     ]);
 
+    const inventoryObjects = await prisma.cleaningObject.findMany({
+      where: objectsFilter,
+      select: {
+        id: true,
+        name: true,
+        address: true,
+        inventoryExpenses: {
+          where: {
+            month: targetMonth,
+            year: targetYear
+          },
+          select: {
+            amount: true
+          }
+        },
+        expenseCategoryLimits: {
+          where: {
+            category: {
+              isActive: true
+            },
+            OR: [
+              {
+                periodType: 'MONTHLY',
+                month: targetMonth,
+                year: targetYear
+              },
+              {
+                periodType: 'DAILY'
+              },
+              {
+                periodType: { in: ['SEMI_ANNUAL', 'ANNUAL'] },
+                startDate: { lte: monthEnd },
+                endDate: { gte: monthStart }
+              }
+            ]
+          },
+          select: {
+            id: true,
+            objectId: true,
+            categoryId: true,
+            amount: true,
+            periodType: true,
+            month: true,
+            year: true,
+            startDate: true,
+            endDate: true,
+            updatedAt: true
+          }
+        }
+      }
+    });
+
+    const inventoryStats = inventoryObjects.map((object) => {
+      const limits = dedupeLimits(object.expenseCategoryLimits as any);
+
+      const limitAmount = limits.reduce((sum: number, limit: any) => {
+        const amount = parseFloat(limit.amount.toString());
+
+        if (limit.periodType === 'MONTHLY') {
+          return sum + amount;
+        }
+
+        if (limit.periodType === 'DAILY') {
+          return sum + amount * daysInMonth;
+        }
+
+        if (limit.periodType === 'SEMI_ANNUAL' && limit.startDate && limit.endDate) {
+          return sum + amount / 6;
+        }
+
+        if (limit.periodType === 'ANNUAL' && limit.startDate && limit.endDate) {
+          return sum + amount / 12;
+        }
+
+        return sum;
+      }, 0);
+
+      const spent = object.inventoryExpenses.reduce(
+        (sum, expense) => sum + parseFloat(expense.amount.toString()),
+        0
+      );
+
+      const balance = limitAmount - spent;
+      const utilization = limitAmount > 0 ? (spent / limitAmount) * 100 : 0;
+
+      return {
+        id: object.id,
+        name: object.name,
+        address: object.address,
+        limit: limitAmount,
+        spent,
+        balance,
+        utilization,
+        isOverBudget: limitAmount > 0 ? balance < 0 : false
+      };
+    });
+
+    const totalInventoryLimit = inventoryStats.reduce((sum, item) => sum + item.limit, 0);
+    const totalInventorySpent = inventoryStats.reduce((sum, item) => sum + item.spent, 0);
+    const inventoryBalance = totalInventoryLimit - totalInventorySpent;
+    const inventoryOverBudget = inventoryStats.filter((item) => item.isOverBudget).length;
+    const topRiskObjects = inventoryStats
+      .filter((item) => item.limit > 0)
+      .sort((a, b) => b.utilization - a.utilization)
+      .slice(0, 3);
+
     const dashboardData = {
       overview: {
         totalObjects,
@@ -251,7 +380,7 @@ export async function GET(req: NextRequest) {
         completionRate,
         trendsData: {
           objectsChange,
-          managersChange: 0, // Менеджеры редко меняются
+          managersChange,
           tasksChange,
           completionChange
         }
@@ -270,7 +399,19 @@ export async function GET(req: NextRequest) {
         todayTasks,
         weekTasks,
         monthTasks,
-        totalInventory
+        totalInventory: totalInventoryLimit
+      },
+      inventory: {
+        month: targetMonth,
+        year: targetYear,
+        summary: {
+          totalLimit: totalInventoryLimit,
+          totalSpent: totalInventorySpent,
+          totalBalance: inventoryBalance,
+          overBudgetCount: inventoryOverBudget
+        },
+        topRisks: topRiskObjects,
+        objects: inventoryStats
       }
     };
 

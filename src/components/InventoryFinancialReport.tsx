@@ -61,6 +61,16 @@ interface ExpenseChartModalProps {
   balance: InventoryBalance | null;
 }
 
+interface ObjectInfo {
+  id: string;
+  name: string;
+  address?: string | null;
+  manager?: {
+    id: string;
+    name: string | null;
+  } | null;
+}
+
 interface BulkLimitModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -96,16 +106,30 @@ function EditLimitModal({ isOpen, onClose, balance, onSave }: EditLimitModalProp
   const [newCategoryDescription, setNewCategoryDescription] = useState('');
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+  const [selectedLimitId, setSelectedLimitId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (balance) {
-      setAmount(balance.limit.toString());
-    }
-    if (isOpen) {
+    if (isOpen && balance) {
+      resetForm(balance);
       loadCategories();
       loadUserRole();
+      loadExistingLimits(balance);
+    } else if (!isOpen) {
+      resetForm(null);
     }
-  }, [balance, isOpen]);
+  }, [isOpen, balance]);
+
+  const resetForm = (currentBalance: InventoryBalance | null) => {
+    setAmount(currentBalance?.limit?.toString() || '');
+    setPeriodType('MONTHLY');
+    setIsRecurring(false);
+    setEndMonth('');
+    setEndYear('');
+    setStartDate('');
+    setEndDate('');
+    setSelectedCategory('');
+    setSelectedLimitId(null);
+  };
 
   const loadCategories = async () => {
     try {
@@ -128,6 +152,53 @@ function EditLimitModal({ isOpen, onClose, balance, onSave }: EditLimitModalProp
       }
     } catch (error) {
       console.error('Error loading user role:', error);
+    }
+  };
+
+  const loadExistingLimits = async (currentBalance: InventoryBalance) => {
+    try {
+      const response = await fetch(`/api/objects/${currentBalance.objectId}/expense-limits`, {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const limits = (data.limits || []) as any[];
+        if (limits.length) {
+          const matchingMonthly = limits.find((limit) =>
+            limit.periodType === 'MONTHLY' &&
+            limit.month === currentBalance.month &&
+            limit.year === currentBalance.year
+          );
+          const selected = matchingMonthly || limits[0];
+          applyLimitDefaults(selected);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading object limits:', error);
+    }
+  };
+
+  const applyLimitDefaults = (limit: any) => {
+    if (!limit) return;
+    if (limit.category?.id) {
+      setSelectedCategory(limit.category.id);
+    }
+    setSelectedLimitId(limit.id || null);
+    if (limit.amount) {
+      setAmount(limit.amount.toString());
+    }
+    if (limit.periodType) {
+      setPeriodType(limit.periodType);
+    }
+    setIsRecurring(Boolean(limit.isRecurring));
+
+    if (limit.periodType === 'SEMI_ANNUAL' || limit.periodType === 'ANNUAL') {
+      if (limit.startDate) {
+        setStartDate(new Date(limit.startDate).toISOString().split('T')[0]);
+      }
+      if (limit.endDate) {
+        setEndDate(new Date(limit.endDate).toISOString().split('T')[0]);
+      }
     }
   };
 
@@ -529,12 +600,21 @@ function ExpenseChartModal({ isOpen, onClose, balance }: ExpenseChartModalProps)
   const [newLimitAmount, setNewLimitAmount] = useState('');
   const [editingSpent, setEditingSpent] = useState<{categoryId: string, categoryName: string, currentSpent: number} | null>(null);
   const [newSpentAmount, setNewSpentAmount] = useState('');
+  const [objectInfo, setObjectInfo] = useState<ObjectInfo | null>(null);
 
   useEffect(() => {
     if (isOpen && balance && activeTab === 'categories') {
       loadCategoryStats();
     }
   }, [isOpen, balance, activeTab]);
+
+  useEffect(() => {
+    if (isOpen && balance?.objectId) {
+      loadObjectInfo(balance.objectId);
+    } else if (!isOpen) {
+      setObjectInfo(null);
+    }
+  }, [isOpen, balance?.objectId]);
 
   const loadCategoryStats = async () => {
     if (!balance) return;
@@ -639,11 +719,39 @@ function ExpenseChartModal({ isOpen, onClose, balance }: ExpenseChartModalProps)
     setNewSpentAmount('');
   };
 
+  const loadObjectInfo = async (objectId: string) => {
+    try {
+      const response = await fetch(`/api/objects/${objectId}`, {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setObjectInfo({
+          id: data.id,
+          name: data.name,
+          address: data.address,
+          manager: data.manager
+        });
+      }
+    } catch (error) {
+      console.error('Error loading object info:', error);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Детальная аналитика расходов - {balance?.objectName}</DialogTitle>
+          <DialogTitle>
+            Детальная аналитика расходов - {objectInfo?.name || balance?.objectName}
+          </DialogTitle>
+          {(objectInfo?.address || objectInfo?.manager?.name) && (
+            <p className="text-sm text-gray-500">
+              {objectInfo?.address && <span>{objectInfo.address}</span>}
+              {objectInfo?.address && objectInfo?.manager?.name && <span> • </span>}
+              {objectInfo?.manager?.name && <span>Менеджер: {objectInfo.manager.name}</span>}
+            </p>
+          )}
         </DialogHeader>
 
         {/* Вкладки */}
