@@ -69,8 +69,24 @@ function processMarkdownContent(content: string): { processedContent: string; sc
   const screenshots: Array<{ number: number; description: string; alt: string }> = [];
   let screenshotCounter = 1;
 
-  // Находим все метки скриншотов и заменяем их на компоненты
-  const processedContent = content.replace(
+  let processedContent = content;
+
+  // 1. Обрабатываем новый формат: ![screenshot-XXX](screenshot-XXX.png)\n*Скриншот N: Описание*
+  processedContent = processedContent.replace(
+    /!\[screenshot-(\d+)\]\(screenshot-\d+\.png\)\s*\n\*Скриншот \d+: ([^*]+)\*/g,
+    (match, number, description) => {
+      const screenshotNumber = parseInt(number);
+      screenshots.push({
+        number: screenshotNumber,
+        description: description.trim(),
+        alt: description.trim()
+      });
+      return `{{SCREENSHOT:${screenshotNumber}}}`;
+    }
+  );
+
+  // 2. Обрабатываем старый формат: 📸 [СКРИНШОТ: Описание]
+  processedContent = processedContent.replace(
     /📸 \[СКРИНШОТ: ([^\]]+)\]/g,
     (match, description) => {
       const screenshotNumber = screenshotCounter++;
