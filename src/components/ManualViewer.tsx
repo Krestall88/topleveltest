@@ -225,11 +225,63 @@ export default function ManualViewer({ isOpen, onClose, initialSlug }: ManualVie
                 {children}
               </td>
             ),
-            a: ({ children, href }) => (
-              <a href={href} className="text-blue-600 hover:text-blue-800 underline">
-                {children}
-              </a>
-            ),
+            a: ({ children, href }) => {
+              // Обрабатываем внутренние ссылки на разделы
+              if (href?.startsWith('./') || href?.includes('.md')) {
+                const handleClick = (e: React.MouseEvent) => {
+                  e.preventDefault();
+                  
+                  // Извлекаем slug из ссылки (например, ./02_УПРАВЛЕНИЕ_ОБЪЕКТАМИ.md -> 02-upravlenie-obektami)
+                  const match = href.match(/\.\/(\d+)_([^.#]+)/);
+                  if (match) {
+                    const number = match[1];
+                    const titlePart = match[2]
+                      .toLowerCase()
+                      .replace(/_/g, '-')
+                      .replace(/а/g, 'a').replace(/б/g, 'b').replace(/в/g, 'v')
+                      .replace(/г/g, 'g').replace(/д/g, 'd').replace(/е/g, 'e')
+                      .replace(/ё/g, 'yo').replace(/ж/g, 'zh').replace(/з/g, 'z')
+                      .replace(/и/g, 'i').replace(/й/g, 'y').replace(/к/g, 'k')
+                      .replace(/л/g, 'l').replace(/м/g, 'm').replace(/н/g, 'n')
+                      .replace(/о/g, 'o').replace(/п/g, 'p').replace(/р/g, 'r')
+                      .replace(/с/g, 's').replace(/т/g, 't').replace(/у/g, 'u')
+                      .replace(/ф/g, 'f').replace(/х/g, 'h').replace(/ц/g, 'ts')
+                      .replace(/ч/g, 'ch').replace(/ш/g, 'sh').replace(/щ/g, 'sch')
+                      .replace(/ъ/g, '').replace(/ы/g, 'y').replace(/ь/g, '')
+                      .replace(/э/g, 'e').replace(/ю/g, 'yu').replace(/я/g, 'ya');
+                    
+                    const slug = `${number}-${titlePart}`;
+                    const targetSection = sections.find(s => s.slug === slug);
+                    
+                    if (targetSection) {
+                      loadSection(targetSection.slug);
+                    }
+                  }
+                };
+                
+                return (
+                  <a 
+                    href="#" 
+                    onClick={handleClick}
+                    className="text-blue-600 hover:text-blue-800 underline cursor-pointer"
+                  >
+                    {children}
+                  </a>
+                );
+              }
+              
+              // Внешние ссылки открываем как обычно
+              return (
+                <a 
+                  href={href} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 underline"
+                >
+                  {children}
+                </a>
+              );
+            },
           }}
         >
           {part}
