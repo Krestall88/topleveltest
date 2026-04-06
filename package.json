@@ -65,7 +65,7 @@
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.395.0",
     "mailparser": "^3.7.4",
-    "next": "15.5.2",
+    "next": "15.5.9",
     "next-auth": "^4.24.11",
     "node-cron": "^4.2.1",
     "node-fetch": "^2.7.0",
