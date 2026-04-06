@@ -55,7 +55,15 @@ export async function uploadFileToStorage(
       );
 
       // Формируем публичный URL файла
-      const fileUrl = `${process.env.S3_ENDPOINT}/${process.env.S3_BUCKET_NAME}/${filePath}`;
+      // Для Timeweb Cloud правильный формат: https://bucket.s3.endpoint/path
+      const bucketName = process.env.S3_BUCKET_NAME;
+      const endpoint = process.env.S3_ENDPOINT || 'https://s3.twcstorage.ru';
+      
+      // Убираем https:// из endpoint для формирования URL
+      const endpointWithoutProtocol = endpoint.replace('https://', '').replace('http://', '');
+      
+      // Формат URL для Timeweb: https://bucket-name.endpoint/path
+      const fileUrl = `https://${bucketName}.${endpointWithoutProtocol}/${filePath}`;
       
       console.log('✅ Файл успешно загружен в S3:', fileUrl);
       

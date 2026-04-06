@@ -77,7 +77,15 @@ export async function POST(req: NextRequest) {
 
         // Создаем запись в базе данных
         // Для виртуальных задач taskId может не существовать в БД
-        // Поэтому НЕ передаем taskId если это виртуальная задача
+        // Виртуальные задачи имеют формат: techCardId-objectId-roomId-YYYY-MM-DD
+        const isVirtualTask = taskId && /\d{4}-\d{2}-\d{2}$/.test(taskId);
+        
+        console.log('🔍 API: Проверка задачи:', {
+          taskId,
+          isVirtual: isVirtualTask,
+          pattern: /\d{4}-\d{2}-\d{2}$/.test(taskId || '')
+        });
+        
         const photoData: any = {
           url: fileUrl,
           comment: comment || null,
@@ -86,9 +94,22 @@ export async function POST(req: NextRequest) {
         };
         
         // Только для материализованных задач добавляем taskId
-        // Виртуальные задачи (с датой в ID) не существуют в таблице Task
-        if (taskId && !taskId.includes('-2025-')) {
-          photoData.taskId = taskId;
+        // Для виртуальных задач НЕ добавляем taskId, чтобы избежать foreign key error
+        if (taskId && !isVirtualTask) {
+          // Проверяем, существует ли задача в БД
+          const taskExists = await prisma.task.findUnique({
+            where: { id: taskId },
+            select: { id: true }
+          });
+          
+          if (taskExists) {
+            photoData.taskId = taskId;
+            console.log('✅ API: Задача существует, добавляем taskId');
+          } else {
+            console.log('⚠️ API: Задача не найдена в БД, пропускаем taskId');
+          }
+        } else if (isVirtualTask) {
+          console.log('⚠️ API: Виртуальная задача, пропускаем taskId');
         }
         
         const photoReport = await prisma.photoReport.create({
@@ -158,28 +179,46 @@ export async function GET(req: NextRequest) {
 
     // Строим условия для поиска
     const whereClause: any = {};
+    let managerObjects: Array<{ id: string; name?: string | null }> = [];
+    let managerObjectIds: string[] = [];
+    let managerObjectNames: string[] = [];
 
-    if (objectId) whereClause.objectId = objectId;
-    if (taskId) whereClause.taskId = taskId;
-    if (techCardId) whereClause.techCardId = techCardId;
-
-    // Права доступа для менеджеров
+    // Права доступа для менеджеров - СНАЧАЛА фильтруем по объектам менеджера
     if (user.role === 'MANAGER') {
       // Получаем объекты менеджера
-      const managerObjects = await prisma.cleaningObject.findMany({
+      managerObjects = await prisma.cleaningObject.findMany({
         where: { managerId: user.id },
-        select: { id: true }
+        select: { id: true, name: true }
       });
+      managerObjectIds = managerObjects.map(obj => obj.id);
+      managerObjectNames = managerObjects.map(obj => obj.name).filter((name): name is string => Boolean(name));
       
       if (managerObjects.length > 0) {
-        whereClause.objectId = {
-          in: managerObjects.map(obj => obj.id)
-        };
+        // Если передан objectId, проверяем что он принадлежит менеджеру
+        if (objectId) {
+          if (managerObjectIds.includes(objectId)) {
+            whereClause.objectId = objectId;
+          } else {
+            // Объект не принадлежит менеджеру - возвращаем пустой результат
+            return NextResponse.json({ photos: [] });
+          }
+        } else {
+          // Фильтруем только по объектам менеджера
+          whereClause.objectId = {
+            in: managerObjectIds
+          };
+        }
       } else {
         // Если у менеджера нет объектов, возвращаем пустой результат
-        whereClause.objectId = 'no-objects';
+        return NextResponse.json({ photos: [] });
       }
+    } else {
+      // Для админов и других ролей - применяем фильтры как есть
+      if (objectId) whereClause.objectId = objectId;
     }
+
+    if (taskId) whereClause.taskId = taskId;
+    if (techCardId) whereClause.techCardId = techCardId;
 
     // Сначала проверяем фотоотчеты из таблицы photoReport
     const photos = await prisma.photoReport.findMany({
@@ -193,27 +232,72 @@ export async function GET(req: NextRequest) {
     console.log('🔍 API фотоотчетов: найдено в photoReport:', photos.length);
 
     // Также проверяем завершенные задачи с фотографиями
-    const tasksWithPhotos = await prisma.task.findMany({
-      where: {
-        status: 'COMPLETED',
-        completionPhotos: {
-          isEmpty: false
-        }
-      },
-      select: {
-        id: true,
-        description: true,
-        completionPhotos: true,
-        completedAt: true,
-        completedById: true,
-        checklistId: true,
-        roomId: true
-      },
-      orderBy: {
-        completedAt: 'desc'
-      },
-      take: 20
-    });
+    // Для менеджеров фильтруем по их объектам
+    let tasksWithPhotos: any[] = [];
+    
+    if (user.role === 'MANAGER') {
+      // Для менеджеров - только задачи их объектов
+      if (managerObjects.length > 0) {
+        tasksWithPhotos = await prisma.task.findMany({
+          where: {
+            status: 'COMPLETED',
+            completionPhotos: {
+              isEmpty: false
+            },
+            OR: [
+              {
+                checklist: {
+                  objectId: {
+                    in: managerObjectIds
+                  }
+                }
+              },
+              {
+                objectName: {
+                  in: managerObjectNames
+                }
+              }
+            ]
+          },
+          select: {
+            id: true,
+            description: true,
+            completionPhotos: true,
+            completedAt: true,
+            completedById: true,
+            checklistId: true,
+            roomId: true
+          },
+          orderBy: {
+            completedAt: 'desc'
+          },
+          take: 20
+        });
+      }
+    } else {
+      // Для админов - все задачи
+      tasksWithPhotos = await prisma.task.findMany({
+        where: {
+          status: 'COMPLETED',
+          completionPhotos: {
+            isEmpty: false
+          }
+        },
+        select: {
+          id: true,
+          description: true,
+          completionPhotos: true,
+          completedAt: true,
+          completedById: true,
+          checklistId: true,
+          roomId: true
+        },
+        orderBy: {
+          completedAt: 'desc'
+        },
+        take: 20
+      });
+    }
 
     console.log('🔍 API фотоотчетов: найдено завершенных задач с фото:', tasksWithPhotos.length);
 

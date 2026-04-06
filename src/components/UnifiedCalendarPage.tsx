@@ -992,11 +992,14 @@ export default function UnifiedCalendarPage() {
 
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {photoViewerTask.completionPhotos?.map((url, index) => (
-                  <div key={index} className="relative group">
-                    <img
+                  <div key={index} className="relative group cursor-pointer" onClick={() => window.open(url, '_blank')}>
+                    <Image
                       src={url}
                       alt={`Фото ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-lg border"
+                      width={200}
+                      height={128}
+                      className="w-full h-32 object-cover rounded-lg border hover:opacity-90 transition-opacity"
+                      unoptimized
                     />
                   </div>
                 ))}

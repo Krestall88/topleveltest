@@ -1,12 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Clock, AlertTriangle, CheckCircle, Camera, X, ChevronLeft, ChevronRight, Square, CheckSquare } from 'lucide-react';
-import Image from 'next/image';
 import { UnifiedTask } from '@/lib/unified-task-system';
 import TaskLocationBreadcrumb from '@/components/TaskLocationBreadcrumb';
 import UnifiedTaskCompletionModal from '@/components/UnifiedTaskCompletionModal';
@@ -81,6 +80,7 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
 
   const [photoViewerTask, setPhotoViewerTask] = useState<UnifiedTask | null>(null);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [photoLoadFailed, setPhotoLoadFailed] = useState(false);
   const [isBulkCompleting, setIsBulkCompleting] = useState(false);
   const [taskToComplete, setTaskToComplete] = useState<UnifiedTask | null>(null);
   const [selectionMode, setSelectionMode] = useState(false);
@@ -89,10 +89,12 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
   const openPhotoViewer = (task: UnifiedTask, index: number = 0) => {
     setPhotoViewerTask(task);
     setCurrentPhotoIndex(index);
+    setPhotoLoadFailed(false);
   };
 
   const navigatePhoto = (direction: 'prev' | 'next') => {
     if (!photoViewerTask?.completionPhotos || photoViewerTask.completionPhotos.length === 0) return;
+    setPhotoLoadFailed(false);
     if (direction === 'prev') {
       setCurrentPhotoIndex(prev => prev > 0 ? prev - 1 : photoViewerTask.completionPhotos!.length - 1);
     } else {
@@ -342,6 +344,12 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
         {photoViewerTask && photoViewerTask.completionPhotos && photoViewerTask.completionPhotos.length > 0 && (
           <Dialog open={!!photoViewerTask} onOpenChange={() => setPhotoViewerTask(null)}>
             <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+              <DialogHeader className="sr-only">
+                <DialogTitle>Просмотр фото выполненной задачи</DialogTitle>
+                <DialogDescription>
+                  Просмотр фотографии {currentPhotoIndex + 1} из {photoViewerTask.completionPhotos.length} для выполненной задачи.
+                </DialogDescription>
+              </DialogHeader>
               <div className="relative">
                 <Button
                   variant="ghost"
@@ -353,12 +361,32 @@ const SimpleTaskListModal: React.FC<SimpleTaskListModalProps> = ({
                 </Button>
 
                 <div className="relative aspect-video bg-black">
-                  <Image
-                    src={photoViewerTask.completionPhotos[currentPhotoIndex]}
-                    alt={`Фото ${currentPhotoIndex + 1}`}
-                    fill
-                    className="object-contain"
-                  />
+                  {!photoLoadFailed && (
+                    <img
+                      src={photoViewerTask.completionPhotos[currentPhotoIndex].includes('s3.twcstorage.ru') ? `/api/proxy-image?url=${encodeURIComponent(photoViewerTask.completionPhotos[currentPhotoIndex])}` : photoViewerTask.completionPhotos[currentPhotoIndex]}
+                      alt={`Фото ${currentPhotoIndex + 1}`}
+                      className="w-full h-full object-contain"
+                      onError={() => {
+                        console.error('Ошибка загрузки изображения:', photoViewerTask.completionPhotos?.[currentPhotoIndex]);
+                        setPhotoLoadFailed(true);
+                      }}
+                    />
+                  )}
+
+                  {photoLoadFailed && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white px-6 text-center">
+                      <Camera className="h-10 w-10 opacity-70" />
+                      <div className="text-sm">Не удалось загрузить фото</div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="bg-white text-black hover:bg-gray-100"
+                        onClick={() => window.open(photoViewerTask.completionPhotos![currentPhotoIndex], '_blank')}
+                      >
+                        Открыть оригинал
+                      </Button>
+                    </div>
+                  )}
 
                   {photoViewerTask.completionPhotos.length > 1 && (
                     <>
