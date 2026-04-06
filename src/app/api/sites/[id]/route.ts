@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { getAuthSession } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 // GET /api/sites/[id] - получить участок по ID
 export async function GET(

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { getAuthSession } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 // PATCH - обновить расход
 export async function PATCH(
@@ -93,8 +91,6 @@ export async function PATCH(
   } catch (error) {
     console.error('Error updating inventory expense:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -169,7 +165,5 @@ export async function DELETE(
   } catch (error) {
     console.error('Error deleting inventory expense:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { dedupeLimits } from '@/lib/expenseLimits';
 import { getAuthSession } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 // GET - получить финансовый отчет по инвентарю
 export async function GET(request: NextRequest) {
@@ -175,7 +173,5 @@ export async function GET(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

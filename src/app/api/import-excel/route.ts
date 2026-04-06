@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import * as XLSX from 'xlsx';
-
-const prisma = new PrismaClient();
 
 // Умная нормализация - пробелы считаются пустыми
 function normalize(str: string | null | undefined): string | null {
@@ -232,7 +230,5 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Ошибка импорта:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }

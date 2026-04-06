@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { getAuthSession } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 // GET - получить расходы
 export async function GET(req: NextRequest) {
@@ -86,8 +84,6 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('Error fetching inventory expenses:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -266,7 +262,5 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Error creating inventory expense:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }

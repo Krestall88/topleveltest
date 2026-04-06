@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-
-const prisma = new PrismaClient();
 
 // Схема валидации для техкарты
 const TechCardSchema = z.object({
@@ -173,7 +171,5 @@ export async function POST(request: NextRequest) {
       error: 'Внутренняя ошибка сервера',
       details: error instanceof Error ? error.message : 'Неизвестная ошибка'
     }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }

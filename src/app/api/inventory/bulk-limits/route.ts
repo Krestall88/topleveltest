@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { getAuthSession } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 // POST - массовое создание лимитов по категориям
 export async function POST(request: NextRequest) {
@@ -252,7 +250,5 @@ export async function POST(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

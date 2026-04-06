@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     const token = jwt.sign(
       { userId: user.id, role: user.role },
       jwtSecret,
-      { expiresIn: '1d' }
+      { expiresIn: '30d' }
     );
 
     console.log('✅ Токен создан, вход успешен');
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 24 * 60 * 60 // 1 день
+      maxAge: 30 * 24 * 60 * 60 // 30 дней
     });
 
     return response;
