@@ -99,7 +99,7 @@ export async function PUT(
     // Проверяем менеджера, если указан
     if (managerId) {
       const manager = await prisma.user.findUnique({
-        where: { id: managerId, role: 'MANAGER' }
+        where: { id: managerId }
       });
 
       if (!manager) {
@@ -108,18 +108,34 @@ export async function PUT(
           { status: 404 }
         );
       }
+      
+      // Проверяем, что это менеджер, старший менеджер или бухгалтер
+      if (!['MANAGER', 'SENIOR_MANAGER', 'ACCOUNTANT'].includes(manager.role)) {
+        return NextResponse.json(
+          { error: 'User must be a manager, senior manager, or accountant' },
+          { status: 400 }
+        );
+      }
     }
 
     // Проверяем старшего менеджера, если указан
     if (seniorManagerId) {
       const seniorManager = await prisma.user.findUnique({
-        where: { id: seniorManagerId, role: 'SENIOR_MANAGER' }
+        where: { id: seniorManagerId }
       });
 
       if (!seniorManager) {
         return NextResponse.json(
           { error: 'Senior manager not found' },
           { status: 404 }
+        );
+      }
+      
+      // Проверяем, что это менеджер, старший менеджер или бухгалтер
+      if (!['MANAGER', 'SENIOR_MANAGER', 'ACCOUNTANT'].includes(seniorManager.role)) {
+        return NextResponse.json(
+          { error: 'User must be a manager, senior manager, or accountant' },
+          { status: 400 }
         );
       }
     }
@@ -146,7 +162,17 @@ export async function PUT(
             id: true,
             name: true,
             phone: true,
-            email: true
+            email: true,
+            role: true
+          }
+        },
+        seniorManager: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+            role: true
           }
         }
       }

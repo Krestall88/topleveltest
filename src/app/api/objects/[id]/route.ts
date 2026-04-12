@@ -231,6 +231,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
             manager: {
               select: { id: true, name: true, email: true }
             },
+            seniorManager: {
+              select: { id: true, name: true, email: true }
+            },
             zones: {
               include: {
                 roomGroups: {

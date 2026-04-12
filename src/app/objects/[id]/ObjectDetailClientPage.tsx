@@ -274,8 +274,12 @@ export default function ObjectDetailClientPage() {
       if (site.manager) {
         initialSiteManagers[site.id] = site.manager.id;
       }
-      if (site.seniorManager) {
-        initialSiteManagers[`senior_${site.id}`] = site.seniorManager.id;
+      // Инициализируем старшего менеджера (даже если не назначен)
+      // Находим виртуальный участок или первый участок
+      const virtualSite = object.sites?.find(s => s.name.includes('__VIRTUAL__'));
+      const targetSite = virtualSite || object.sites?.[0];
+      if (targetSite && site.id === targetSite.id) {
+        initialSiteManagers[`senior_${site.id}`] = site.seniorManager?.id || '';
       }
     });
     setSiteManagers(initialSiteManagers);
@@ -577,10 +581,10 @@ export default function ObjectDetailClientPage() {
                                   }}
                                   className="w-full p-1 text-sm border border-purple-300 rounded focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
                                 >
-                                  <option value="">-- Выберите старшего менеджера --</option>
-                                  {managers.filter(m => m.role === 'SENIOR_MANAGER').map((manager) => (
+                                  <option value="">-- Не назначен --</option>
+                                  {managers.map((manager) => (
                                     <option key={manager.id} value={manager.id}>
-                                      {manager.name}
+                                      {manager.name} {manager.role === 'SENIOR_MANAGER' ? '(Старший)' : manager.role === 'ACCOUNTANT' ? '(Бухгалтер)' : ''}
                                     </option>
                                   ))}
                                 </select>
