@@ -1,0 +1,212 @@
+﻿Diagnose log at 2026-04-06T08:12:31Z
+
+AppPath: C:\Program Files\Git\mingw64\bin\git-credential-manager.exe
+InstallDir: C:\Program Files\Git\mingw64\bin\
+Version: 2.6.1+786ab03440ddc82e807a97c0e540f5247e44cec6
+
+------------
+Diagnostic: Environment
+Skipped: False
+Success: True
+Exception: None
+Log:
+OSType: Windows
+OSVersion: 10.0 (build 26200)
+Reading environment variables... OK
+ Variables:
+HOMEPATH=\Users\Тайм
+DriverData=C:\Windows\System32\Drivers\DriverData
+COMPUTERNAME=DESKTOP-NTPVR55
+GIT_TRACE2_PARENT_SID=47210bdc-05b9-4a23-b231-076907cbc37e
+CommonProgramFiles(x86)=C:\Program Files (x86)\Common Files
+OneDrive=C:\Users\Тайм\OneDrive
+PYTHON_BASIC_REPL=1
+SESSIONNAME=Console
+BUNDLED_DEBUGPY_PATH=c:\Users\Тайм\.windsurf\extensions\ms-python.debugpy-2025.14.1-win32-x64\bundled\libs\debugpy
+LANG=en_US.UTF-8
+TMP=C:\Users\19BD~1\AppData\Local\Temp
+PROCESSOR_REVISION=8d01
+PYDEVD_DISABLE_FILE_VALIDATION=1
+PATHEXT=.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL
+VSCODE_INJECTION=1
+GIT_ASKPASS=c:\Users\Тайм\AppData\Local\Programs\Windsurf\resources\app\extensions\git\dist\askpass.sh
+GIT_EXEC_PATH=C:/Program Files/Git/mingw64/libexec/git-core
+EFC_6204_1592913036=1
+LOCALAPPDATA=C:\Users\Тайм\AppData\Local
+MSYSTEM=MINGW64
+PG_LIB_DIR=C:\Users\Тайм\scoop\apps\postgresql\current\lib
+TERM=xterm-256color
+PROCESSOR_IDENTIFIER=Intel64 Family 6 Model 141 Stepping 1, GenuineIntel
+VSCODE_PYTHON_AUTOACTIVATE_GUARD=1
+COLORTERM=truecolor
+windir=C:\WINDOWS
+PYTHONSTARTUP=c:\Users\Тайм\AppData\Roaming\Windsurf\User\workspaceStorage\dc93d37139eda88ae0ccf46100c295bf\ms-python.python\pythonrc.py
+USERDOMAIN=DESKTOP-NTPVR55
+WINDSURF_CASCADE_TERMINAL=1
+WINDSURF_CASCADE_TERMINAL_KIND=inherit
+Path=C:/Program Files/Git/mingw64/libexec/git-core;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\bin;C:\Users\Тайм\bin;C:\Program Files (x86)\Common Files\Intel\Shared Libraries\redist\intel64\compiler;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\nodejs\;C:\Program Files\Graphviz\bin;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\Git\cmd;C:\ngrok;C:\Users\Тайм\scoop\apps\postgresql\current\bin;C:\Users\Тайм\scoop\shims;C:\Users\Тайм\AppData\Local\Programs\Python\Python312\Scripts\;C:\Users\Тайм\AppData\Local\Programs\Python\Python312\;C:\Users\Тайм\AppData\Local\Microsoft\WindowsApps;C:\Program Files\JetBrains\PyCharm Community Edition 2023.2.5\bin;C:\Users\Тайм\AppData\Local\Microsoft\WindowsApps;C:\Users\Тайм\AppData\Roaming\npm;C:\Users\Тайм\AppData\Local\Programs\Windsurf\bin;C:\Program Files\PostgreSQL\16\bin;C:\Users\Тайм\AppData\Roaming\Programs\Zero Install;c:\Users\Тайм\.windsurf\extensions\ms-python.debugpy-2025.14.1-win32-x64\bundled\scripts\noConfigScripts
+TERM_PROGRAM=vscode
+PROCESSOR_LEVEL=6
+NUMBER_OF_PROCESSORS=16
+TMPDIR=C:\Users\19BD~1\AppData\Local\Temp
+VSCODE_GIT_ASKPASS_EXTRA_ARGS=
+APPDATA=C:\Users\Тайм\AppData\Roaming
+TERM_PROGRAM_VERSION=1.108.2
+VSCODE_GIT_ASKPASS_MAIN=c:\Users\Тайм\AppData\Local\Programs\Windsurf\resources\app\extensions\git\dist\askpass-main.js
+ProgramFiles(x86)=C:\Program Files (x86)
+PUBLIC=C:\Users\Public
+VSCODE_GIT_IPC_HANDLE=\\.\pipe\vscode-git-7dcc8049cb-sock
+FPS_BROWSER_USER_PROFILE_STRING=Default
+CommonProgramFiles=C:\Program Files (x86)\Common Files
+__PSLockDownPolicy=0
+VSCODE_DEBUGPY_ADAPTER_ENDPOINTS=c:\Users\Тайм\.windsurf\extensions\ms-python.debugpy-2025.14.1-win32-x64\.noConfigDebugAdapterEndpoints\endpoint-6f93c3ea852840d3.txt
+CHROME_CRASHPAD_PIPE_NAME=\\.\pipe\crashpad_30568_LOCNHTGMDWXIHQGZ
+asl.log=Destination=file
+PAGER=cat
+PGDATA=C:\Users\Тайм\scoop\apps\postgresql\current\data
+ProgramData=C:\ProgramData
+ProgramW6432=C:\Program Files
+GIT_PAGER=cat
+ProgramFiles=C:\Program Files (x86)
+RG_GPU_FRAMEWORK_ENGINE_RESOURCEDIR=C:\Program Files\Red Giant\RGFX
+PLINK_PROTOCOL=ssh
+PyCharm Community Edition=C:\Program Files\JetBrains\PyCharm Community Edition 2023.2.5\bin;
+VSCODE_GIT_ASKPASS_NODE=C:\Users\Тайм\AppData\Local\Programs\Windsurf\Windsurf.exe
+SystemRoot=C:\WINDOWS
+INTEL_DEV_REDIST=C:\Program Files (x86)\Common Files\Intel\Shared Libraries\
+HOME=C:\Users\Тайм
+CommonProgramW6432=C:\Program Files\Common Files
+ZES_ENABLE_SYSMAN=1
+LOGONSERVER=\\DESKTOP-NTPVR55
+USERPROFILE=C:\Users\Тайм
+USERDOMAIN_ROAMINGPROFILE=DESKTOP-NTPVR55
+PROCESSOR_ARCHITEW6432=AMD64
+HOMEDRIVE=C:
+PSModulePath=C:\Users\Тайм\OneDrive\Документы\WindowsPowerShell\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules
+USERNAME=Nikos
+MIC_LD_LIBRARY_PATH=C:\Program Files (x86)\Common Files\Intel\Shared Libraries\compiler\lib\mic
+FPS_BROWSER_APP_PROFILE_STRING=Internet Explorer
+PROCESSOR_ARCHITECTURE=x86
+OS=Windows_NT
+ComSpec=C:\WINDOWS\system32\cmd.exe
+TEMP=C:\Users\19BD~1\AppData\Local\Temp
+SystemDrive=C:
+PG_INCLUDE_DIR=C:\Users\Тайм\scoop\apps\postgresql\current\include
+OneDriveConsumer=C:\Users\Тайм\OneDrive
+ALLUSERSPROFILE=C:\ProgramData
+
+
+------------
+Diagnostic: File system
+Skipped: False
+Success: True
+Exception: None
+Log:
+Temporary directory is 'C:\Users\Тайм\AppData\Local\Temp\'...
+Checking basic file I/O...
+Writing to temporary file 'C:\Users\Тайм\AppData\Local\Temp\fa73431aa81e5340c1603d27'... OK
+Reading from temporary file 'C:\Users\Тайм\AppData\Local\Temp\fa73431aa81e5340c1603d27'... OK
+Deleting temporary file 'C:\Users\Тайм\AppData\Local\Temp\fa73431aa81e5340c1603d27'... OK
+Testing IFileSystem instance...
+UserHomePath: C:\Users\Тайм
+UserDataDirectoryPath: C:\Users\Тайм\.gcm
+GetCurrentDirectory(): C:\Users\Тайм\Documents\toplevel
+
+------------
+Diagnostic: Networking
+Skipped: False
+Success: True
+Exception: None
+Log:
+Checking networking and HTTP stack...
+Creating HTTP client... OK
+IsNetworkAvailable: True
+Sending HEAD request to http://example.com...Sending HEAD request to https://example.com... OK
+ OK
+Acquiring free TCP port... OK
+Testing local HTTP loopback connections...
+Creating new HTTP listener for http://localhost:53588/... OK
+Waiting for loopback connection... OK
+Writing response... OK
+Waiting for response data... OK
+Loopback connection data OK
+
+------------
+Diagnostic: Git
+Skipped: False
+Success: True
+Exception: None
+Log:
+Getting Git version... OK
+Git version is '2.50.1.windows.1'
+Locating current repository...Git repository at 'C:/Users/Тайм/Documents/toplevel/.git'
+ OK
+Listing all Git configuration... OK
+Git configuration:
+file:C:/Program Files/Git/etc/gitconfig	diff.astextplain.textconv=astextplain
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.clean=git-lfs clean -- %f
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.smudge=git-lfs smudge -- %f
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.process=git-lfs filter-process
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.required=true
+file:C:/Program Files/Git/etc/gitconfig	http.sslbackend=schannel
+file:C:/Program Files/Git/etc/gitconfig	core.autocrlf=true
+file:C:/Program Files/Git/etc/gitconfig	core.fscache=true
+file:C:/Program Files/Git/etc/gitconfig	core.symlinks=false
+file:C:/Program Files/Git/etc/gitconfig	pull.rebase=false
+file:C:/Program Files/Git/etc/gitconfig	credential.helper=manager
+file:C:/Program Files/Git/etc/gitconfig	credential.https://dev.azure.com.usehttppath=true
+file:C:/Program Files/Git/etc/gitconfig	init.defaultbranch=master
+file:"C:/Users/\320\242\320\260\320\271\320\274/.gitconfig"	user.name=Krestall88
+file:"C:/Users/\320\242\320\260\320\271\320\274/.gitconfig"	user.email=eldarkg87@gmail.com
+file:.git/config	core.repositoryformatversion=0
+file:.git/config	core.filemode=false
+file:.git/config	core.bare=false
+file:.git/config	core.logallrefupdates=true
+file:.git/config	core.symlinks=false
+file:.git/config	core.ignorecase=true
+file:.git/config	core.autocrlf=false
+file:.git/config	remote.origin.url=https://github.com/Krestall88/topleveltest.git
+file:.git/config	remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
+file:.git/config	branch.main.remote=origin
+file:.git/config	branch.main.merge=refs/heads/main
+file:.git/config	branch.improved-daily-tasks-highlighting.remote=origin
+file:.git/config	branch.improved-daily-tasks-highlighting.merge=refs/heads/improved-daily-tasks-highlighting
+file:.git/config	user.name=NikolaiPerepichko
+file:.git/config	user.email=nikolai.perepichko@example.com
+
+
+------------
+Diagnostic: Credential storage
+Skipped: False
+Success: True
+Exception: None
+Log:
+ICredentialStore instance is of type: CredentialStore
+Writing test credential... OK
+Reading test credential... OK
+Deleting test credential... OK
+
+------------
+Diagnostic: Microsoft authentication (AAD/MSA)
+Skipped: False
+Success: True
+Exception: None
+Log:
+Broker is not enabled.
+Flow type is: Auto
+Gathering MSAL token cache data... OK
+CacheDirectory: C:\Users\Тайм\AppData\Local\.IdentityService
+CacheFileName: msal.cache
+CacheFilePath: C:\Users\Тайм\AppData\Local\.IdentityService\msal.cache
+Creating cache helper... OK
+Verifying MSAL token cache persistence... OK
+
+------------
+Diagnostic: GitHub API
+Skipped: False
+Success: True
+Exception: None
+Log:
+Using 'https://github.com/' as API target.
+Querying '/meta' endpoint... OK
+

@@ -10,6 +10,19 @@ export const prisma =
   global.prisma ||
   new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+    // Connection pooling для serverless окружения (Vercel)
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
+    },
   });
 
 if (process.env.NODE_ENV !== 'production') global.prisma = prisma;
+
+// Graceful shutdown для production
+if (process.env.NODE_ENV === 'production') {
+  process.on('beforeExit', async () => {
+    await prisma.$disconnect();
+  });
+}

@@ -75,9 +75,8 @@ export async function POST(req: NextRequest) {
         const fileUrl = await uploadImage(file);
         console.log('✅ API: Файл загружен в S3:', fileUrl);
 
-        // Создаем запись в базе данных
-        // Для виртуальных задач taskId может не существовать в БД
-        // Виртуальные задачи имеют формат: techCardId-objectId-roomId-YYYY-MM-DD
+        // Для виртуальных задач НЕ создаем photoReport сразу
+        // Виртуальные задачи имеют формат: techCardId-YYYY-MM-DD или techCardId-objectId-roomId-YYYY-MM-DD
         const isVirtualTask = taskId && /\d{4}-\d{2}-\d{2}$/.test(taskId);
         
         console.log('🔍 API: Проверка задачи:', {
@@ -86,60 +85,74 @@ export async function POST(req: NextRequest) {
           pattern: /\d{4}-\d{2}-\d{2}$/.test(taskId || '')
         });
         
-        const photoData: any = {
-          url: fileUrl,
-          comment: comment || null,
-          uploaderId: user.id,
-          objectId: objectId
-        };
-        
-        // Только для материализованных задач добавляем taskId
-        // Для виртуальных задач НЕ добавляем taskId, чтобы избежать foreign key error
-        if (taskId && !isVirtualTask) {
-          // Проверяем, существует ли задача в БД
-          const taskExists = await prisma.task.findUnique({
-            where: { id: taskId },
-            select: { id: true }
+        // Для виртуальных задач просто возвращаем URL фото
+        // PhotoReport будет создан позже в /api/tasks/unified-complete после материализации
+        if (isVirtualTask) {
+          console.log('⚠️ API: Виртуальная задача, пропускаем создание photoReport');
+          uploadedPhotos.push({
+            id: `temp-${Date.now()}-${Math.random()}`,
+            url: fileUrl,
+            comment: comment || null,
+            uploaderId: user.id,
+            objectId: objectId,
+            createdAt: new Date()
           });
+        } else {
+          // Для материализованных задач создаем photoReport
+          const photoData: any = {
+            url: fileUrl,
+            comment: comment || null,
+            uploaderId: user.id,
+            objectId: objectId
+          };
           
-          if (taskExists) {
-            photoData.taskId = taskId;
-            console.log('✅ API: Задача существует, добавляем taskId');
-          } else {
-            console.log('⚠️ API: Задача не найдена в БД, пропускаем taskId');
+          // Проверяем, существует ли задача в БД
+          if (taskId) {
+            const taskExists = await prisma.task.findUnique({
+              where: { id: taskId },
+              select: { id: true }
+            });
+            
+            if (taskExists) {
+              photoData.taskId = taskId;
+              console.log('✅ API: Задача существует, добавляем taskId');
+            } else {
+              console.log('⚠️ API: Задача не найдена в БД, пропускаем taskId');
+            }
           }
-        } else if (isVirtualTask) {
-          console.log('⚠️ API: Виртуальная задача, пропускаем taskId');
-        }
-        
-        const photoReport = await prisma.photoReport.create({
-          data: photoData
-        });
+          
+          const photoReport = await prisma.photoReport.create({
+            data: photoData
+          });
 
-        console.log('✅ API: Запись в БД создана:', photoReport.id);
-        uploadedPhotos.push(photoReport);
+          console.log('✅ API: Запись в БД создана:', photoReport.id);
+          uploadedPhotos.push(photoReport);
+        }
       } catch (fileError) {
         console.error('❌ API: Ошибка загрузки файла:', file.name, fileError);
         throw fileError;
       }
     }
 
-    // Логируем действие
-    await prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'PHOTOS_UPLOADED',
-        entity: 'PhotoReport',
-        entityId: uploadedPhotos[0]?.id || '',
-        details: {
-          photosCount: uploadedPhotos.length,
-          objectId: objectId,
-          techCardId: techCardId,
-          taskId: taskId,
-          comment: comment
+    // Логируем действие только если создали photoReport (не виртуальная задача)
+    const isVirtualTask = taskId && /\d{4}-\d{2}-\d{2}$/.test(taskId);
+    if (!isVirtualTask && uploadedPhotos.length > 0) {
+      await prisma.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'PHOTOS_UPLOADED',
+          entity: 'PhotoReport',
+          entityId: uploadedPhotos[0]?.id || '',
+          details: {
+            photosCount: uploadedPhotos.length,
+            objectId: objectId,
+            techCardId: techCardId,
+            taskId: taskId,
+            comment: comment
+          }
         }
-      }
-    });
+      });
+    }
 
     return NextResponse.json({
       message: 'Фотоотчеты загружены',
